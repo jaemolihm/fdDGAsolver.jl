@@ -1,0 +1,13 @@
+name = "fdDGAsolver"
+uuid = "f39c066c-8a55-46b6-9f3a-188d6b255019"
+authors = ["Jae-Mo Lihm <jaemolim96@gmail.com> and contributors"]
+version = "1.0.0-DEV"
+
+[compat]
+julia = "1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
