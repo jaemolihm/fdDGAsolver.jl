@@ -1,6 +1,8 @@
 using fdDGAsolver
+using MatsubaraFunctions
+using HDF5
+using MPI
 using Test
 
-@testset "fdDGAsolver.jl" begin
-    # Write your tests here.
-end
+MPI.Init()
+MatsubaraFunctions.DEBUG() = true # enable all checks for testing
