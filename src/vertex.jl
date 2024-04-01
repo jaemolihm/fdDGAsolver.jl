@@ -2,7 +2,6 @@ using MatsubaraFunctions: MeshFunction
 
 abstract type AbstractVertex{DD, Q <: Number} end
 channel_freq(v::AbstractVertex) = v.channel_freq
-channel_spin(v::AbstractVertex) = v.channel_spin
 
 """
     Vertex_K1{1, Q <: Number, MT <: NTuple{1, Mesh}, AT <: AbstractArray{Q, DD}, MF <: MeshFunction{1, Q, MT, AT}}
@@ -10,18 +9,17 @@ channel_spin(v::AbstractVertex) = v.channel_spin
 Vertex_K1 type with fields:
 * `data :: MF` : `MeshFunction` storing the data
 * `channel_freq :: Symbol` : Frequency channel. `:a`, `:p`, or `t`
-* `channel_spin :: Symbol` : Spin channel. `:Da`, `:Ma`, `:Sp`, `:Tp`, `:Dt`, or `:Mt`
+* `lim :: Q` : Extrapolated constant value outside the mesh.
 """
 struct Vertex_K1{DD, Q <: Number, MT <: NTuple{DD, Mesh}, AT <: AbstractArray{Q, DD}, MF <: MeshFunction{DD, Q, MT, AT}} <: AbstractVertex{DD, Q}
     data :: MF
     channel_freq :: Symbol
-    channel_spin :: Symbol
     lim :: Q
 end
 
 
 function Base.show(io::IO, v::Vertex_K1)
-    print(io, "$(nameof(typeof(v))), channel_freq = $(v.channel_freq), channel_spin = $(v.channel_spin)\n")
+    print(io, "$(nameof(typeof(v))), channel_freq = $(v.channel_freq)\n")
     print(io, "meshes:\n")
     for (i, mesh) in enumerate(v.data.meshes)
         print(io, "    $i. $(typeof(value(first(mesh.points)))), N = $(mesh.domain[:N])")

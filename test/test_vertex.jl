@@ -7,8 +7,10 @@ using Test
     N = 10
     mesh = MatsubaraMesh(T, N, Fermion)
     x = MeshFunction((mesh,), rand(length(mesh)))
-    y = Vertex_K1(x, :a, :Da, 3.)
+    y = Vertex_K1(x, :a, 3.)
     @test y[mesh[1]] === x[mesh[1]]
+    @test Base.show(IOBuffer(), y) === nothing
+    @test fdDGAsolver.channel_freq(y) == :a
 
     v1, v2, w = -10., 9., 5.
     @test y(v1, v2, w) == x(w)
