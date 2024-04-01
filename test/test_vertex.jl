@@ -2,12 +2,12 @@ using fdDGAsolver
 using MatsubaraFunctions
 using Test
 
-@testset "SU2Vertex" begin
+@testset "Vertex" begin
     T = 1.0
     N = 10
     mesh = MatsubaraMesh(T, N, Fermion)
     x = MeshFunction((mesh,), rand(length(mesh)))
-    y = SU2Vertex_K1(x, :a, :Da, 3.)
+    y = Vertex_K1(x, :a, :Da, 3.)
     @test y[mesh[1]] === x[mesh[1]]
 
     v1, v2, w = -10., 9., 5.
