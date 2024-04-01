@@ -11,4 +11,7 @@ module fdDGAsolver
     end
 
     include("types.jl")
+    include("channel.jl")
+    include("vertex.jl")
+
 end

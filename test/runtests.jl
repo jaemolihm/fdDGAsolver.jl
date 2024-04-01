@@ -6,3 +6,5 @@ using Test
 
 MPI.Init()
 MatsubaraFunctions.DEBUG() = true # enable all checks for testing
+
+include("test_vertex.jl")
