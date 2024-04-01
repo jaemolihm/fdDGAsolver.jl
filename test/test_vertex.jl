@@ -2,7 +2,7 @@ using fdDGAsolver
 using MatsubaraFunctions
 using Test
 
-@testset begin
+@testset "SU2Vertex" begin
     T = 1.0
     N = 10
     mesh = MatsubaraMesh(T, N, Fermion)

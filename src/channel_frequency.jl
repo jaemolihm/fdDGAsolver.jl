@@ -27,12 +27,12 @@ end
     throw(ArgumentError("Wrong channel $C"))
 end
 
-@inline frequency_to_channel(v1, v2, w) = (v1, -v1-w, v2+w, -v2)
+@inline frequency_to_standard(v1, v2, w) = (v1, -v1-w, v2+w, -v2)
 
 # v1 + v2 + v3 + v4 = 0 is assumed to hold.
 @inline frequency_to_channel(v1, v2, v3, v4) = (v1, -v4, v3 + v4)
 
-@inline frequency_to_channel(C :: Symbol, v1, v2, w) = shuffle_to_standard(C, frequency_to_channel(v1, v2, w))
+@inline frequency_to_standard(C :: Symbol, v1, v2, w) = shuffle_to_standard(C, frequency_to_standard(v1, v2, w))
 @inline frequency_to_channel(C :: Symbol, v1, v2, v3, v4) = frequency_to_channel(shuffle_to_channel(C, (v1, v2, v3, v4))...)
 @inline frequency_to_channel(C :: Symbol, v1234) = frequency_to_channel(C, v1234...)
 
@@ -40,6 +40,6 @@ end
     if C_from === C_to
         v1, v2, w
     else
-        frequency_to_channel(C_to, frequency_to_channel(C_from, v1, v2, w))
+        frequency_to_channel(C_to, frequency_to_standard(C_from, v1, v2, w))
     end
 end
