@@ -97,10 +97,7 @@ function fixed_point!(
     reduce!(S.F)
 
     # update Σ
-    # SDE!(S)
-    SDE_channel!(S)
-    Σ_U² = SDE_U2(S)
-    add!(S.Σ, Σ_U²)
+    SDE!(S)
 
     # calculate residue
     flatten!(S, R)
@@ -113,14 +110,19 @@ end
 function solve!(
     S::ParquetSolver
     ;
+    parallel_mode :: Symbol = :serial,
     strat::Symbol=:fdPA,
     maxiter::Int64=100,
     tol::Float64=1e-4,
     δ::Float64=0.85,
-    mem::Int64=8
+    mem::Int64=8,
+    verbose :: Bool = true,
 )
 
-    mpi_println("Converging parquet equations ...")
+    verbose && mpi_println("Converging parquet equations.")
+    verbose && mpi_println("parallel_mode = $parallel_mode ...")
+
+    S.mode = parallel_mode
 
     ti = time()
     res = nlsolve((R, x) -> fixed_point!(R, x, S; strat), flatten(S),
@@ -129,10 +131,10 @@ function solve!(
         ftol=tol,
         beta=δ,
         m=mem,
-        show_trace=true)
-        # mpi_ismain())
+        show_trace = mpi_ismain() && verbose,
+    )
 
-    # mpi_println("Done. Calculation took $(round(time() - ti, digits = 3)) seconds.")
+    verbose && mpi_println("Done. Calculation took $(round(time() - ti, digits = 3)) seconds.")
 
     return res
 end
@@ -154,3 +156,6 @@ function MatsubaraFunctions.save!(
 
     return nothing
 end
+
+export
+    parquet_solver_siam_parquet_approximation

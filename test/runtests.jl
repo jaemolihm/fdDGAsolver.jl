@@ -8,3 +8,4 @@ MPI.Init()
 MatsubaraFunctions.DEBUG() = true # enable all checks for testing
 
 include("test_channel.jl")
+include("test_parquet_siam.jl")

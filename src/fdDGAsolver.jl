@@ -16,6 +16,7 @@ module fdDGAsolver
     include("channel.jl")
     include("refvertex.jl")
     include("vertex.jl")
+    include("siam.jl")
     include("ParquetSolver.jl")
     include("SDE.jl")
     include("BSE.jl")

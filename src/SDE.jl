@@ -1,48 +1,3 @@
-function SDE!(
-    S :: ParquetSolver{Q}
-    ) :: Nothing where {Q}
-
-    # model the diagram
-    @inline function diagram(wtpl)
-
-        ν   = wtpl[1]
-        val = zero(Q)
-
-        for ω in value.(meshes(S.G, 1))
-            # SDE using only K1 + K2 in p channel
-            val += S.G[ω] * (box_eval(S.F.γp.K1, ν + ω) + box_eval(S.F.γp.K2, ν + ω, ν))
-            if S.F0 isa Vertex
-                val += S.G[ω] * (box_eval(S.F0.γp.K1, ν + ω) + box_eval(S.F0.γp.K2, ν + ω, ν))
-            end
-        end
-
-        return temperature(S) * val
-    end
-
-    # compute Σ
-    S.SGΣ(S.Σ, InitFunction{1, Q}(diagram); mode = S.mode)
-
-    # sanity check
-    self_energy_sanity_check(S.Σ)
-
-    return nothing
-end
-
-function self_energy_sanity_check(Σ)
-    passed = true
-    # sanity check
-    for ν in value.(meshes(Σ, 1))
-        if value(ν) > 0.0 && imag(Σ[ν]) > 0.0
-            passed = false
-            @warn "Σ violates causality at n = $(index(ν))"
-        elseif value(ν) < 0.0 && imag(Σ[ν]) < 0.0
-            passed = false
-            @warn "Σ violates causality at n = $(index(ν))"
-        end
-    end
-    passed
-end
-
 function Dyson!(
     S :: ParquetSolver
     ) :: Nothing
@@ -51,8 +6,8 @@ function Dyson!(
     D = 10.0
     e = 0.
     for ν in value.(meshes(S.G, 1))
-        # We store S.G is im * G
-        S.G[ν] = 1 / (value(ν) + im * e + 2Δ / π * atan(D / value(ν)) + S.Σ(ν))
+        # S.G and S.Σ is im * G and im * Σ, so -Σ in the Dyson equation becomes +Σ.
+        S.G[ν] = 1 / (1 / S.Gbare[ν] + S.Σ(ν))
     end
 
     return nothing
@@ -127,8 +82,10 @@ function SDE_channel_L_ph(
 end
 
 
-function SDE_channel!(
+function SDE!(
     S :: ParquetSolver{Q}
+    ;
+    include_U² = true,
     ) :: Nothing where {Q}
     # γa, γp, γt contribution to the self-energy in the asymptotic decomposition
 
@@ -158,6 +115,11 @@ function SDE_channel!(
 
     # compute Σ
     S.SGΣ(S.Σ, InitFunction{1, Q}(diagram); mode = S.mode)
+
+    if include_U²
+        Σ_U² = SDE_U2(S)
+        add!(S.Σ, Σ_U²)
+    end
 
     return nothing
 end
@@ -190,4 +152,49 @@ function SDE_U2(
     S.SGΣ(Σ_U², InitFunction{1, Q}(diagram); mode = S.mode)
 
     return Σ_U²
+end
+
+function SDE_using_K12!(
+    S :: ParquetSolver{Q}
+    ) :: Nothing where {Q}
+
+    # model the diagram
+    @inline function diagram(wtpl)
+
+        ν   = wtpl[1]
+        val = zero(Q)
+
+        for ω in value.(meshes(S.G, 1))
+            # SDE using only K1 + K2 in p channel
+            val += S.G[ω] * (box_eval(S.F.γp.K1, ν + ω) + box_eval(S.F.γp.K2, ν + ω, ν))
+            if S.F0 isa Vertex
+                val += S.G[ω] * (box_eval(S.F0.γp.K1, ν + ω) + box_eval(S.F0.γp.K2, ν + ω, ν))
+            end
+        end
+
+        return temperature(S) * val
+    end
+
+    # compute Σ
+    S.SGΣ(S.Σ, InitFunction{1, Q}(diagram); mode = S.mode)
+
+    # sanity check
+    self_energy_sanity_check(S.Σ)
+
+    return nothing
+end
+
+function self_energy_sanity_check(Σ)
+    passed = true
+    # sanity check
+    for ν in value.(meshes(Σ, 1))
+        if value(ν) > 0.0 && imag(Σ[ν]) > 0.0
+            passed = false
+            @warn "Σ violates causality at n = $(index(ν))"
+        elseif value(ν) < 0.0 && imag(Σ[ν]) < 0.0
+            passed = false
+            @warn "Σ violates causality at n = $(index(ν))"
+        end
+    end
+    passed
 end

@@ -29,6 +29,8 @@ struct Vertex{Q, VT}
     end
 end
 
+Base.eltype(::Type{<: Vertex{Q}}) where {Q} = Q
+
 function Base.show(io::IO, Γ::Vertex{Q}) where {Q}
     print(io, "$(nameof(typeof(Γ))){$Q}, U = $(Γ.F0.U), T = $(temperature(Γ))\n")
     print(io, "F0 : $(Γ.F0)\n")

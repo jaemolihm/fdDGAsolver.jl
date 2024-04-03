@@ -1,4 +1,7 @@
 mutable struct ParquetSolver{Q}
+    # Bare Green function
+    Gbare :: MF_G{Q}
+
     # single-particle Green's function and bubbles for reference system
     G0::MF_G{Q}
     Π0pp::MF_Π{Q}
@@ -55,6 +58,7 @@ mutable struct ParquetSolver{Q}
         nK1::Int64,
         nK2::NTuple{2,Int64},
         nK3::NTuple{2,Int64},
+        Gbare::MF_G{Q},
         G0::MF_G{Q},
         Σ0::MF_G{Q},
         F0::RefVertex{Q}
@@ -78,6 +82,7 @@ mutable struct ParquetSolver{Q}
         # single-particle Green's function and self-energy
         G = MeshFunction(MatsubaraMesh(T, nG, Fermion); data_t=Q)
         Σ = MeshFunction(MatsubaraMesh(T, nΣ, Fermion); data_t=Q)
+        set!(G, 0)
         set!(Σ, 0)
 
         # bubbles
@@ -85,12 +90,10 @@ mutable struct ParquetSolver{Q}
         Πph = copy(Π0pp)
 
         # channel-decomposed two-particle vertex
-        println("   Building F ...")
         F = Vertex(F0, T, nK1, nK2, nK3)
         Fbuff = Vertex(RefVertex(T, 0.0, Q), T, nK1, nK2, nK3)
 
         # symmetry groups
-        println("   Building symmetry group dummies ...")
         SGΣ = SymmetryGroup(Σ)
         SGpp = SymmetryGroup[SymmetryGroup(F.γp.K1), SymmetryGroup(F.γp.K2), SymmetryGroup(F.γp.K3)]
         SGph = SymmetryGroup[SymmetryGroup(F.γp.K1), SymmetryGroup(F.γp.K2), SymmetryGroup(F.γp.K3)]
@@ -100,9 +103,8 @@ mutable struct ParquetSolver{Q}
         # asymptotic limit
         νInf = InfiniteMatsubaraFrequency()
 
-        return new{Q}(G0, Π0pp, Π0ph, Σ0, F0, G, Πpp, Πph, Σ, F, Fbuff, copy(Fbuff), SGΣ, SGpp, SGph, SGppL, SGphL, νInf, mode)::ParquetSolver{Q}
+        return new{Q}(Gbare, G0, Π0pp, Π0ph, Σ0, F0, G, Πpp, Πph, Σ, F, Fbuff, copy(Fbuff), SGΣ, SGpp, SGph, SGppL, SGphL, νInf, mode)::ParquetSolver{Q}
     end
-
 end
 
 Base.eltype(::Type{<:ParquetSolver{Q}}) where {Q} = Q
@@ -113,6 +115,40 @@ function Base.show(io::IO, S::ParquetSolver{Q}) where {Q}
     print(io, "F  K1 : $(numK1(S.F))\n")
     print(io, "F  K2 : $(numK2(S.F))\n")
     print(io, "F  K3 : $(numK3(S.F))")
+end
+
+
+# Construct for parquet approximation
+function parquet_solver_siam_parquet_approximation(
+    nG::Int64,
+    nΣ::Int64,
+    nK1::Int64,
+    nK2::NTuple{2,Int64},
+    nK3::NTuple{2,Int64},
+    :: Type{Q} = ComplexF64,
+    ;
+    mode::Symbol = :serial,
+    e,
+    Δ,
+    D,
+    T,
+    U,
+) where {Q}
+
+    # Mesh for the Green functions and self-energy
+    mG = MatsubaraMesh(T, nG, Fermion)
+    mΣ = MatsubaraMesh(T, nΣ, Fermion)
+
+    Gbare = siam_bare_Green(mG, Q; e, Δ, D)
+
+    # Reference system: G0 = Σ0 = 0, F0 = U (parquet approximation)
+    G0 = MeshFunction(mG; data_t = Q)
+    Σ0 = MeshFunction(mΣ; data_t = Q)
+    F0 = fdDGAsolver.RefVertex(T, U, Q)
+    set!(G0, 0)
+    set!(Σ0, 0)
+
+    ParquetSolver(nG, nΣ, nK1, nK2, nK3, Gbare, G0, Σ0, F0; mode)
 end
 
 # construct from CTINT input data
