@@ -12,14 +12,14 @@ function sK1pp(
     w :: NTuple{1, MatsubaraFrequency},
     ) :: Tuple{NTuple{1, MatsubaraFrequency}, Operation}
 
-    return (-w[1],), Operation()
+    return (-w[1],), Operation(sgn = false, con = true)
 end
 
 function sK2pp1(
     w :: NTuple{2, MatsubaraFrequency},
     ) :: Tuple{NTuple{2, MatsubaraFrequency}, Operation}
 
-    return (-w[1], -w[2]), Operation()
+    return (-w[1], -w[2]), Operation(sgn = false, con = true)
 end
 
 function sK2pp2(
@@ -33,7 +33,7 @@ function sK3pp1(
     w :: NTuple{3, MatsubaraFrequency},
     ) :: Tuple{NTuple{3, MatsubaraFrequency}, Operation}
 
-    return (-w[1], -w[2], -w[3]), Operation()
+    return (-w[1], -w[2], -w[3]), Operation(sgn = false, con = true)
 end
 
 function sK3pp2(

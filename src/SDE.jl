@@ -86,6 +86,7 @@ function SDE!(
     S :: ParquetSolver{Q}
     ;
     include_U² = true,
+    include_Hartree = true,
     ) :: Nothing where {Q}
     # γa, γp, γt contribution to the self-energy in the asymptotic decomposition
 
@@ -119,6 +120,12 @@ function SDE!(
     if include_U²
         Σ_U² = SDE_U2(S)
         add!(S.Σ, Σ_U²)
+    end
+
+    if include_Hartree
+        n = compute_occupation(S.G)
+        # We store im * Σ in S.Σ, so we multiply im.
+        S.Σ.data .+= Q((n - 1/2) * S.F.F0.U * im)
     end
 
     return nothing
@@ -156,6 +163,8 @@ end
 
 function SDE_using_K12!(
     S :: ParquetSolver{Q}
+    ;
+    include_Hartree = true,
     ) :: Nothing where {Q}
 
     # model the diagram
@@ -178,6 +187,12 @@ function SDE_using_K12!(
     # compute Σ
     S.SGΣ(S.Σ, InitFunction{1, Q}(diagram); mode = S.mode)
 
+    if include_Hartree
+        n = compute_occupation(S.G)
+        # We store im * Σ in S.Σ, so we multiply im.
+        S.Σ.data .+= Q((n - 1/2) * S.F.F0.U * im)
+    end
+
     # sanity check
     self_energy_sanity_check(S.Σ)
 
@@ -188,13 +203,22 @@ function self_energy_sanity_check(Σ)
     passed = true
     # sanity check
     for ν in value.(meshes(Σ, 1))
-        if value(ν) > 0.0 && imag(Σ[ν]) > 0.0
+        if value(ν) > 0 && real(Σ[ν]) < 0
             passed = false
             @warn "Σ violates causality at n = $(index(ν))"
-        elseif value(ν) < 0.0 && imag(Σ[ν]) < 0.0
+        elseif value(ν) < 0 && real(Σ[ν]) > 0
             passed = false
             @warn "Σ violates causality at n = $(index(ν))"
         end
     end
     passed
 end
+
+function compute_occupation(
+    G :: MF_G
+) :: Float64
+    return 0.5 + imag(sum(G.data)) * temperature(meshes(G, 1))
+end
+
+export
+    compute_occupation
