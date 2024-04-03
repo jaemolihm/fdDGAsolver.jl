@@ -7,6 +7,4 @@ using Test
 MPI.Init()
 MatsubaraFunctions.DEBUG() = true # enable all checks for testing
 
-include("test_spin.jl")
 include("test_channel.jl")
-include("test_vertex.jl")

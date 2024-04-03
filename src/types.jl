@@ -1,14 +1,25 @@
-# # channel dispatch
-# abstract type Channel end
-# struct ch_S <: Channel end
-# struct ch_T <: Channel end
-# struct ch_D <: Channel end
-# struct ch_M <: Channel end
+# channels
+abstract type ChannelTag end
+struct pCh <: ChannelTag end
+struct tCh <: ChannelTag end
+struct aCh <: ChannelTag end
 
-# # MatsubaraFunction aliases
-# const MF1 = MatsubaraFunction{1, 0, 1, Float64}
-# const MF2 = MatsubaraFunction{2, 0, 2, Float64}
-# const MF3 = MatsubaraFunction{3, 0, 3, Float64}
+# spin components
+abstract type SpinTag end
+struct pSp <: SpinTag end
+struct xSp <: SpinTag end
+
+# Mesh aliases
+const FMesh = Mesh{MeshPoint{MatsubaraFrequency{Fermion}}, MatsubaraDomain}
+const BMesh = Mesh{MeshPoint{MatsubaraFrequency{Boson}}, MatsubaraDomain}
+
+# MeshFunction aliases
+const MF_G{Q}  = MeshFunction{1, Q, Tuple{FMesh}, Array{Q, 1}}
+const MF_Π{Q}  = MeshFunction{2, Q, Tuple{BMesh, FMesh}, Array{Q, 2}}
+const MF_K1{Q} = MeshFunction{1, Q, Tuple{BMesh}, Array{Q, 1}}
+const MF_K2{Q} = MeshFunction{2, Q, Tuple{BMesh, FMesh}, Array{Q, 2}}
+const MF_K3{Q} = MeshFunction{3, Q, Tuple{BMesh, FMesh, FMesh}, Array{Q, 3}}
+
 
 # # MatsubaraSymmetry aliases
 # const MS2 = MatsubaraSymmetry{2, 0}
