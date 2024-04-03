@@ -14,5 +14,6 @@ module fdDGAsolver
     include("channel_frequency.jl")
     include("channel_spin.jl")
     include("vertex.jl")
+    include("reducible_vertex.jl")
 
 end

@@ -1,5 +1,6 @@
 using fdDGAsolver
 using MatsubaraFunctions
+using HDF5
 using Test
 
 @testset "Vertex" begin
@@ -47,4 +48,64 @@ using Test
     @test y_K2[v1, v3] == x_K2[v1, v3]
     @test y_K2p[v2, v3] == x_K2[v2, v3]
     @test y_K3[v1, v2, v3] == x_K3[v1, v2, v3]
+end
+
+
+# @testset "ReducibleVertex"
+begin
+    T = 0.5
+    numK1 = 10
+    numK2 = (5, 5)
+    numK3 = (3, 3)
+    γ = fdDGAsolver.ReducibleVertex(T, :a, numK1, numK2, numK3)
+    @test MatsubaraFunctions.temperature(γ) == T
+    @test fdDGAsolver.numK1(γ) == numK1
+    @test fdDGAsolver.numK2(γ) == numK2
+    @test fdDGAsolver.numK3(γ) == numK3
+    @test length(γ) == (2numK1 - 1) + 2numK2[1] * (2numK2[2] - 1) + (2numK3[1])^2 * (2numK3[2] - 1)
+    @test length(flatten(γ)) == length(γ)
+
+    # Test copy
+    γ.K1.data .= rand(size(γ.K1.data)...)
+    γ.K2.data .= rand(size(γ.K2.data)...)
+    γ.K3.data .= rand(size(γ.K3.data)...)
+    γ_copy = copy(γ)
+    @test γ == γ_copy
+
+    set!(γ_copy.K1, 0)
+    set!(γ_copy.K2, 0)
+    set!(γ_copy.K3, 0)
+    @test γ != γ_copy
+    @test MatsubaraFunctions.absmax(γ) > 0
+    @test MatsubaraFunctions.absmax(γ_copy) == 0
+
+    # Test flatten and unflatten
+    unflatten!(γ_copy, flatten(γ))
+    @test γ == γ_copy
+
+    # Test reduce!
+    fdDGAsolver.reduce!(γ)
+
+    # Test evaluation
+    vInf = MatsubaraFrequency(T, 10^10, Fermion)
+    v1 = value(meshes(γ.K3, 1)[3])
+    v2 = value(meshes(γ.K3, 2)[4])
+    w  = value(meshes(γ.K3, 3)[5])
+    @test γ(v1, v2, w) ≈ γ.K1[w] + γ.K2[v1, w] + γ.K2[v2, w] + γ.K3[v1, v2, w]
+    @test γ(vInf, vInf, w) ≈ γ.K1[w]
+    @test γ(v1, vInf, w) ≈ γ.K1[w] + γ.K2[v1, w]
+    @test γ(vInf, v2, w) ≈ γ.K1[w] + γ.K2[v2, w]
+
+    # Test IO
+    testfile = dirname(@__FILE__) * "/test.h5"
+    file = h5open(testfile, "w")
+    save!(file, "f", γ)
+    close(file)
+
+    file = h5open(testfile, "r")
+    γp = fdDGAsolver.load_reducible_vertex(file, "f")
+    @test γ == γp
+    close(file)
+
+    rm(testfile; force=true)
 end
