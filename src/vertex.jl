@@ -40,7 +40,7 @@ function Base.show(io::IO, v::AbstractVertex)
     print(io, "$(nameof(typeof(v))), channel_freq = $(v.channel_freq)\n")
     print(io, "meshes:")
     for (i, mesh) in enumerate(v.data.meshes)
-        print(io, "\n    $i. $(typeof(value(first(mesh.points)))), N = $(mesh.domain[:N])")
+        print(io, "\n    $i. $(typeof(value(first(mesh.points)))), N = $(domain(mesh).N)")
     end
 end
 
