@@ -19,8 +19,13 @@ function BSE_K1!(
             Fpl  = S.F(Ω, S.νInf, ω, aCh, pSp; γp = false, γt = false)
             F0pr = S.F0(Ω, ω, S.νInf, aCh, pSp; γp = false, γt = false)
 
-            # 1ℓ and central part
-            val += Fpl * ((Πslice[i] - Π0slice[i]) * F0pr + Πslice[i] * box_eval(S.FL.γa.K2, Ω, ω))
+            # 1ℓ part
+            val += Fpl * (Πslice[i] - Π0slice[i]) * F0pr
+
+            # central part
+            if is_inbounds(Ω, meshes(S.FL.γa.K2, 1)) && is_inbounds(ω, meshes(S.FL.γa.K2, 2))
+                val += Fpl * Πslice[i] * S.FL.γa.K2[Ω, ω]
+            end
         end
 
         return temperature(S) * val

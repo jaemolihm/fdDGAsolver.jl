@@ -20,15 +20,4 @@ const MF_K1{Q} = MeshFunction{1, Q, Tuple{BMesh}, Array{Q, 1}}
 const MF_K2{Q} = MeshFunction{2, Q, Tuple{BMesh, FMesh}, Array{Q, 2}}
 const MF_K3{Q} = MeshFunction{3, Q, Tuple{BMesh, FMesh, FMesh}, Array{Q, 3}}
 
-
-# # MatsubaraSymmetry aliases
-# const MS2 = MatsubaraSymmetry{2, 0}
-# const MS3 = MatsubaraSymmetry{3, 0}
-
-# # MatsubaraSymmetryGroup aliases
-# const MSG2 = MatsubaraSymmetryGroup{2, 0, 2, Float64}
-# const MSG3 = MatsubaraSymmetryGroup{3, 0, 3, Float64}
-
-# # MatsubaraInitFunction aliases
-# const MIF2 = MatsubaraInitFunction{2, 0, Float64}
-# const MIF3 = MatsubaraInitFunction{3, 0, Float64}
+struct InfiniteMatsubaraFrequency; end

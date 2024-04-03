@@ -30,7 +30,7 @@ function fixed_point!(
     F0t = copy(Γpx)
     F0a = copy(Γpx)
 
-    @time Threads.@threads for i in CartesianIndices(Γpx.data)
+    Threads.@threads for i in CartesianIndices(Γpx.data)
         Ω = value(meshes(Γpx, 1)[i.I[1]])
         ν = value(meshes(Γpx, 2)[i.I[2]])
         νp = value(meshes(Γpx, 3)[i.I[3]])
@@ -53,7 +53,7 @@ function fixed_point!(
     Ft = deepcopy(Γpp)
     Fa = deepcopy(Γpp)
 
-    @time Threads.@threads for i in CartesianIndices(Γpp.data)
+    Threads.@threads for i in CartesianIndices(Γpp.data)
         Ω = value(meshes(Γpp, 1)[i.I[1]])
         ν = value(meshes(Γpp, 2)[i.I[2]])
         νp = value(meshes(Γpp, 3)[i.I[3]])
@@ -77,29 +77,29 @@ function fixed_point!(
     end
 
     # calculate Fbuff
-    println("BSE_K1")
-    @time BSE_K1!(S, pCh)
-    @time BSE_K1!(S, tCh)
-    @time BSE_K1!(S, aCh)
+    # println("BSE_K1")
+    BSE_K1!(S, pCh)
+    BSE_K1!(S, tCh)
+    BSE_K1!(S, aCh)
 
-    println("BSE_K2")
-    @time BSE_K2!(S, pCh)
-    @time BSE_K2!(S, tCh)
-    @time BSE_K2!(S, aCh)
+    # println("BSE_K2")
+    BSE_K2!(S, pCh)
+    BSE_K2!(S, tCh)
+    BSE_K2!(S, aCh)
 
-    println("BSE_K3")
-    @time BSE_K3!(S, Γpx, Fp, F0p, pCh)
-    @time BSE_K3!(S, Γt, Γa, Ft, Fa, F0t, F0a, tCh)
-    @time BSE_K3!(S, Γa, Fa, F0a, aCh)
+    # println("BSE_K3")
+    BSE_K3!(S, Γpx, Fp, F0p, pCh)
+    BSE_K3!(S, Γt, Γa, Ft, Fa, F0t, F0a, tCh)
+    BSE_K3!(S, Γa, Fa, F0a, aCh)
 
     # update F
     set!(S.F, S.Fbuff)
-    @time reduce!(S.F)
+    reduce!(S.F)
 
     # update Σ
     # SDE!(S)
-    @time SDE_channel!(S)
-    @time Σ_U² = SDE_U2(S)
+    SDE_channel!(S)
+    Σ_U² = SDE_U2(S)
     add!(S.Σ, Σ_U²)
 
     # calculate residue
@@ -143,10 +143,6 @@ function MatsubaraFunctions.save!(
     label::String,
     S::ParquetSolver
 )::Nothing
-
-    attributes(f)["V"] = S.V
-    attributes(f)["D"] = S.D
-    attributes(f)["νInf"] = index(S.νInf)
 
     MatsubaraFunctions.save!(f, "G0", S.G0)
     MatsubaraFunctions.save!(f, "Σ0", S.Σ0)

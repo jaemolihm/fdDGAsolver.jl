@@ -43,7 +43,7 @@ mutable struct ParquetSolver{Q}
     SGphL::Vector{SymmetryGroup}
 
     # auxiliary frequency for asymptotic limits
-    νInf::MatsubaraFrequency
+    νInf::InfiniteMatsubaraFrequency
 
     # Parallelization mode
     mode::Symbol
@@ -98,7 +98,7 @@ mutable struct ParquetSolver{Q}
         SGphL = SymmetryGroup[SymmetryGroup(F.γp.K1), SymmetryGroup(F.γp.K2), SymmetryGroup(F.γp.K3)]
 
         # asymptotic limit
-        νInf = MatsubaraFrequency(T, 10^10, Fermion)
+        νInf = InfiniteMatsubaraFrequency()
 
         return new{Q}(G0, Π0pp, Π0ph, Σ0, F0, G, Πpp, Πph, Σ, F, Fbuff, copy(Fbuff), SGΣ, SGpp, SGph, SGppL, SGphL, νInf, mode)::ParquetSolver{Q}
     end

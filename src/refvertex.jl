@@ -135,6 +135,37 @@ end
     return -F.Ft_p(Ω, νp, ν) - F.U
 end
 
+@inline function (F :: RefVertex{Q})(
+    Ω  :: MatsubaraFrequency,
+    ν  :: InfiniteMatsubaraFrequency,
+    νp :: MatsubaraFrequency,
+       :: Type{Ch},
+       :: Type{Sp},
+    ; kwargs...
+    )  :: Q where {Q, Ch <: ChannelTag, Sp <: SpinTag}
+
+    return bare_vertex(F, Ch, Sp)
+end
+
+@inline function (F :: RefVertex{Q})(
+    Ω  :: MatsubaraFrequency,
+    ν  :: MatsubaraFrequency,
+    νp :: InfiniteMatsubaraFrequency,
+       :: Type{Ch},
+       :: Type{Sp},
+    ; kwargs...
+    )  :: Q where {Q, Ch <: ChannelTag, Sp <: SpinTag}
+
+    return bare_vertex(F, Ch, Sp)
+end
+
+@inline bare_vertex(F :: RefVertex, :: Type{pCh}, :: Type{pSp}) =  F.U
+@inline bare_vertex(F :: RefVertex, :: Type{tCh}, :: Type{pSp}) =  F.U
+@inline bare_vertex(F :: RefVertex, :: Type{aCh}, :: Type{pSp}) =  F.U
+@inline bare_vertex(F :: RefVertex, :: Type{pCh}, :: Type{xSp}) = -F.U
+@inline bare_vertex(F :: RefVertex, :: Type{tCh}, :: Type{xSp}) = -F.U
+@inline bare_vertex(F :: RefVertex, :: Type{aCh}, :: Type{xSp}) = -F.U
+
 # save to HDF5
 function MatsubaraFunctions.save!(
     file  :: HDF5.File,

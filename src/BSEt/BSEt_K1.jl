@@ -22,10 +22,12 @@ function BSE_K1!(
             F0xr = S.F0(Ω, ω, S.νInf, tCh, xSp; γp = false, γa = false)
 
             # 1ℓ part
-            val -= (Πslice[i] - Π0slice[i]) * ((2.0 * Fpl + Fxl) * F0pr + Fpl * F0xr)
+            val -= (Πslice[i] - Π0slice[i]) * ((2 * Fpl + Fxl) * F0pr + Fpl * F0xr)
 
             # central part
-            val -= Πslice[i] * ((2.0 * Fpl + Fxl) * box_eval(S.FL.γt.K2, Ω, ω) - Fpl * box_eval(S.FL.γa.K2, Ω, ω))
+            if is_inbounds(Ω, meshes(S.FL.γt.K2, 1)) && is_inbounds(ω, meshes(S.FL.γt.K2, 2))
+                val -= Πslice[i] * ((2 * Fpl + Fxl) * S.FL.γt.K2[Ω, ω] - Fpl * S.FL.γa.K2[Ω, ω])
+            end
         end
 
         return temperature(S) * val

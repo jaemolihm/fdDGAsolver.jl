@@ -55,10 +55,12 @@ function BSE_K3!(
             ω = value(meshes(Γ, 3)[i])
 
             # central part
-            if is_inbounds(ω, meshes(S.FL.γa.K3, 2))
+            if is_inbounds(ω, meshes(S.FL.γa.K3, 2)) && is_inbounds(νp, meshes(S.FL.γa.K3, 3))
                 val += Fslice[i] * Πslice[i] * S.FL.γa.K3[Ω, ω, νp]
-            else
-                val += Fslice[i] * Πslice[i] * box_eval(S.FL.γa.K2, Ω, ω)
+            elseif is_inbounds(ω, meshes(S.FL.γa.K2, 2))
+                val += Fslice[i] * Πslice[i] * S.FL.γa.K2[Ω, ω]
+            # else
+            #     val += Fslice[i] * Πslice[i] * box_eval(S.FL.γa.K2, Ω, ω)
             end
         end
 

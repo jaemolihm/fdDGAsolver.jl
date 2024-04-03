@@ -141,9 +141,16 @@ function SDE_channel!(
         ν   = wtpl[1]
         val = zero(Q)
 
-        for Ω in value.(meshes(Lpp, 1))
-            val += S.G(Ω - ν) * box_eval(Lpp, Ω, ν)
-            val += S.G(Ω + ν) * box_eval(Lph, Ω, ν)
+        if is_inbounds(ν, meshes(Lpp, 2))
+            Lppslice = view(Lpp, :, ν)
+            Lphslice = view(Lph, :, ν)
+
+            for i in eachindex(Lppslice)
+                Ω = value(meshes(Lpp, 1)[i])
+
+                val += S.G(Ω - ν) * Lppslice[i]
+                val += S.G(Ω + ν) * Lphslice[i]
+            end
         end
 
         return temperature(S) * val

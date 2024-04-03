@@ -167,8 +167,8 @@ end
 # evaluators for parallel spin component
 @inline function (F :: Vertex{Q})(
     Ω  :: MatsubaraFrequency,
-    ν  :: MatsubaraFrequency,
-    νp :: MatsubaraFrequency,
+    ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
        :: Type{pCh},
        :: Type{pSp}
     ;
@@ -201,8 +201,8 @@ end
 
 @inline function (F :: Vertex{Q})(
     Ω  :: MatsubaraFrequency,
-    ν  :: MatsubaraFrequency,
-    νp :: MatsubaraFrequency,
+    ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
        :: Type{tCh},
        :: Type{pSp}
     ;
@@ -235,8 +235,8 @@ end
 
 @inline function (F :: Vertex{Q})(
     Ω  :: MatsubaraFrequency,
-    ν  :: MatsubaraFrequency,
-    νp :: MatsubaraFrequency,
+    ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
        :: Type{aCh},
        :: Type{pSp}
     ;
@@ -270,8 +270,8 @@ end
 # evaluators for crossed spin component
 @inline function (F :: Vertex{Q})(
     Ω  :: MatsubaraFrequency,
-    ν  :: MatsubaraFrequency,
-    νp :: MatsubaraFrequency,
+    ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
        :: Type{pCh},
        :: Type{xSp}
     ;
@@ -286,8 +286,8 @@ end
 
 @inline function (F :: Vertex{Q})(
     Ω  :: MatsubaraFrequency,
-    ν  :: MatsubaraFrequency,
-    νp :: MatsubaraFrequency,
+    ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
        :: Type{tCh},
        :: Type{xSp}
     ;
@@ -302,8 +302,8 @@ end
 
 @inline function (F :: Vertex{Q})(
     Ω  :: MatsubaraFrequency,
-    ν  :: MatsubaraFrequency,
-    νp :: MatsubaraFrequency,
+    ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
        :: Type{aCh},
        :: Type{xSp}
     ;
@@ -315,6 +315,9 @@ end
 
     return -F(Ω, νp, ν, tCh, pSp; F0 = F0, γp = γp, γt = γa, γa = γt)
 end
+
+@inline bare_vertex(F :: Vertex, :: Type{Ch}, :: Type{Sp}) where {Ch <: ChannelTag, Sp <: SpinTag} = bare_vertex(F.F0, Ch, Sp)
+@inline bare_vertex(F :: Vertex, :: Type{Ch}, :: Type{Sp}) where {Ch <: ChannelTag, Sp <: SpinTag} = bare_vertex(F.F0, Ch, Sp)
 
 # # build full vertex in given frequency convention and spin component
 # function mk_vertex(

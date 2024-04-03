@@ -33,7 +33,7 @@ struct Channel{Q <: Number}
         K2   = MeshFunction(mK2Ω, mK2ν; data_t = Q)
         set!(K2, 0)
 
-        @assert numK2 > numK3 "Number of frequencies in K2 must be larger than in K3"
+        @assert all(numK2 .>= numK3) "Number of frequencies in K2 must be larger than in K3"
         mK3Ω = MatsubaraMesh(T, numK3[1], Boson)
         mK3ν = MatsubaraMesh(T, numK3[2], Fermion)
         K3   = MeshFunction(mK3Ω, mK3ν, mK3ν; data_t = Q)
@@ -237,6 +237,66 @@ end
                 val += γ.K2[Ω, νp]
             end
         end
+    end
+
+    return val
+end
+
+
+@inline function (γ :: Channel{Q})(
+    Ω  :: MatsubaraFrequency,
+    ν  :: InfiniteMatsubaraFrequency,
+    νp :: MatsubaraFrequency
+    )  :: Q where {Q}
+
+    # Implement special case ν = ∞
+
+    val = zero(Q)
+
+    if is_inbounds(Ω, meshes(γ.K1, 1))
+        val += γ.K1[Ω]
+
+        if is_inbounds(Ω, meshes(γ.K2, 1)) && is_inbounds(νp, meshes(γ.K2, 2))
+            val += γ.K2[Ω, νp]
+        end
+    end
+
+    return val
+end
+
+@inline function (γ :: Channel{Q})(
+    Ω  :: MatsubaraFrequency,
+    ν  :: MatsubaraFrequency,
+    νp :: InfiniteMatsubaraFrequency
+    )  :: Q where {Q}
+
+    # Implement special case νp = ∞
+
+    val = zero(Q)
+
+    if is_inbounds(Ω, meshes(γ.K1, 1))
+        val += γ.K1[Ω]
+
+        if is_inbounds(Ω, meshes(γ.K2, 1)) && is_inbounds(ν, meshes(γ.K2, 2))
+            val += γ.K2[Ω, ν]
+        end
+    end
+
+    return val
+end
+
+@inline function (γ :: Channel{Q})(
+    Ω  :: MatsubaraFrequency,
+    ν  :: InfiniteMatsubaraFrequency,
+    νp :: InfiniteMatsubaraFrequency
+    )  :: Q where {Q}
+
+    # Implement special case ν = ∞ and νp = ∞
+
+    val = zero(Q)
+
+    if is_inbounds(Ω, meshes(γ.K1, 1))
+        val += γ.K1[Ω]
     end
 
     return val
