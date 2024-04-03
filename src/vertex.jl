@@ -183,7 +183,7 @@ end
     val = zero(Q)
 
     if F0
-        val += F.F0(Ω, ν, νp, pCh, pSp)
+        val += F.F0(Ω, ν, νp, pCh, pSp; F0, γp, γt, γa)
     end
 
     if γp
@@ -217,7 +217,7 @@ end
     val = zero(Q)
 
     if F0
-        val += F.F0(Ω, ν, νp, tCh, pSp)
+        val += F.F0(Ω, ν, νp, tCh, pSp; F0, γp, γt, γa)
     end
 
     if γp
@@ -251,7 +251,7 @@ end
     val = zero(Q)
 
     if F0
-        val += F.F0(Ω, ν, νp, aCh, pSp)
+        val += F.F0(Ω, ν, νp, aCh, pSp; F0, γp, γt, γa)
     end
 
     if γp
@@ -318,7 +318,7 @@ end
     return -F(Ω, νp, ν, tCh, pSp; F0 = F0, γp = γp, γt = γa, γa = γt)
 end
 
-@inline bare_vertex(F :: Vertex, :: Type{Ch}, :: Type{Sp}) where {Ch <: ChannelTag, Sp <: SpinTag} = bare_vertex(F.F0, Ch, Sp)
+@inline bare_vertex(F :: Vertex) =  bare_vertex(F.F0)
 @inline bare_vertex(F :: Vertex, :: Type{Ch}, :: Type{Sp}) where {Ch <: ChannelTag, Sp <: SpinTag} = bare_vertex(F.F0, Ch, Sp)
 
 # # build full vertex in given frequency convention and spin component

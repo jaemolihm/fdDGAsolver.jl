@@ -5,10 +5,10 @@ function fixed_point!(
     x::Vector{Q},
     S::ParquetSolver
     ;
-    strat::Symbol=:fdPA
+    strategy :: Symbol = :fdPA
 )::Nothing where {Q}
 
-    @assert strat in (:fdPA, :scPA) "Calculation strategy unknown"
+    @assert strategy in (:fdPA, :scPA) "Calculation strategy unknown"
 
     # update solver from input vector
     unflatten!(S, x)
@@ -65,7 +65,7 @@ function fixed_point!(
         Fa[i] = S.F(Ω, ν, νp, aCh, pSp)
     end
 
-    if strat == :fdPA
+    if strategy == :fdPA
         # calculate FL
         BSE_L_K2!(S, pCh)
         BSE_L_K2!(S, tCh)
@@ -97,7 +97,25 @@ function fixed_point!(
     reduce!(S.F)
 
     # update Σ
-    SDE!(S)
+    if strategy === :scPA
+        SDE!(S)
+    elseif strategy === :fdPA
+        # Σ = SDE(ΔΓ, Π, G)
+        SDE!(S; include_U² = false, include_Hartree = false)
+        #   + SDE(Γ₀, Π, G)
+        add!(S.Σ, SDE!(copy(S.Σ), S.G, S.Πpp, S.Πph, S.F0, S.SGΣ, S.SGpp[2], S.SGph[2]; S.mode))
+        #   - SDE(Γ₀, Π₀, G₀)
+        add!(S.Σ, SDE!(copy(S.Σ), S.G0, S.Π0pp, S.Π0ph, S.F0, S.SGΣ, S.SGpp[2], S.SGph[2]; S.mode) * -1)
+        #   + Σ₀
+        add!(S.Σ, S.Σ0)
+
+        # # Using K12
+        # SDE_using_K12!(S)
+        # add!(S.Σ, SDE_using_K12!(copy(S.Σ), S.G - S.G0, S.F0, S.SGΣ; S.mode, include_Hartree = false))
+        # add!(S.Σ, SDE_using_K12!(copy(S.Σ), S.G0, S.F0, S.SGΣ; S.mode, include_Hartree = false))
+    end
+
+    self_energy_sanity_check(S.Σ)
 
     # calculate residue
     flatten!(S, R)
@@ -111,7 +129,7 @@ function solve!(
     S::ParquetSolver
     ;
     parallel_mode :: Symbol = :serial,
-    strat::Symbol=:fdPA,
+    strategy::Symbol = :fdPA,
     maxiter::Int64=100,
     tol::Float64=1e-4,
     δ::Float64=0.85,
@@ -125,7 +143,7 @@ function solve!(
     S.mode = parallel_mode
 
     ti = time()
-    res = nlsolve((R, x) -> fixed_point!(R, x, S; strat), flatten(S),
+    res = nlsolve((R, x) -> fixed_point!(R, x, S; strategy), flatten(S),
         method=:anderson,
         iterations=maxiter,
         ftol=tol,

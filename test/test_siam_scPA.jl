@@ -24,7 +24,7 @@ using Test
         S = parquet_solver_siam_parquet_approximation(nG, nΣ, nK1, nK2, nK3, Q; e, T, D, Δ, U)
         fdDGAsolver.init_sym_grp!(S)
 
-        res = fdDGAsolver.solve!(S; strat = :scPA, verbose = false, parallel_mode = mode);
+        res = fdDGAsolver.solve!(S; strategy = :scPA, verbose = false, parallel_mode = mode);
 
         @test S.Σ.(π * T .* [-3, -1, 1, 3]) ≈ [-0.05172702999366102, -0.03827565862415375, 0.03827565862415375, 0.05172702999366102]
         @test S.F.γa.K1.(2π * T .* -2:2) ≈ [0.1410031933986213, 0.5564948604568605, 0.24418625119203477, 0.09866033387273063]
@@ -57,7 +57,7 @@ end
     S = parquet_solver_siam_parquet_approximation(nG, nΣ, nK1, nK2, nK3; e, T, D, Δ, U)
     fdDGAsolver.init_sym_grp!(S)
 
-    res = fdDGAsolver.solve!(S; strat = :scPA, verbose = false, parallel_mode = :threads);
+    res = fdDGAsolver.solve!(S; strategy = :scPA, verbose = false, parallel_mode = :threads);
 
     @test S.Σ.(π * T .* [-3, -1, 1, 3]) ≈ [-0.03824070097780221 - 0.1680223364784656im, -0.025009124539466316 - 0.1737636175072827im, 0.025009124539466316 - 0.1737636175072827im, 0.03824070097780221 - 0.1680223364784656im]
     @test S.F.γa.K1.(2π * T .* -2:2) ≈ [0.12769493880529753 + 4.6654794404848284e-5im, 0.42934963842995794 + 2.086772186614021e-5im, 0.2134122166709921 - 5.027788348710732e-5im, 0.09031817322744154 - 2.336206882038395e-5im]

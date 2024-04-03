@@ -159,6 +159,7 @@ end
     return bare_vertex(F, Ch, Sp)
 end
 
+@inline bare_vertex(F :: RefVertex) =  F.U
 @inline bare_vertex(F :: RefVertex, :: Type{pCh}, :: Type{pSp}) =  F.U
 @inline bare_vertex(F :: RefVertex, :: Type{tCh}, :: Type{pSp}) =  F.U
 @inline bare_vertex(F :: RefVertex, :: Type{aCh}, :: Type{pSp}) =  F.U

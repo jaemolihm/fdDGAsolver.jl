@@ -25,58 +25,74 @@ function bubbles!(
     return nothing
 end
 
+function SDE_channel_L_pp(S :: ParquetSolver{Q}) :: MF_K2{Q} where {Q}
+    SDE_channel_L_pp(S.Πpp, S.F, S.SGpp[2]; S.mode)
+end
+
+function SDE_channel_L_ph(S :: ParquetSolver{Q}) :: MF_K2{Q} where {Q}
+    SDE_channel_L_ph(S.Πph, S.F, S.SGph[2]; S.mode)
+end
+
 function SDE_channel_L_pp(
-    S :: ParquetSolver{Q},
-    ) :: MF_K2{Q} where {Q}
+    Πpp   :: MF_K2{Q},
+    F     :: Vertex{Q},
+    SGpp2 :: SymmetryGroup
+    ;
+    mode  :: Symbol,
+    )     :: MF_K2{Q} where {Q}
 
     # model the diagram
     @inline function diagram(wtpl)
 
         Ω, ν    = wtpl
         val     = zero(Q)
-        Πslice  = view(S.Πpp, Ω, :)
+        Πslice  = view(Πpp, Ω, :)
 
         for i in eachindex(Πslice)
-            ω = value(meshes(S.Π0pp, 2)[i])
+            ω = value(meshes(Πpp, 2)[i])
 
-            val += S.F.F0.U * Πslice[i] * S.F.γp(Ω, Ω - ω, ν)
+            val += bare_vertex(F) * Πslice[i] * F.γp(Ω, Ω - ω, ν)
         end
 
-        return temperature(S) * val
+        return temperature(F) * val
     end
 
     # compute Lpp
-    Lpp = copy(S.F.γp.K2)
+    Lpp = copy(F.γp.K2)
 
-    S.SGpp[2](Lpp, InitFunction{2, Q}(diagram); mode = S.mode)
+    SGpp2(Lpp, InitFunction{2, Q}(diagram); mode = mode)
 
     return Lpp
 end
 
 function SDE_channel_L_ph(
-    S :: ParquetSolver{Q},
-    ) :: MF_K2{Q} where {Q}
+    Πph   :: MF_K2{Q},
+    F     :: Vertex{Q},
+    SGph2 :: SymmetryGroup
+    ;
+    mode  :: Symbol,
+    )     :: MF_K2{Q} where {Q}
 
     # model the diagram
     @inline function diagram(wtpl)
 
         Ω, ν    = wtpl
         val     = zero(Q)
-        Πslice  = view(S.Πph, Ω, :)
+        Πslice  = view(Πph, Ω, :)
 
         for i in eachindex(Πslice)
-            ω = value(meshes(S.Π0pp, 2)[i])
+            ω = value(meshes(Πph, 2)[i])
 
-            val += S.F.F0.U * Πslice[i] * (S.F.γt(Ω, ν, ω) + S.F.γa(Ω, ν, ω))
+            val += bare_vertex(F) * Πslice[i] * (F.γt(Ω, ν, ω) + F.γa(Ω, ν, ω))
         end
 
-        return temperature(S) * val
+        return temperature(F) * val
     end
 
     # compute Lph
-    Lph = copy(S.F.γt.K2)
+    Lph = copy(F.γt.K2)
 
-    S.SGph[2](Lph, InitFunction{2, Q}(diagram); mode = S.mode)
+    SGph2(Lph, InitFunction{2, Q}(diagram); mode)
 
     return Lph
 end
@@ -87,11 +103,28 @@ function SDE!(
     ;
     include_U² = true,
     include_Hartree = true,
-    ) :: Nothing where {Q}
+    ) :: MF_G{Q} where {Q}
+    SDE!(S.Σ, S.G, S.Πpp, S.Πph, S.F, S.SGΣ, S.SGpp[2], S.SGph[2]; S.mode, include_U², include_Hartree)
+end
+
+function SDE!(
+    Σ     :: MF_G{Q},
+    G     :: MF_G{Q},
+    Πpp   :: MF_K2{Q},
+    Πph   :: MF_K2{Q},
+    F     :: Vertex{Q},
+    SGΣ   :: SymmetryGroup,
+    SGpp2 :: SymmetryGroup,
+    SGph2 :: SymmetryGroup,
+    ;
+    mode  :: Symbol,
+    include_U² = true,
+    include_Hartree = true,
+    )     :: MF_G{Q} where {Q}
     # γa, γp, γt contribution to the self-energy in the asymptotic decomposition
 
-    Lpp = SDE_channel_L_pp(S)
-    Lph = SDE_channel_L_ph(S)
+    Lpp = SDE_channel_L_pp(Πpp, F, SGpp2; mode)
+    Lph = SDE_channel_L_ph(Πph, F, SGph2; mode)
 
     # model the diagram
     @inline function diagram(wtpl)
@@ -106,37 +139,51 @@ function SDE!(
             for i in eachindex(Lppslice)
                 Ω = value(meshes(Lpp, 1)[i])
 
-                val += S.G(Ω - ν) * Lppslice[i]
-                val += S.G(Ω + ν) * Lphslice[i]
+                val += G(Ω - ν) * Lppslice[i]
+                val += G(Ω + ν) * Lphslice[i]
             end
         end
 
-        return temperature(S) * val
+        return temperature(F) * val
     end
 
     # compute Σ
-    S.SGΣ(S.Σ, InitFunction{1, Q}(diagram); mode = S.mode)
+    SGΣ(Σ, InitFunction{1, Q}(diagram); mode)
 
     if include_U²
-        Σ_U² = SDE_U2(S)
-        add!(S.Σ, Σ_U²)
+        Σ_U² = SDE_U2(Σ, G, Πpp, Πph, SGΣ, bare_vertex(F); mode)
+        add!(Σ, Σ_U²)
     end
 
     if include_Hartree
-        n = compute_occupation(S.G)
+        n = compute_occupation(G)
         # We store im * Σ in S.Σ, so we multiply im.
-        S.Σ.data .+= Q((n - 1/2) * S.F.F0.U * im)
+        Σ.data .+= Q((n - 1/2) * bare_vertex(F) * im)
     end
 
-    return nothing
+    return Σ
 end
 
 function SDE_U2(
     S :: ParquetSolver{Q},
     ) :: MF_G{Q} where {Q}
+    SDE_U2(S.Σ, S.G, S.Πpp, S.Πph, S.SGΣ, bare_vertex(S.F); S.mode)
+end
+
+function SDE_U2(
+    Σ   :: MF_G{Q},
+    G   :: MF_G{Q},
+    Πpp :: MF_K2{Q},
+    Πph :: MF_K2{Q},
+    SGΣ :: SymmetryGroup,
+    U   :: Number,
+    ;
+    mode  :: Symbol,
+    )   :: MF_G{Q} where {Q}
     # 2nd-order perturbative contribution to the self-energy
 
-    Σ_U² = copy(S.Σ)
+    T = temperature(meshes(Σ, 1))
+    Σ_U² = copy(Σ)
     set!(Σ_U², 0)
 
     # model the diagram
@@ -145,27 +192,35 @@ function SDE_U2(
         ν   = wtpl[1]
         val = zero(Q)
 
-        for Ω in value.(meshes(S.Πph, 1))
-            Πppsum = sum(view(S.Πpp, Ω, :)) * temperature(S)
-            Πphsum = sum(view(S.Πph, Ω, :)) * temperature(S)
+        for Ω in value.(meshes(Πph, 1))
+            Πppsum = sum(view(Πpp, Ω, :)) * T
+            Πphsum = sum(view(Πph, Ω, :)) * T
 
-            val += S.G(Ω - ν) * Πppsum + S.G(Ω + ν) * Πphsum
+            val += G(Ω - ν) * Πppsum + G(Ω + ν) * Πphsum
         end
 
-        return temperature(S) * val * (S.F.F0.U)^2 / 2
+        return val * U^2 * T / 2
     end
 
     # compute Σ
-    S.SGΣ(Σ_U², InitFunction{1, Q}(diagram); mode = S.mode)
+    SGΣ(Σ_U², InitFunction{1, Q}(diagram); mode)
 
     return Σ_U²
 end
 
+function SDE_using_K12!(S :: ParquetSolver{Q}; include_Hartree = true,) :: MF_G{Q} where {Q}
+    SDE_using_K12!(S.Σ, S.G, S.F, S.SGΣ; S.mode, include_Hartree)
+end
+
 function SDE_using_K12!(
-    S :: ParquetSolver{Q}
+    Σ :: MF_G{Q},
+    G :: MF_G{Q},
+    F :: Vertex{Q},
+    SGΣ :: SymmetryGroup,
     ;
+    mode :: Symbol,
     include_Hartree = true,
-    ) :: Nothing where {Q}
+    ) :: MF_G{Q} where {Q}
 
     # model the diagram
     @inline function diagram(wtpl)
@@ -173,30 +228,24 @@ function SDE_using_K12!(
         ν   = wtpl[1]
         val = zero(Q)
 
-        for ω in value.(meshes(S.G, 1))
+        for ω in value.(meshes(G, 1))
             # SDE using only K1 + K2 in p channel
-            val += S.G[ω] * (box_eval(S.F.γp.K1, ν + ω) + box_eval(S.F.γp.K2, ν + ω, ν))
-            if S.F0 isa Vertex
-                val += S.G[ω] * (box_eval(S.F0.γp.K1, ν + ω) + box_eval(S.F0.γp.K2, ν + ω, ν))
-            end
+            val += G[ω] * (box_eval(F.γp.K1, ν + ω) + box_eval(F.γp.K2, ν + ω, ν))
         end
 
-        return temperature(S) * val
+        return temperature(F) * val
     end
 
     # compute Σ
-    S.SGΣ(S.Σ, InitFunction{1, Q}(diagram); mode = S.mode)
+    SGΣ(Σ, InitFunction{1, Q}(diagram); mode)
 
     if include_Hartree
-        n = compute_occupation(S.G)
+        n = compute_occupation(G)
         # We store im * Σ in S.Σ, so we multiply im.
-        S.Σ.data .+= Q((n - 1/2) * S.F.F0.U * im)
+        Σ.data .+= Q((n - 1/2) * bare_vertex(F) * im)
     end
 
-    # sanity check
-    self_energy_sanity_check(S.Σ)
-
-    return nothing
+    return Σ
 end
 
 function self_energy_sanity_check(Σ)

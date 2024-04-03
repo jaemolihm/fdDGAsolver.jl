@@ -1,4 +1,4 @@
-mutable struct ParquetSolver{Q}
+mutable struct ParquetSolver{Q, RefVT}
     # Bare Green function
     Gbare :: MF_G{Q}
 
@@ -11,7 +11,7 @@ mutable struct ParquetSolver{Q}
     Σ0::MF_G{Q}
 
     # two-particle vertex for reference system
-    F0::RefVertex{Q}
+    F0::RefVT
 
     # single-particle Green's function and bubbles for target system
     G::MF_G{Q}
@@ -22,7 +22,7 @@ mutable struct ParquetSolver{Q}
     Σ::MF_G{Q}
 
     # channel-decomposed two-particle vertex for target system
-    F::Vertex{Q, RefVertex{Q}}
+    F::Vertex{Q, RefVT}
 
     # channel-decomposed two-particle vertex buffer
     Fbuff::Vertex{Q, RefVertex{Q}}
@@ -61,10 +61,10 @@ mutable struct ParquetSolver{Q}
         Gbare::MF_G{Q},
         G0::MF_G{Q},
         Σ0::MF_G{Q},
-        F0::RefVertex{Q}
+        F0::RefVT,
         ;
         mode::Symbol = :serial,
-    ) where {Q}
+    ) where {Q, RefVT}
 
         T = MatsubaraFunctions.temperature(meshes(G0, 1))
 
@@ -103,14 +103,14 @@ mutable struct ParquetSolver{Q}
         # asymptotic limit
         νInf = InfiniteMatsubaraFrequency()
 
-        return new{Q}(Gbare, G0, Π0pp, Π0ph, Σ0, F0, G, Πpp, Πph, Σ, F, Fbuff, copy(Fbuff), SGΣ, SGpp, SGph, SGppL, SGphL, νInf, mode)::ParquetSolver{Q}
+        return new{Q, RefVT}(Gbare, G0, Π0pp, Π0ph, Σ0, F0, G, Πpp, Πph, Σ, F, Fbuff, copy(Fbuff), SGΣ, SGpp, SGph, SGppL, SGphL, νInf, mode)::ParquetSolver{Q}
     end
 end
 
 Base.eltype(::Type{<:ParquetSolver{Q}}) where {Q} = Q
 
 function Base.show(io::IO, S::ParquetSolver{Q}) where {Q}
-    print(io, "$(nameof(typeof(S))){$Q}, U = $(S.F0.U), T = $(temperature(S))\n")
+    print(io, "$(nameof(typeof(S))){$Q}, U = $(real(bare_vertex(S.F0, aCh, pSp))), T = $(temperature(S))\n")
     print(io, "F0 K3 : $(numK3(S.F0))\n")
     print(io, "F  K1 : $(numK1(S.F))\n")
     print(io, "F  K2 : $(numK2(S.F))\n")

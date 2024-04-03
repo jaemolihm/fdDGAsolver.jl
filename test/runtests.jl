@@ -7,5 +7,8 @@ using Test
 MPI.Init()
 MatsubaraFunctions.DEBUG() = true # enable all checks for testing
 
-include("test_channel.jl")
-include("test_parquet_siam.jl")
+@testset "fdDGAsolver" begin
+    include("test_channel.jl")
+    include("test_siam_scPA.jl")
+    include("test_siam_fdPA.jl")
+end
