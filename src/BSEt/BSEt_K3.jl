@@ -20,7 +20,7 @@ function BSE_L_K3!(
 
         # additional minus sign for xSp terms because we use crossing symmetry here
         for i in 1 : length(meshes(Γt, 3))
-            val -= Π0slice[i] * ((2.0 * Γtslice[i] - Γaslice[i]) * F0tslice[i] - Γtslice[i] * F0aslice[i])
+            val -= Π0slice[i] * ((2 * Γtslice[i] - Γaslice[i]) * F0tslice[i] - Γtslice[i] * F0aslice[i])
         end
 
         return temperature(S) * val
@@ -73,10 +73,8 @@ function BSE_K3!(
             # central part
             if is_inbounds(ω, meshes(S.FL.γt.K3, 2)) && is_inbounds(νp, meshes(S.FL.γt.K3, 3))
                 val -= Πslice[i] * ((2 * Fpl + Fxl) * S.FL.γt.K3[Ω, ω, νp] - Fpl * S.FL.γa.K3[Ω, ω, νp])
-            elseif is_inbounds(ω, meshes(S.FL.γt.K2, 2))
-                val -= Πslice[i] * ((2 * Fpl + Fxl) * S.FL.γt.K2[Ω, ω] - Fpl * S.FL.γa.K2[Ω, ω])
-            # else
-            #     val -= Πslice[i] * ((2 * Fpl + Fxl) * box_eval(S.FL.γt.K2, Ω, ω) - Fpl * box_eval(S.FL.γa.K2, Ω, ω))
+            else
+                val -= Πslice[i] * ((2 * Fpl + Fxl) * box_eval(S.FL.γt.K2, Ω, ω) - Fpl * box_eval(S.FL.γa.K2, Ω, ω))
             end
         end
 

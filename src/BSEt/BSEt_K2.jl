@@ -19,7 +19,7 @@ function BSE_L_K2!(
             F0p = S.F0(Ω, ω, νInf, tCh, pSp; γp = false, γa = false)
             F0x = S.F0(Ω, ω, νInf, tCh, xSp; γp = false, γa = false)
 
-            val -= Π0slice[i] * ((2.0 * Γp + Γx) * F0p + Γp * F0x)
+            val -= Π0slice[i] * ((2 * Γp + Γx) * F0p + Γp * F0x)
         end
 
         return temperature(S) * val
@@ -58,9 +58,7 @@ function BSE_K2!(
             val -= (Πslice[i] - Π0slice[i]) * ((2 * Fpl + Fxl) * F0pr + Fpl * F0xr)
 
             # central part
-            if is_inbounds(ω, meshes(S.FL.γt.K2, 2))
-                val -= Πslice[i] * ((2 * Fpl + Fxl) * S.FL.γt.K2[Ω, ω] - Fpl * S.FL.γa.K2[Ω, ω])
-            end
+            val -= Πslice[i] * ((2 * Fpl + Fxl) * box_eval(S.FL.γt.K2, Ω, ω) - Fpl * box_eval(S.FL.γa.K2, Ω, ω))
         end
 
         return S.FL.γt.K2[Ω, ν] + temperature(S) * val

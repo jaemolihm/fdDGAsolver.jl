@@ -25,9 +25,7 @@ function BSE_K1!(
             val -= (Πslice[i] - Π0slice[i]) * ((2 * Fpl + Fxl) * F0pr + Fpl * F0xr)
 
             # central part
-            if is_inbounds(Ω, meshes(S.FL.γt.K2, 1)) && is_inbounds(ω, meshes(S.FL.γt.K2, 2))
-                val -= Πslice[i] * ((2 * Fpl + Fxl) * S.FL.γt.K2[Ω, ω] - Fpl * S.FL.γa.K2[Ω, ω])
-            end
+            val -= Πslice[i] * ((2 * Fpl + Fxl) * box_eval(S.FL.γt.K2, Ω, ω) - Fpl * box_eval(S.FL.γa.K2, Ω, ω))
         end
 
         return temperature(S) * val

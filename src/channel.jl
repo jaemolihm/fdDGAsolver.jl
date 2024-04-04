@@ -200,17 +200,52 @@ function MatsubaraFunctions.unflatten!(
 end
 
 # evaluator
-@inline function box_eval(
-    f :: MeshFunction{DD, Q},
-    w :: Vararg{MatsubaraFrequency, DD}
-    ) :: Q where {DD, Q}
+# @inline function box_eval(
+#     f :: MeshFunction{DD, Q},
+#     w :: Vararg{MatsubaraFrequency, DD}
+#     ) :: Q where {DD, Q}
 
-    if any(ntuple(i -> !is_inbounds(w[i], meshes(f, i)), DD))
-        return zero(Q)
-    else
-        return f[w...]
-    end
+#     if any(ntuple(i -> !is_inbounds(w[i], meshes(f, i)), DD))
+#         return zero(Q)
+#     else
+#         return f[w...]
+#     end
+# end
+
+@inline function box_eval(
+    f  :: MeshFunction{1, Q},
+    w1 :: MatsubaraFrequency,
+    ) :: Q where {Q}
+
+    is_inbounds(w1, meshes(f, 1)) || return zero(Q)
+    return f[w1]
 end
+
+@inline function box_eval(
+    f  :: MeshFunction{2, Q},
+    w1 :: MatsubaraFrequency,
+    w2 :: MatsubaraFrequency,
+    ) :: Q where {Q}
+
+    is_inbounds(w1, meshes(f, 1)) || return zero(Q)
+    is_inbounds(w2, meshes(f, 2)) || return zero(Q)
+    return f[w1, w2]
+end
+
+
+@inline function box_eval(
+    f  :: MeshFunction{3, Q},
+    w1 :: MatsubaraFrequency,
+    w2 :: MatsubaraFrequency,
+    w3 :: MatsubaraFrequency,
+    ) :: Q where {Q}
+
+    is_inbounds(w1, meshes(f, 1)) || return zero(Q)
+    is_inbounds(w2, meshes(f, 2)) || return zero(Q)
+    is_inbounds(w3, meshes(f, 3)) || return zero(Q)
+    return f[w1, w2, w3]
+end
+
 
 @inline function (γ :: Channel{Q})(
     Ω  :: MatsubaraFrequency,
