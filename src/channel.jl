@@ -344,21 +344,26 @@ function reduce!(
     γ :: Channel
     ) :: Nothing
 
-    for Ω in value.(meshes(γ.K2, 1))
+    for iΩ in eachindex(meshes(γ.K2, 1))
+        Ω = value(meshes(γ.K2, 1)[iΩ])
         K1val = γ.K1[Ω]
 
-        for ν in value.(meshes(γ.K2, 2))
+        for iν in eachindex(meshes(γ.K2, 2))
+            ν = value(meshes(γ.K2, 2)[iν])
             γ.K2[Ω, ν] -= K1val
         end
     end
 
-    for Ω in value.(meshes(γ.K3, 1))
+    for iΩ in eachindex(meshes(γ.K3, 1))
+        Ω = value(meshes(γ.K3, 1)[iΩ])
         K1val = γ.K1[Ω]
 
-        for ν in value.(meshes(γ.K3, 2))
+        for iν in eachindex(meshes(γ.K3, 2))
+            ν = value(meshes(γ.K3, 2)[iν])
             K2val = γ.K2[Ω, ν]
 
-            for νp in value.(meshes(γ.K3, 3))
+            for iνp in eachindex(meshes(γ.K3, 3))
+                νp = value(meshes(γ.K3, 3)[iνp])
                 γ.K3[Ω, ν, νp] -= K1val + K2val + γ.K2[Ω, νp]
             end
         end

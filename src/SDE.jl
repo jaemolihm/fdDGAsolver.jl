@@ -5,21 +5,10 @@ function Dyson!(
     Δ = π / 5
     D = 10.0
     e = 0.
-    for ν in value.(meshes(S.G, 1))
+    for iν in eachindex(meshes(S.G, 1))
+        ν = value(meshes(S.G, 1)[iν])
         # S.G and S.Σ is im * G and im * Σ, so -Σ in the Dyson equation becomes +Σ.
         S.G[ν] = 1 / (1 / S.Gbare[ν] + S.Σ(ν))
-    end
-
-    return nothing
-end
-
-function bubbles!(
-    S :: ParquetSolver
-    ) :: Nothing
-
-    for Ω in value.(meshes(S.Πpp, 1)), ν in value.(meshes(S.Πpp, 2))
-        S.Πpp[Ω, ν] = S.G(ν) * S.G(Ω - ν)
-        S.Πph[Ω, ν] = S.G(Ω + ν) * S.G(ν)
     end
 
     return nothing
@@ -231,7 +220,8 @@ function SDE_using_K12!(
         ν   = wtpl[1]
         val = zero(Q)
 
-        for ω in value.(meshes(G, 1))
+        for iω in eachindex(meshes(G, 1))
+            ω = value(meshes(G, 1)[iω])
             # SDE using only K1 + K2 in p channel
             val += G[ω] * (box_eval(F.γp.K1, ν + ω) + box_eval(F.γp.K2, ν + ω, ν))
         end
@@ -254,11 +244,11 @@ end
 function self_energy_sanity_check(Σ)
     passed = true
     # sanity check
-    for ν in value.(meshes(Σ, 1))
-        if value(ν) > 0 && real(Σ[ν]) < 0
+    for ν in meshes(Σ, 1)
+        if plain_value(ν) > 0 && real(Σ[ν]) < 0
             passed = false
             @warn "Σ violates causality at n = $(index(ν))"
-        elseif value(ν) < 0 && real(Σ[ν]) > 0
+        elseif plain_value(ν) < 0 && real(Σ[ν]) > 0
             passed = false
             @warn "Σ violates causality at n = $(index(ν))"
         end

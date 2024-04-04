@@ -77,17 +77,14 @@ function fixed_point!(
     end
 
     # calculate Fbuff
-    # println("BSE_K1")
     BSE_K1!(S, pCh)
     BSE_K1!(S, tCh)
     BSE_K1!(S, aCh)
 
-    # println("BSE_K2")
     BSE_K2!(S, pCh)
     BSE_K2!(S, tCh)
     BSE_K2!(S, aCh)
 
-    # println("BSE_K3")
     BSE_K3!(S, Γpx, Fp, F0p, pCh)
     BSE_K3!(S, Γt, Γa, Ft, Fa, F0t, F0a, tCh)
     BSE_K3!(S, Γa, Fa, F0a, aCh)

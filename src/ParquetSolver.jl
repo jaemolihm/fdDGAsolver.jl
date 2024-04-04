@@ -77,10 +77,7 @@ mutable struct ParquetSolver{Q, RefVT}
         Π0pp = MeshFunction(mΠΩ, mΠν; data_t=Q)
         Π0ph = copy(Π0pp)
 
-        for Ω in value.(meshes(Π0pp, 1)), ν in value.(meshes(Π0pp, 2))
-            Π0pp[Ω, ν] = G0(ν) * G0(Ω - ν)
-            Π0ph[Ω, ν] = G0(Ω + ν) * G0(ν)
-        end
+        bubbles!(Π0pp, Π0ph, G0)
 
         # single-particle Green's function and self-energy
         G = MeshFunction(MatsubaraMesh(T, nG, Fermion); data_t=Q)

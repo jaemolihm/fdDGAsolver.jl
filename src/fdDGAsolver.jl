@@ -19,6 +19,7 @@ module fdDGAsolver
     include("vertex.jl")
     include("siam.jl")
     include("ParquetSolver.jl")
+    include("bubble.jl")
     include("SDE.jl")
     include("BSE.jl")
     include("solve.jl")

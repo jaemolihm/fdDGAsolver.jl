@@ -16,11 +16,12 @@ function siam_bare_Green(
     G0 = MeshFunction(mesh; data_t = Q)
 
     # S.G is im * G
-    for ν in value.(mesh)
+    for ν in mesh
+        ν_value = plain_value(ν)
         if D == Inf
-            G0[ν] = 1 / (value(ν) + im * e + Δ * sign(value(ν)))
+            G0[ν] = 1 / (ν_value + im * e + Δ * sign(ν_value))
         else
-            G0[ν] = 1 / (value(ν) + im * e + 2Δ / π * atan(D / value(ν)))
+            G0[ν] = 1 / (ν_value + im * e + 2Δ / π * atan(D / ν_value))
         end
     end
 
