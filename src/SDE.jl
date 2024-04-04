@@ -186,20 +186,23 @@ function SDE_U2(
     Σ_U² = copy(Σ)
     set!(Σ_U², 0)
 
+    Πppsum = MeshFunction((meshes(Πpp, 1),), dropdims(sum(Πpp.data, dims=2), dims=2))
+    Πphsum = MeshFunction((meshes(Πph, 1),), dropdims(sum(Πph.data, dims=2), dims=2))
+
     # model the diagram
     @inline function diagram(wtpl)
 
         ν   = wtpl[1]
         val = zero(Q)
 
-        for Ω in value.(meshes(Πph, 1))
-            Πppsum = sum(view(Πpp, Ω, :)) * T
-            Πphsum = sum(view(Πph, Ω, :)) * T
+        for i in eachindex(meshes(Πppsum, 1))
 
-            val += G(Ω - ν) * Πppsum + G(Ω + ν) * Πphsum
+            Ω = value(meshes(Πppsum, 1)[i])
+            val += G(Ω - ν) * Πppsum[Ω] + G(Ω + ν) * Πphsum[Ω]
+
         end
 
-        return val * U^2 * T / 2
+        return val * U^2 * T^2 / 2
     end
 
     # compute Σ
