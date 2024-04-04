@@ -21,3 +21,4 @@ const MF_K2{Q} = MeshFunction{2, Q, Tuple{BMesh, FMesh}, Array{Q, 2}}
 const MF_K3{Q} = MeshFunction{3, Q, Tuple{BMesh, FMesh, FMesh}, Array{Q, 3}}
 
 struct InfiniteMatsubaraFrequency; end
+const νInf = InfiniteMatsubaraFrequency()

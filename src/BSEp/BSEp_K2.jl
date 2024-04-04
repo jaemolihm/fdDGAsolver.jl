@@ -12,7 +12,7 @@ function BSE_L_K2!(
 
         for i in eachindex(Π0slice)
             ω    = value(meshes(S.Π0pp, 2)[i])
-            val += S.F(Ω, ν, ω, pCh, pSp; F0 = false, γp = false) * Π0slice[i] * S.F0(Ω, Ω - ω, S.νInf, pCh, pSp; γt = false, γa = false)
+            val += S.F(Ω, ν, ω, pCh, pSp; F0 = false, γp = false) * Π0slice[i] * S.F0(Ω, Ω - ω, νInf, pCh, pSp; γt = false, γa = false)
         end
 
         return temperature(S) * val
@@ -43,7 +43,7 @@ function BSE_K2!(
 
             # vertices
             Fpl  = S.F(Ω, ν, ω, pCh, pSp)
-            F0pr = S.F0(Ω, Ω - ω, S.νInf, pCh, pSp; γt = false, γa = false)
+            F0pr = S.F0(Ω, Ω - ω, νInf, pCh, pSp; γt = false, γa = false)
 
             # 1ℓ and central part
             # val += Fpl * ((Πslice[i] - Π0slice[i]) * F0pr +  Πslice[i] * box_eval(S.FL.γp.K2, Ω, Ω - ω))

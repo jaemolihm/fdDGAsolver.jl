@@ -45,8 +45,11 @@ mutable struct ParquetSolver{Q, RefVT}
     # symmetry groups for the particle-hole channels of FL
     SGphL::Vector{SymmetryGroup}
 
-    # auxiliary frequency for asymptotic limits
-    νInf::InfiniteMatsubaraFrequency
+    # symmetry groups for the particle-particle channel of F0. Used only for fdPA
+    SG0pp2::Union{SymmetryGroup, Nothing}
+
+    # symmetry groups for the particle-hole channels of F0. Used only for fdPA
+    SG0ph2::Union{SymmetryGroup, Nothing}
 
     # Parallelization mode
     mode::Symbol
@@ -100,10 +103,16 @@ mutable struct ParquetSolver{Q, RefVT}
         SGppL = SymmetryGroup[SymmetryGroup(F.γp.K1), SymmetryGroup(F.γp.K2), SymmetryGroup(F.γp.K3)]
         SGphL = SymmetryGroup[SymmetryGroup(F.γp.K1), SymmetryGroup(F.γp.K2), SymmetryGroup(F.γp.K3)]
 
-        # asymptotic limit
-        νInf = InfiniteMatsubaraFrequency()
+        # Symmetry group of F0, needed for the BSE of the reference vertex in SDE for fdPA
+        if F0 isa Vertex
+            SG0pp2 = SymmetryGroup(F0.γp.K2)
+            SG0ph2 = SymmetryGroup(F0.γp.K2)
+        else
+            SG0pp2 = nothing
+            SG0ph2 = nothing
+        end
 
-        return new{Q, RefVT}(Gbare, G0, Π0pp, Π0ph, Σ0, F0, G, Πpp, Πph, Σ, F, Fbuff, copy(Fbuff), SGΣ, SGpp, SGph, SGppL, SGphL, νInf, mode)::ParquetSolver{Q}
+        return new{Q, RefVT}(Gbare, G0, Π0pp, Π0ph, Σ0, F0, G, Πpp, Πph, Σ, F, Fbuff, copy(Fbuff), SGΣ, SGpp, SGph, SGppL, SGphL, SG0pp2, SG0ph2, mode)::ParquetSolver{Q}
     end
 end
 
@@ -277,6 +286,12 @@ function init_sym_grp!(
     S.SGphL[1] = S.SGph[1]
     S.SGphL[2] = S.SGph[2]
     S.SGphL[3] = SymmetryGroup([Symmetry{3}(sK3ph1), Symmetry{3}(sK3ph3)], S.F.γt.K3)
+
+    # For F0
+    if S.SG0pp2 !== nothing
+        S.SG0pp2 = SymmetryGroup([Symmetry{2}(sK2pp1), Symmetry{2}(sK2pp2)], S.F0.γp.K2)
+        S.SG0ph2 = SymmetryGroup([Symmetry{2}(sK2ph1), Symmetry{2}(sK2ph2)], S.F0.γt.K2)
+    end
 
     return nothing
 end

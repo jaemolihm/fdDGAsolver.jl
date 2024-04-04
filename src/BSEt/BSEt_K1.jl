@@ -16,10 +16,10 @@ function BSE_K1!(
             ω = value(meshes(S.Π0ph, 2)[i])
 
             # vertices
-            Fpl  = S.F(Ω, S.νInf, ω, tCh, pSp; γp = false, γa = false)
-            Fxl  = S.F(Ω, S.νInf, ω, tCh, xSp; γp = false, γa = false)
-            F0pr = S.F0(Ω, ω, S.νInf, tCh, pSp; γp = false, γa = false)
-            F0xr = S.F0(Ω, ω, S.νInf, tCh, xSp; γp = false, γa = false)
+            Fpl  = S.F(Ω, νInf, ω, tCh, pSp; γp = false, γa = false)
+            Fxl  = S.F(Ω, νInf, ω, tCh, xSp; γp = false, γa = false)
+            F0pr = S.F0(Ω, ω, νInf, tCh, pSp; γp = false, γa = false)
+            F0xr = S.F0(Ω, ω, νInf, tCh, xSp; γp = false, γa = false)
 
             # 1ℓ part
             val -= (Πslice[i] - Π0slice[i]) * ((2 * Fpl + Fxl) * F0pr + Fpl * F0xr)

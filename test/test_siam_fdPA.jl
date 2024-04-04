@@ -43,9 +43,36 @@ using Test
     @test absmax(S.Σ - S_fd.Σ) < 3e-5
 
     for ch in [:γa, :γp, :γt], class in [:K1, :K2, :K3]
-        @test  absmax(getproperty(getproperty(S.F, ch), class)
-                    + getproperty(getproperty(S.F0, ch), class)
-                    - getproperty(getproperty(S_fd.F, ch), class)) < 2e-3
+        @test absmax(getproperty(getproperty(S.F, ch), class)
+                   + getproperty(getproperty(S.F0, ch), class)
+                   - getproperty(getproperty(S_fd.F, ch), class)) < 2e-3
+    end
+
+    # fdPA with different box sizes for the vertex
+    nmax = 6
+    nK1 = 12nmax
+    nK2 = (2nmax, nmax)
+    nK3 = (2nmax, nmax)
+
+    Gbare = fdDGAsolver.siam_bare_Green(meshes(S0.G, 1); e = e_fd, Δ = Δ_fd, D = D_fd)
+
+    S2 = ParquetSolver(nG, nΣ, nK1, nK2, nK3, Gbare, S0.G, S0.Σ, S0.F)
+    fdDGAsolver.init_sym_grp!(S2)
+    res = fdDGAsolver.solve!(S2; strategy = :fdPA, parallel_mode = :threads, verbose = false);
+
+    @test absmax(S2.Σ - S_fd.Σ) < 3e-3
+    @test S2.Σ(π*T) ≈ 0.024629132767655895 - 0.1752779384660937im
+
+    Ω = MatsubaraFrequency(T, 0, Boson)
+    ν = MatsubaraFrequency(T, 1, Fermion)
+    νp = MatsubaraFrequency(T, -2, Fermion)
+    for ch in [:γa, :γp, :γt]
+        z1 = getproperty(S2.F, ch)(Ω, ν, νp) + getproperty(S2.F0, ch)(Ω, ν, νp)
+        z2 = getproperty(S_fd.F, ch)(Ω, ν, νp)
+        @test z1 ≈ z2 atol = 2e-4
+    end
+    for ch in [pCh, tCh, aCh], sp in [pSp, xSp]
+        @test S2.F(Ω, ν, νp, ch, sp) ≈ S_fd.F(Ω, ν, νp, ch, sp) atol = 3e-4
     end
 
 end
