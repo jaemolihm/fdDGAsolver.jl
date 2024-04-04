@@ -171,99 +171,31 @@ end
     Ω  :: MatsubaraFrequency,
     ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
-       :: Type{pCh},
+       :: Type{Ch},
        :: Type{pSp}
     ;
     F0 :: Bool = true,
     γp :: Bool = true,
     γt :: Bool = true,
     γa :: Bool = true
-    )  :: Q where {Q}
+    )  :: Q where {Q, Ch <: ChannelTag}
 
     val = zero(Q)
 
     if F0
-        val += F.F0(Ω, ν, νp, pCh, pSp; F0, γp, γt, γa)
+        val += F.F0(Ω, ν, νp, Ch, pSp; F0, γp, γt, γa)
     end
 
     if γp
-        val += F.γp(Ω, ν, νp)
+        val += F.γp(convert_frequency(Ω, ν, νp, Ch, pCh)...)
     end
 
     if γt
-        val += F.γt(Ω - ν - νp, νp, ν)
+        val += F.γt(convert_frequency(Ω, ν, νp, Ch, tCh)...)
     end
 
     if γa
-        val += F.γa(ν - νp, Ω - ν, νp)
-    end
-
-    return val
-end
-
-@inline function (F :: Vertex{Q})(
-    Ω  :: MatsubaraFrequency,
-    ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
-    νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
-       :: Type{tCh},
-       :: Type{pSp}
-    ;
-    F0 :: Bool = true,
-    γp :: Bool = true,
-    γt :: Bool = true,
-    γa :: Bool = true
-    )  :: Q where {Q}
-
-    val = zero(Q)
-
-    if F0
-        val += F.F0(Ω, ν, νp, tCh, pSp; F0, γp, γt, γa)
-    end
-
-    if γp
-        val += F.γp(Ω + ν + νp, νp, ν)
-    end
-
-    if γt
-        val += F.γt(Ω, ν, νp)
-    end
-
-    if γa
-        val += F.γa(νp - ν, Ω + ν, ν)
-    end
-
-    return val
-end
-
-@inline function (F :: Vertex{Q})(
-    Ω  :: MatsubaraFrequency,
-    ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
-    νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
-       :: Type{aCh},
-       :: Type{pSp}
-    ;
-    F0 :: Bool = true,
-    γp :: Bool = true,
-    γt :: Bool = true,
-    γa :: Bool = true
-    )  :: Q where {Q}
-
-    val = zero(Q)
-
-    if F0
-        val += F.F0(Ω, ν, νp, aCh, pSp; F0, γp, γt, γa)
-    end
-
-    if γp
-        val += F.γp(Ω + νp + ν, Ω + νp, νp)
-    end
-
-    if γt
-        val += F.γt(ν - νp, νp, Ω + νp)
-    end
-
-    if γa
-        val += F.γa(Ω, ν, νp)
+        val += F.γa(convert_frequency(Ω, ν, νp, Ch, aCh)...)
     end
 
     return val
