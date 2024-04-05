@@ -31,6 +31,16 @@ using Test
         @test Gbare(ν, SVector(0.2 + 2π, 0.4 - 2π)) ≈ Gbare(ν, SVector(0.2, 0.4))
     end
 
+    # Test creation of bubbles
+
+    mΠΩ = MatsubaraMesh(T, 4, Boson)
+    mΠν = MatsubaraMesh(T, 8, Fermion)
+
+    Πpp = MeshFunction(mΠΩ, mΠν, mK, mK)
+    Πph = MeshFunction(mΠΩ, mΠν, mK, mK)
+
+    fdDGAsolver.bubbles!(Πpp, Πph, Gbare)
+
     # Test Dyson
 
     G = MeshFunction(mG, mK)

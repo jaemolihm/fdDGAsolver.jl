@@ -108,3 +108,22 @@ function Base.:setindex!(
     f.data[i1, i2, i3, i4, i5] = val
     return nothing
 end
+
+# Avoid dispatch ambiguity
+function Base.:setindex!(f :: MeshFunction{3, Q}, val :: Qp, x :: Vararg{Union{Int, UnitRange, Colon}, 3}
+    ) where {Q <: Number, Qp <: Number}
+    f.data[x...] = val
+    return nothing
+end
+
+function Base.:setindex!(f :: MeshFunction{4, Q}, val :: Qp, x :: Vararg{Union{Int, UnitRange, Colon}, 4}
+    ) where {Q <: Number, Qp <: Number}
+    f.data[x...] = val
+    return nothing
+end
+
+function Base.:setindex!(f :: MeshFunction{5, Q}, val :: Qp, x :: Vararg{Union{Int, UnitRange, Colon}, 5}
+    ) where {Q <: Number, Qp <: Number}
+    f.data[x...] = val
+    return nothing
+end
