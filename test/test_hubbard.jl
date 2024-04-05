@@ -49,4 +49,20 @@ using Test
     # should satisfy the ordinary Dyson equation G⁻¹ = Gbare⁻¹ - Σ when multiplied by -im.
     @test 1 / (-im * G(ν, k)) ≈ 1 / (-im * Gbare(ν, k)) - (-im * Σ(ν, k))
 
+
+    # Test bubbles
+
+    Gbare = hubbard_bare_Green(mG, mK; μ, t1)
+
+    Πpp = MeshFunction(mΠΩ, mΠν, mK, mK)
+    Πph = MeshFunction(mΠΩ, mΠν, mK, mK)
+    fdDGAsolver.bubbles!(Πpp, Πph, Gbare)
+
+    Ω = MatsubaraFrequency(T, 3, Boson)
+    ν = MatsubaraFrequency(T, -2, Fermion)
+    P = value(mK[58])
+    k = value(mK[23])
+    @test Πpp(Ω, ν, P, k) ≈ Gbare(ν, k) * Gbare(Ω - ν, P - k)
+    @test Πph(Ω, ν, P, k) ≈ Gbare(Ω + ν, P + k) * Gbare(ν, k)
+
 end

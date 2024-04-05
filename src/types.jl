@@ -23,7 +23,8 @@ const MF_K2{Q} = MeshFunction{2, Q, Tuple{BMesh, FMesh}, Array{Q, 2}}
 const MF_K3{Q} = MeshFunction{3, Q, Tuple{BMesh, FMesh, FMesh}, Array{Q, 3}}
 
 # MeshFunction aliases : Nonlocal
-const NL_MF_G{Q}  = MeshFunction{2, Q, Tuple{FMesh, KMesh}, Matrix{Q}}
+const NL_MF_G{Q}  = MeshFunction{2, Q, Tuple{FMesh, KMesh}, Array{Q, 2}}
+const NL_MF_Π{Q}  = MeshFunction{4, Q, Tuple{BMesh, FMesh, KMesh, KMesh}, Array{Q, 4}}
 
 
 
