@@ -33,7 +33,7 @@ module fdDGAsolver
     export
         pCh, tCh, aCh,
         pSp, xSp, dSp,
-        numK1, numK2, numK3,
+        νInf,
         Channel,
         RefVertex,
         Vertex,
