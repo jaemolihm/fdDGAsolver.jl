@@ -24,6 +24,11 @@ using Test
     @test γ(Ω, ν, νInf, P_)    ≈ γ.K1[Ω, P] + γ.K2[Ω, ν, P]
     @test γ(Ω, νInf, νInf, P_) ≈ γ.K1[Ω, P]
 
+    @test fdDGAsolver.numK1(γ) == 5
+    @test fdDGAsolver.numK2(γ) == (4, 3)
+    @test fdDGAsolver.numK3(γ) == (2, 3)
+    @test fdDGAsolver.numP(γ) == length(mK)
+
     # Test evaluation with 3 momentum arguments
     # NL_Channel has no fermionic frequency dependence.
 
@@ -70,11 +75,16 @@ end
     k2 = 2pi * SVector(0., 1.)
     mK = BrillouinZoneMesh(BrillouinZone(3, k1, k2))
 
-    F = fdDGAsolver.NL_Vertex(RefVertex(T, U), T, 10, (2, 2), (2, 2), mK)
+    F = fdDGAsolver.NL_Vertex(RefVertex(T, U), T, 10, (4, 3), (2, 1), mK)
     set!(F, 0)
     F.γp.K1.data .= rand(ComplexF64, size(F.γp.K1.data)...)
     F.γt.K1.data .= rand(ComplexF64, size(F.γt.K1.data)...)
     F.γa.K1.data .= rand(ComplexF64, size(F.γa.K1.data)...)
+
+    @test fdDGAsolver.numK1(F) == 10
+    @test fdDGAsolver.numK2(F) == (4, 3)
+    @test fdDGAsolver.numK3(F) == (2, 1)
+    @test fdDGAsolver.numP(F) == length(mK)
 
     Ω = MatsubaraFrequency(T, 1, Boson)
     ν = MatsubaraFrequency(T, 2, Fermion)

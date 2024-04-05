@@ -76,11 +76,11 @@ function numK3(
     return numK3(F.γp)
 end
 
-function numQ(
+function numP(
     F :: NL_Vertex
     ) :: Int64
 
-    return numQ(F.γp)
+    return numP(F.γp)
 end
 
 # setter methods

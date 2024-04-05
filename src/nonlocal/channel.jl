@@ -80,11 +80,11 @@ function numK3(
     return N(meshes(γ.K3, 1)), N(meshes(γ.K3, 2))
 end
 
-function numQ(
+function numP(
     γ :: NL_Channel
     ) :: Int64
 
-    return N(meshes(γ.K1, 2))
+    return length(meshes(γ.K1, 2))
 end
 
 # setter methods
