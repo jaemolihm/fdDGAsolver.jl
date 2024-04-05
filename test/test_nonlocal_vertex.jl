@@ -61,3 +61,33 @@ using Test
 
     rm(testfile; force=true)
 end
+
+
+@testset "NL_Vertex" begin
+    T = 0.5
+    U = 3.0
+    k1 = 2pi * SVector(1., 0.)
+    k2 = 2pi * SVector(0., 1.)
+    mK = BrillouinZoneMesh(BrillouinZone(3, k1, k2))
+
+    F = fdDGAsolver.NL_Vertex(RefVertex(T, U), T, 10, (2, 2), (2, 2), mK)
+    set!(F, 0)
+    F.γp.K1.data .= rand(ComplexF64, size(F.γp.K1.data)...)
+    F.γt.K1.data .= rand(ComplexF64, size(F.γt.K1.data)...)
+    F.γa.K1.data .= rand(ComplexF64, size(F.γa.K1.data)...)
+
+    Ω = MatsubaraFrequency(T, 1, Boson)
+    ν = MatsubaraFrequency(T, 2, Fermion)
+    ω = MatsubaraFrequency(T, -1, Fermion)
+    P = BrillouinPoint(-1, 1)
+    k = BrillouinPoint(1, 1)
+    q = BrillouinPoint(0, 1)
+
+    @test F(Ω, νInf, νInf, P, k, q, pCh, pSp) ≈ U + F.γp.K1(Ω, P)
+    @test F(Ω, νInf, νInf, P, k, q, tCh, pSp) ≈ U + F.γt.K1(Ω, P)
+    @test F(Ω, νInf, νInf, P, k, q, aCh, pSp) ≈ U + F.γa.K1(Ω, P)
+
+    @test F(Ω, ν, ω, P, k, q, pCh, pSp) ≈ U + F.γp.K1(Ω, P) + F.γt.K1(Ω - ν - ω, P - k - q) + F.γa.K1(ν - ω, k - q)
+    @test F(Ω, ν, ω, P, k, q, tCh, pSp) ≈ U + F.γt.K1(Ω, P) + F.γp.K1(Ω + ν + ω, P + k + q) + F.γa.K1(ω - ν, q - k)
+    @test F(Ω, ν, ω, P, k, q, aCh, pSp) ≈ U + F.γa.K1(Ω, P) + F.γp.K1(Ω + ν + ω, P + k + q) + F.γt.K1(ν - ω, k - q)
+end

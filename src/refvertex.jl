@@ -36,6 +36,10 @@ end
 
 Base.eltype(::Type{<: RefVertex{Q}}) where {Q} = Q
 
+function Base.show(io::IO, Γ::RefVertex{Q}) where {Q}
+    print(io, "$(nameof(typeof(Γ))){$Q}, U = $(Γ.U), T = $(temperature(Γ)), K3 : $(numK3(Γ))")
+end
+
 function numK3(
     Λ :: RefVertex
     ) :: NTuple{2, Int64}
@@ -163,6 +167,18 @@ end
 @inline function (F :: RefVertex{Q})(
     Ω  :: MatsubaraFrequency,
     ν  :: MatsubaraFrequency,
+    νp :: InfiniteMatsubaraFrequency,
+       :: Type{Ch},
+       :: Type{Sp},
+    ; kwargs...
+    )  :: Q where {Q, Ch <: ChannelTag, Sp <: SpinTag}
+
+    return bare_vertex(F, Ch, Sp)
+end
+
+@inline function (F :: RefVertex{Q})(
+    Ω  :: MatsubaraFrequency,
+    ν  :: InfiniteMatsubaraFrequency,
     νp :: InfiniteMatsubaraFrequency,
        :: Type{Ch},
        :: Type{Sp},

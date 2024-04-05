@@ -369,6 +369,24 @@ end
 end
 
 
+# Evaluation of local vertices with auxiliary momentum arguments
+@inline function (γ :: Union{Channel{Q}, RefVertex{Q}, Vertex{Q}})(
+    Ω  :: MatsubaraFrequency,
+    ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    P  :: BrillouinPoint,
+    k  :: BrillouinPoint,
+    kp :: BrillouinPoint,
+    args...
+    ;
+    kwargs...
+    )  :: Q where {Q}
+
+    return γ(Ω, ν, νp, args...; kwargs...)
+end
+
+
+
 # reducer
 # Subtract the lower-order asymptotic vertices from the higher-order ones
 function reduce!(

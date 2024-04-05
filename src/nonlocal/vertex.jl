@@ -1,37 +1,38 @@
-struct Vertex{Q, VT}
+struct NL_Vertex{Q, VT}
     F0 :: VT
-    γp :: Channel{Q}
-    γt :: Channel{Q}
-    γa :: Channel{Q}
+    γp :: NL_Channel{Q}
+    γt :: NL_Channel{Q}
+    γa :: NL_Channel{Q}
 
-    function Vertex(
+    function NL_Vertex(
         F0 :: VT,
-        γp :: Channel{Q},
-        γt :: Channel{Q},
-        γa :: Channel{Q},
-        )  :: Vertex{Q} where {Q, VT}
+        γp :: NL_Channel{Q},
+        γt :: NL_Channel{Q},
+        γa :: NL_Channel{Q},
+        )  :: NL_Vertex{Q} where {Q, VT}
 
         return new{Q, VT}(F0, γp, γt, γa)
     end
 
-    function Vertex(
+    function NL_Vertex(
         F0    :: VT,
         T     :: Float64,
         numK1 :: Int64,
         numK2 :: NTuple{2, Int64},
         numK3 :: NTuple{2, Int64},
+        meshK :: KMesh,
         ) where {VT}
 
         Q = eltype(F0)
 
-        γ = Channel(T, numK1, numK2, numK3, Q)
-        return new{Q, VT}(F0, γ, copy(γ), copy(γ)) :: Vertex{Q}
+        γ = NL_Channel(T, numK1, numK2, numK3, meshK, Q)
+        return new{Q, VT}(F0, γ, copy(γ), copy(γ)) :: NL_Vertex{Q}
     end
 end
 
-Base.eltype(::Type{<: Vertex{Q}}) where {Q} = Q
+Base.eltype(::Type{<: NL_Vertex{Q}}) where {Q} = Q
 
-function Base.show(io::IO, Γ::Vertex{Q}) where {Q}
+function Base.show(io::IO, Γ::NL_Vertex{Q}) where {Q}
     print(io, "$(nameof(typeof(Γ))){$Q}, U = $(Γ.F0.U), T = $(temperature(Γ))\n")
     print(io, "F0 : $(Γ.F0)\n")
     print(io, "K1 : $(numK1(Γ))\n")
@@ -41,37 +42,51 @@ end
 
 # getter methods
 function MatsubaraFunctions.temperature(
-    F :: Vertex
+    F :: NL_Vertex
     ) :: Float64
 
     return MatsubaraFunctions.temperature(F.γp)
 end
 
+function get_P_mesh(
+    F :: NL_Vertex
+    ) :: KMesh
+
+    return get_P_mesh(F.γp)
+end
+
 function numK1(
-    F :: Vertex
+    F :: NL_Vertex
     ) :: Int64
 
     return numK1(F.γp)
 end
 
 function numK2(
-    F :: Vertex
+    F :: NL_Vertex
     ) :: NTuple{2, Int64}
 
     return numK2(F.γp)
 end
 
 function numK3(
-    F :: Vertex
+    F :: NL_Vertex
     ) :: NTuple{2, Int64}
 
     return numK3(F.γp)
 end
 
+function numQ(
+    F :: NL_Vertex
+    ) :: Int64
+
+    return numQ(F.γp)
+end
+
 # setter methods
 function MatsubaraFunctions.set!(
-    F1 :: Vertex,
-    F2 :: Vertex
+    F1 :: NL_Vertex,
+    F2 :: NL_Vertex
     )  :: Nothing
 
     set!(F1.γp, F2.γp)
@@ -81,29 +96,30 @@ function MatsubaraFunctions.set!(
     return nothing
 end
 
-function reset!(
-    F :: Vertex
-    ) :: Nothing
+function MatsubaraFunctions.set!(
+    F   :: NL_Vertex,
+    val :: Number,
+    )   :: Nothing
 
-    reset!(F.γp)
-    reset!(F.γt)
-    reset!(F.γa)
+    set!(F.γp, val)
+    set!(F.γt, val)
+    set!(F.γa, val)
 
     return nothing
 end
 
 # copy
 function Base.:copy(
-    F :: Vertex{Q}
-    ) :: Vertex{Q} where {Q}
+    F :: NL_Vertex{Q}
+    ) :: NL_Vertex{Q} where {Q}
 
-    return Vertex(copy(F.F0), copy(F.γp), copy(F.γt), copy(F.γa))
+    return NL_Vertex(copy(F.F0), copy(F.γp), copy(F.γt), copy(F.γa))
 end
 
 # addition
 function MatsubaraFunctions.add!(
-    F1 :: Vertex,
-    F2 :: Vertex
+    F1 :: NL_Vertex,
+    F2 :: NL_Vertex
     )  :: Nothing
 
     add!(F1.γp, F2.γp)
@@ -115,7 +131,7 @@ end
 
 # maximum absolute value
 function MatsubaraFunctions.absmax(
-    F :: Vertex
+    F :: NL_Vertex
     ) :: Float64
 
     return max(absmax(F.γp), absmax(F.γt), absmax(F.γa))
@@ -123,7 +139,7 @@ end
 
 # flatten into vector
 function MatsubaraFunctions.flatten!(
-    F :: Vertex,
+    F :: NL_Vertex,
     x :: AbstractVector
     ) :: Nothing
 
@@ -139,7 +155,7 @@ function MatsubaraFunctions.flatten!(
 end
 
 function MatsubaraFunctions.flatten(
-    F :: Vertex{Q}
+    F :: NL_Vertex{Q}
     ) :: Vector{Q} where {Q}
 
     xp = flatten(F.γp)
@@ -151,7 +167,7 @@ end
 
 # unflatten from vector
 function MatsubaraFunctions.unflatten!(
-    F :: Vertex,
+    F :: NL_Vertex,
     x :: AbstractVector
     ) :: Nothing
 
@@ -167,10 +183,13 @@ function MatsubaraFunctions.unflatten!(
 end
 
 # evaluators for parallel spin component
-@inline function (F :: Vertex{Q})(
+@inline function (F :: NL_Vertex{Q})(
     Ω  :: MatsubaraFrequency,
     ν  :: MatsubaraFrequency,
     νp :: MatsubaraFrequency,
+    P  :: BrillouinPoint,
+    k  :: BrillouinPoint,
+    kp :: BrillouinPoint,
        :: Type{Ch},
        :: Type{pSp}
     ;
@@ -183,19 +202,22 @@ end
     val = zero(Q)
 
     if F0
-        val += F.F0(Ω, ν, νp, Ch, pSp; F0, γp, γt, γa)
+        val += F.F0(Ω, ν, νp, P, k, kp, Ch, pSp; F0, γp, γt, γa)
     end
 
     if γp
-        val += F.γp(convert_frequency(Ω, ν, νp, Ch, pCh)...)
+        val += F.γp(convert_frequency(Ω, ν, νp, Ch, pCh)...,
+                    convert_momentum( P, k, kp, Ch, pCh)...)
     end
 
     if γt
-        val += F.γt(convert_frequency(Ω, ν, νp, Ch, tCh)...)
+        val += F.γt(convert_frequency(Ω, ν, νp, Ch, tCh)...,
+                    convert_momentum( P, k, kp, Ch, tCh)...)
     end
 
     if γa
-        val += F.γa(convert_frequency(Ω, ν, νp, Ch, aCh)...)
+        val += F.γa(convert_frequency(Ω, ν, νp, Ch, aCh)...,
+                    convert_momentum( P, k, kp, Ch, aCh)...)
     end
 
     return val
@@ -204,10 +226,13 @@ end
 
 
 # Special cases where either ν or νp is an InfiniteMatsubaraFrequency
-@inline function (F :: Vertex{Q})(
+@inline function (F :: NL_Vertex{Q})(
     Ω  :: MatsubaraFrequency,
     ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    P  :: BrillouinPoint,
+    k  :: BrillouinPoint,
+    kp :: BrillouinPoint,
        :: Type{Ch},
        :: Type{pSp}
     ;
@@ -220,7 +245,7 @@ end
     val = zero(Q)
 
     if F0
-        val += F.F0(Ω, ν, νp, Ch, pSp; F0, γp, γt, γa)
+        val += F.F0(Ω, ν, νp, P, k, kp, Ch, pSp; F0, γp, γt, γa)
     end
 
     # This function is called only if either ν or νp is an InfiniteMatsubaraFrequency.
@@ -230,15 +255,18 @@ end
     # only for the same channel evaluated.
 
     if Ch === pCh && γp
-        val += F.γp(convert_frequency(Ω, ν, νp, Ch, pCh)...)
+        val += F.γp(convert_frequency(Ω, ν, νp, Ch, pCh)...,
+                    convert_momentum( P, k, kp, Ch, pCh)...)
     end
 
     if Ch === tCh && γt
-        val += F.γt(convert_frequency(Ω, ν, νp, Ch, tCh)...)
+        val += F.γt(convert_frequency(Ω, ν, νp, Ch, tCh)...,
+                    convert_momentum( P, k, kp, Ch, tCh)...)
     end
 
     if Ch === aCh && γa
-        val += F.γa(convert_frequency(Ω, ν, νp, Ch, aCh)...)
+        val += F.γa(convert_frequency(Ω, ν, νp, Ch, aCh)...,
+                    convert_momentum( P, k, kp, Ch, aCh)...)
     end
 
     return val
@@ -246,10 +274,13 @@ end
 
 
 # evaluators for crossed spin component
-@inline function (F :: Vertex{Q})(
+@inline function (F :: NL_Vertex{Q})(
     Ω  :: MatsubaraFrequency,
     ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    P  :: BrillouinPoint,
+    k  :: BrillouinPoint,
+    kp :: BrillouinPoint,
        :: Type{pCh},
        :: Type{xSp}
     ;
@@ -259,13 +290,16 @@ end
     γa :: Bool = true
     )  :: Q where {Q}
 
-    return -F(Ω, ν, Ω - νp, pCh, pSp; F0 = F0, γp = γp, γt = γa, γa = γt)
+    return -F(Ω, ν, Ω - νp, P, k, P - kp, pCh, pSp; F0 = F0, γp = γp, γt = γa, γa = γt)
 end
 
-@inline function (F :: Vertex{Q})(
+@inline function (F :: NL_Vertex{Q})(
     Ω  :: MatsubaraFrequency,
     ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    P  :: BrillouinPoint,
+    k  :: BrillouinPoint,
+    kp :: BrillouinPoint,
        :: Type{tCh},
        :: Type{xSp}
     ;
@@ -275,13 +309,16 @@ end
     γa :: Bool = true
     )  :: Q where {Q}
 
-    return -F(Ω, νp, ν, aCh, pSp; F0 = F0, γp = γp, γt = γa, γa = γt)
+    return -F(Ω, νp, ν, P, kp, k, aCh, pSp; F0 = F0, γp = γp, γt = γa, γa = γt)
 end
 
-@inline function (F :: Vertex{Q})(
+@inline function (F :: NL_Vertex{Q})(
     Ω  :: MatsubaraFrequency,
     ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    P  :: BrillouinPoint,
+    k  :: BrillouinPoint,
+    kp :: BrillouinPoint,
        :: Type{aCh},
        :: Type{xSp}
     ;
@@ -291,14 +328,17 @@ end
     γa :: Bool = true
     )  :: Q where {Q}
 
-    return -F(Ω, νp, ν, tCh, pSp; F0 = F0, γp = γp, γt = γa, γa = γt)
+    return -F(Ω, νp, ν, P, kp, k, tCh, pSp; F0 = F0, γp = γp, γt = γa, γa = γt)
 end
 
 # evaluators for density spin component
-@inline function (F :: Vertex{Q})(
+@inline function (F :: NL_Vertex{Q})(
     Ω  :: MatsubaraFrequency,
     ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    P  :: BrillouinPoint,
+    k  :: BrillouinPoint,
+    kp :: BrillouinPoint,
        :: Type{Ch},
        :: Type{dSp}
     ;
@@ -310,44 +350,21 @@ end
 
     val = zero(Q)
 
-    val += F(Ω, ν, νp, Ch, pSp; F0, γp, γt, γa) * 2
+    val += F(Ω, ν, νp, P, k, kp, Ch, pSp; F0, γp, γt, γa) * 2
 
-    val += F(Ω, ν, νp, Ch, xSp; F0, γp, γt, γa)
+    val += F(Ω, ν, νp, P, k, kp, Ch, xSp; F0, γp, γt, γa)
 
     return val
 end
 
 
-@inline bare_vertex(F :: Vertex) =  bare_vertex(F.F0)
-@inline bare_vertex(F :: Vertex, :: Type{Ch}, :: Type{Sp}) where {Ch <: ChannelTag, Sp <: SpinTag} = bare_vertex(F.F0, Ch, Sp)
+@inline bare_vertex(F :: NL_Vertex) =  bare_vertex(F.F0)
+@inline bare_vertex(F :: NL_Vertex, :: Type{Ch}, :: Type{Sp}) where {Ch <: ChannelTag, Sp <: SpinTag} = bare_vertex(F.F0, Ch, Sp)
 
-# # build full vertex in given frequency convention and spin component
-# function mk_vertex(
-#     F   :: Vertex,
-#     gΩ  :: MatsubaraGrid,
-#     gν  :: MatsubaraGrid,
-#     gνp :: MatsubaraGrid,
-#         :: Type{CT},
-#         :: Type{ST}
-#     ;
-#     F0  :: Bool = true,
-#     γp  :: Bool = true,
-#     γt  :: Bool = true,
-#     γa  :: Bool = true
-#     )   :: MatsubaraFunction{3, 1, 4, Float64} where {CT <: ChannelTag, ST <: SpinTag}
-
-#     f = MatsubaraFunction((gΩ, gν, gνp), 1, Float64)
-
-#     Threads.@threads for i in eachindex(f.data)
-#         f[i] = F(first(to_Matsubara(f, i))..., CT, ST; F0 = F0, γp = γp, γt = γt, γa = γa)
-#     end
-
-#     return f
-# end
 
 # reducer
 function reduce!(
-    F :: Vertex
+    F :: NL_Vertex
     ) :: Nothing
 
     reduce!(F.γp)
@@ -361,7 +378,7 @@ end
 function save_vertex!(
     file  :: HDF5.File,
     label :: String,
-    F     :: Vertex
+    F     :: NL_Vertex
     )     :: Nothing
 
     MatsubaraFunctions.save!(file, label * "/F0", F.F0)
@@ -373,15 +390,15 @@ function save_vertex!(
 end
 
 # load from HDF5
-function load_vertex(
+function load_nonlocal_vertex(
     file  :: HDF5.File,
     label :: String
-    )     :: Vertex
+    )     :: NL_Vertex
 
     F0 = load_refvertex(file, label * "/F0")
     γp = load_channel(file, label * "/γp")
     γt = load_channel(file, label * "/γt")
     γa = load_channel(file, label * "/γa")
 
-    return Vertex(F0, γp, γt, γa)
+    return NL_Vertex(F0, γp, γt, γa)
 end

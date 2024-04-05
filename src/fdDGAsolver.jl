@@ -15,6 +15,7 @@ module fdDGAsolver
     include("box_eval.jl")
 
     include("types.jl")
+    include("convention.jl")
     include("symmetries.jl")
     # include("sum_me.jl")
     include("channel.jl")
@@ -22,6 +23,7 @@ module fdDGAsolver
     include("vertex.jl")
 
     include("nonlocal/channel.jl")
+    include("nonlocal/vertex.jl")
 
     include("models/siam.jl")
     include("models/hubbard.jl")
@@ -40,6 +42,7 @@ module fdDGAsolver
         Channel,
         RefVertex,
         Vertex,
+        NL_Channel, NL_Vertex,
         ParquetSolver
 
 end
