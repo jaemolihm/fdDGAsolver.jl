@@ -24,6 +24,19 @@ using Test
     @test γ(Ω, ν, νInf, P_)    ≈ γ.K1[Ω, P] + γ.K2[Ω, ν, P]
     @test γ(Ω, νInf, νInf, P_) ≈ γ.K1[Ω, P]
 
+    # Test evaluation with 3 momentum arguments
+    # NL_Channel has no fermionic frequency dependence.
+
+    k1 = BrillouinPoint(0, 0)
+    k2 = BrillouinPoint(0, 0)
+    for ν in [MatsubaraFrequency(T, 2, Fermion), νInf]
+        for ω in [MatsubaraFrequency(T, -1, Fermion), νInf]
+            for (K1, K2, K3) in Iterators.product((true, false), (true, false), (true, false))
+                @test γ(Ω, ν, ω, P_; K1, K2, K3) == γ(Ω, ν, ω, P_, k1, k2; K1, K2, K3)
+            end
+        end
+    end
+
     # Test reduce
     x1 = γ(Ω, ν, ω, P; K1 = false, K2 = false, K3 = true)
     x2 = γ(Ω, νInf, ω, P; K1 = false, K2 = true, K3 = false)

@@ -218,6 +218,25 @@ end
 # evaluator
 @inline function (γ :: NL_Channel{Q})(
     Ω  :: MatsubaraFrequency,
+    ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    P_ :: BrillouinPoint,
+    k  :: BrillouinPoint,
+    kp :: BrillouinPoint,
+    ;
+    K1 :: Bool = true,
+    K2 :: Bool = true,
+    K3 :: Bool = true,
+    )  :: Q where {Q}
+
+    # We have only bosonic momentum dependence, so drop k and kp arguments.
+
+    return γ(Ω, ν, νp, P_; K1, K2, K3)
+end
+
+
+@inline function (γ :: NL_Channel{Q})(
+    Ω  :: MatsubaraFrequency,
     ν  :: MatsubaraFrequency,
     νp :: MatsubaraFrequency,
     P_ :: BrillouinPoint,
