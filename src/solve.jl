@@ -22,13 +22,13 @@ function fixed_point!(
     # build vertices
     # Γpx : Target   , p-channel irreducible, spin cross
     # F0p : Reference, p-channel full       , spin cross
-    # F0t : Reference, t-channel full       , spin parallel
     # F0a : Reference, a-channel full       , spin parallel
+    # F0t : Reference, t-channel full       , spin density
     g = MatsubaraMesh(temperature(S), 2 * numK1(S), Fermion)
     Γpx = MeshFunction(meshes(S.F.γp.K3, 1), g, meshes(S.F.γp.K3, 2); data_t=Q)
     F0p = copy(Γpx)
-    F0t = copy(Γpx)
     F0a = copy(Γpx)
+    F0t = copy(Γpx)
 
     Threads.@threads for i in CartesianIndices(Γpx.data)
         Ω = value(meshes(Γpx, 1)[i.I[1]])
@@ -36,33 +36,33 @@ function fixed_point!(
         νp = value(meshes(Γpx, 3)[i.I[3]])
         Γpx[i] = S.F(Ω, ν, νp, pCh, xSp; F0=false, γp=false)
         F0p[i] = S.F0(Ω, ν, νp, pCh, xSp)
-        F0t[i] = S.F0(Ω, ν, νp, tCh, pSp)
         F0a[i] = S.F0(Ω, ν, νp, aCh, pSp)
+        F0t[i] = S.F0(Ω, ν, νp, tCh, pSp) * 2 - F0a[i]
     end
 
     # Γpp : Target, p-channel irreducible, spin parallel
-    # Γt  : Target, t-channel irreducible, spin parallel
     # Γa  : Target, a-channel irreducible, spin parallel
+    # Γt  : Target, t-channel irreducible, spin density
     # Fp  : Target, a-channel full,        spin parallel
-    # Ft  : Target, a-channel full,        spin parallel
     # Fa  : Target, a-channel full,        spin parallel
+    # Ft  : Target, a-channel full,        spin density
     Γpp = MeshFunction(meshes(S.F.γp.K3, 1), meshes(S.F.γp.K3, 2), g; data_t=Q)
-    Γt = deepcopy(Γpp)
     Γa = deepcopy(Γpp)
+    Γt = deepcopy(Γpp)
     Fp = deepcopy(Γpp)
-    Ft = deepcopy(Γpp)
     Fa = deepcopy(Γpp)
+    Ft = deepcopy(Γpp)
 
     Threads.@threads for i in CartesianIndices(Γpp.data)
         Ω = value(meshes(Γpp, 1)[i.I[1]])
         ν = value(meshes(Γpp, 2)[i.I[2]])
         νp = value(meshes(Γpp, 3)[i.I[3]])
         Γpp[i] = S.F(Ω, ν, νp, pCh, pSp; F0=false, γp=false)
-        Γt[i] = S.F(Ω, ν, νp, tCh, pSp; F0=false, γt=false)
         Γa[i] = S.F(Ω, ν, νp, aCh, pSp; F0=false, γa=false)
+        Γt[i] = S.F(Ω, ν, νp, tCh, pSp; F0=false, γt=false) * 2 - Γa[i]
         Fp[i] = S.F(Ω, ν, νp, pCh, pSp)
-        Ft[i] = S.F(Ω, ν, νp, tCh, pSp)
         Fa[i] = S.F(Ω, ν, νp, aCh, pSp)
+        Ft[i] = S.F(Ω, ν, νp, tCh, pSp) * 2 - Fa[i]
     end
 
     if strategy == :fdPA
@@ -72,8 +72,8 @@ function fixed_point!(
         BSE_L_K2!(S, tCh)
 
         BSE_L_K3!(S, Γpp, F0p, pCh)
-        BSE_L_K3!(S, Γt, Γa, F0t, F0a, tCh)
         BSE_L_K3!(S, Γa, F0a, aCh)
+        BSE_L_K3!(S, Γt, F0t, tCh)
     end
 
     # calculate Fbuff
@@ -82,12 +82,12 @@ function fixed_point!(
     BSE_K1!(S, tCh)
 
     BSE_K2!(S, pCh)
-    BSE_K2!(S, tCh)
     BSE_K2!(S, aCh)
+    BSE_K2!(S, tCh)
 
     BSE_K3!(S, Γpx, Fp, F0p, pCh)
-    BSE_K3!(S, Γt, Γa, Ft, Fa, F0t, F0a, tCh)
     BSE_K3!(S, Γa, Fa, F0a, aCh)
+    BSE_K3!(S, Γt, Ft, F0t, tCh)
 
     # update F
     set!(S.F, S.Fbuff)

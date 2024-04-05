@@ -16,16 +16,14 @@ function BSE_K1!(
             ω = value(meshes(S.Π0ph, 2)[i])
 
             # vertices
-            Fpl  = S.F(Ω, νInf, ω, tCh, pSp; γp = false, γa = false)
-            Fxl  = S.F(Ω, νInf, ω, tCh, xSp; γp = false, γa = false)
-            F0pr = S.F0(Ω, ω, νInf, tCh, pSp; γp = false, γa = false)
-            F0xr = S.F0(Ω, ω, νInf, tCh, xSp; γp = false, γa = false)
+            Fdl  = S.F(Ω, νInf, ω, tCh, dSp; γp = false, γa = false)
+            F0dr = S.F0(Ω, ω, νInf, tCh, dSp; γp = false, γa = false)
 
             # 1ℓ part
-            val -= (Πslice[i] - Π0slice[i]) * ((2 * Fpl + Fxl) * F0pr + Fpl * F0xr)
+            val -= (Πslice[i] - Π0slice[i]) * Fdl * F0dr
 
             # central part
-            val -= Πslice[i] * ((2 * Fpl + Fxl) * box_eval(S.FL.γt.K2, Ω, ω) - Fpl * box_eval(S.FL.γa.K2, Ω, ω))
+            val -= Πslice[i] * Fdl * (2 * box_eval(S.FL.γt.K2, Ω, ω) - box_eval(S.FL.γa.K2, Ω, ω))
         end
 
         return temperature(S) * val
@@ -33,6 +31,11 @@ function BSE_K1!(
 
     # compute K1
     S.SGph[1](S.Fbuff.γt.K1, InitFunction{1, Q}(diagram); mode = S.mode)
+
+    # Currently S.Fbuff.γt.K1 has γtd = 2 γtp + γtx = 2 γtp - γax
+    # We want to store γtp = (γtd + γax) / 2
+    add!(S.Fbuff.γt.K1, S.Fbuff.γa.K1)
+    S.Fbuff.γt.K1.data ./= 2
 
     return nothing
 end

@@ -14,12 +14,10 @@ function BSE_L_K2!(
             ω = value(meshes(S.Π0ph, 2)[i])
 
             # vertices
-            Γp  = S.F(Ω, ν, ω, tCh, pSp; F0 = false, γt = false)
-            Γx  = S.F(Ω, ν, ω, tCh, xSp; F0 = false, γt = false)
-            F0p = S.F0(Ω, ω, νInf, tCh, pSp; γp = false, γa = false)
-            F0x = S.F0(Ω, ω, νInf, tCh, xSp; γp = false, γa = false)
+            Γd  = S.F(Ω, ν, ω, tCh, dSp; F0 = false, γt = false)
+            F0d = S.F0(Ω, ω, νInf, tCh, dSp; γp = false, γa = false)
 
-            val -= Π0slice[i] * ((2 * Γp + Γx) * F0p + Γp * F0x)
+            val -= Π0slice[i] * Γd * F0d
         end
 
         return temperature(S) * val
@@ -27,6 +25,11 @@ function BSE_L_K2!(
 
     # compute K2
     S.SGphL[2](S.FL.γt.K2, InitFunction{2, Q}(diagram); mode = S.mode)
+
+    # Currently S.FL.γt.K2 has γtd = 2 γtp + γtx = 2 γtp - γax
+    # We want to store γtp = (γtd + γax) / 2
+    add!(S.FL.γt.K2, S.FL.γa.K2)
+    S.FL.γt.K2.data ./= 2
 
     return nothing
 end
@@ -49,23 +52,26 @@ function BSE_K2!(
             ω = value(meshes(S.Π0ph, 2)[i])
 
             # vertices
-            Fpl  = S.F(Ω, ν, ω, tCh, pSp)
-            Fxl  = S.F(Ω, ν, ω, tCh, xSp)
-            F0pr = S.F0(Ω, ω, νInf, tCh, pSp; γp = false, γa = false)
-            F0xr = S.F0(Ω, ω, νInf, tCh, xSp; γp = false, γa = false)
+            Fdl  = S.F(Ω, ν, ω, tCh, dSp)
+            F0dr = S.F0(Ω, ω, νInf, tCh, dSp; γp = false, γa = false)
 
             # 1ℓ part
-            val -= (Πslice[i] - Π0slice[i]) * ((2 * Fpl + Fxl) * F0pr + Fpl * F0xr)
+            val -= (Πslice[i] - Π0slice[i]) * Fdl * F0dr
 
             # central part
-            val -= Πslice[i] * ((2 * Fpl + Fxl) * box_eval(S.FL.γt.K2, Ω, ω) - Fpl * box_eval(S.FL.γa.K2, Ω, ω))
+            val -= Πslice[i] * Fdl * (2 * box_eval(S.FL.γt.K2, Ω, ω) - box_eval(S.FL.γa.K2, Ω, ω))
         end
 
-        return S.FL.γt.K2[Ω, ν] + temperature(S) * val
+        return (2 * S.FL.γt.K2[Ω, ν] - S.FL.γa.K2[Ω, ν]) + temperature(S) * val
     end
 
     # compute K2
     S.SGph[2](S.Fbuff.γt.K2, InitFunction{2, Q}(diagram); mode = S.mode)
+
+    # Currently S.Fbuff.γt.K2 has γtd = 2 γtp + γtx = 2 γtp - γax
+    # We want to store γtp = (γtd + γax) / 2
+    add!(S.Fbuff.γt.K2, S.Fbuff.γa.K2)
+    S.Fbuff.γt.K2.data ./= 2
 
     return nothing
 end

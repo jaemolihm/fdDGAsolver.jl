@@ -135,6 +135,19 @@ end
     return -F.Ft_p(Ω, νp, ν) - F.U
 end
 
+# evaluators for density component
+@inline function (F :: RefVertex{Q})(
+    Ω  :: MatsubaraFrequency,
+    ν  :: MatsubaraFrequency,
+    νp :: MatsubaraFrequency,
+       :: Type{Ch},
+       :: Type{dSp},
+    ; kwargs...
+    )  :: Q where {Q, Ch <: ChannelTag}
+
+    return 2 * F(Ω, ν, νp, Ch, pSp) + F(Ω, ν, νp, Ch, xSp)
+end
+
 @inline function (F :: RefVertex{Q})(
     Ω  :: MatsubaraFrequency,
     ν  :: InfiniteMatsubaraFrequency,
@@ -166,9 +179,9 @@ end
 @inline bare_vertex(F :: RefVertex, :: Type{pCh}, :: Type{xSp}) = -F.U
 @inline bare_vertex(F :: RefVertex, :: Type{tCh}, :: Type{xSp}) = -F.U
 @inline bare_vertex(F :: RefVertex, :: Type{aCh}, :: Type{xSp}) = -F.U
-@inline bare_vertex(F :: RefVertex{Q}, :: Type{pCh}, :: Type{dSp}) where {Q} = zero(Q)
-@inline bare_vertex(F :: RefVertex{Q}, :: Type{tCh}, :: Type{dSp}) where {Q} = zero(Q)
-@inline bare_vertex(F :: RefVertex{Q}, :: Type{aCh}, :: Type{dSp}) where {Q} = zero(Q)
+@inline bare_vertex(F :: RefVertex{Q}, :: Type{pCh}, :: Type{dSp}) where {Q} = F.U
+@inline bare_vertex(F :: RefVertex{Q}, :: Type{tCh}, :: Type{dSp}) where {Q} = F.U
+@inline bare_vertex(F :: RefVertex{Q}, :: Type{aCh}, :: Type{dSp}) where {Q} = F.U
 
 # save to HDF5
 function MatsubaraFunctions.save!(
