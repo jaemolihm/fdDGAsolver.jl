@@ -1,3 +1,6 @@
+function bubbles!(S :: AbstractSolver)
+    bubbles!(S.Πpp, S.Πph, S.G)
+end
 
 function bubbles!(
     Πpp :: MF_Π{Q},
@@ -49,14 +52,4 @@ function bubbles!(
     end
 
     return nothing
-end
-
-
-
-function bubbles!(
-    S :: Union{ParquetSolver, NL_ParquetSolver}
-    ) :: Nothing
-
-    bubbles!(S.Πpp, S.Πph, S.G)
-
 end

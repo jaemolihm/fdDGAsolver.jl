@@ -12,8 +12,8 @@ end
 # self-energy symmetries
 function sΣ_conj(
     w :: Tuple{MatsubaraFrequency, BrillouinPoint{2}},
-    m :: KMesh,
     )
+    # Complex conjugation
     # We store iΣ, so the symmetry Σ -> Σ* becomes iΣ -> -(iΣ)*.
     return (-w[1], -w[2]), Operation(sgn = true, con = true)
 end
@@ -32,13 +32,27 @@ function sΣ_rot(
     return (w[1], _rot(w[2], m)), Operation()
 end
 
-# # particle-particle symmetries
-# function sK1pp(
-#     w :: NTuple{1, MatsubaraFrequency},
-#     ) :: Tuple{NTuple{1, MatsubaraFrequency}, Operation}
+# Symmetries in the particle-particle channel
+function sK1_conj(
+    w :: Tuple{MatsubaraFrequency, BrillouinPoint{2}},
+    )
+    # Complex conjugation
+    return (-w[1], -w[2]), Operation(sgn = false, con = true)
+end
 
-#     return (-w[1],), Operation(sgn = false, con = true)
-# end
+function sK1_ref(
+    w :: Tuple{MatsubaraFrequency, BrillouinPoint{2}},
+    m :: KMesh,
+    )
+    return (w[1], _ref(w[2], m)), Operation()
+end
+
+function sK1_rot(
+    w :: Tuple{MatsubaraFrequency, BrillouinPoint{2}},
+    m :: KMesh,
+    )
+    return (w[1], _rot(w[2], m)), Operation()
+end
 
 # function sK2pp1(
 #     w :: NTuple{2, MatsubaraFrequency},
@@ -76,12 +90,6 @@ end
 # end
 
 # # particle-hole symmetries
-# function sK1ph(
-#     w :: NTuple{1, MatsubaraFrequency},
-#     ) :: Tuple{NTuple{1, MatsubaraFrequency}, Operation}
-
-#     return sK1pp(w)
-# end
 
 # function sK2ph1(
 #     w :: NTuple{2, MatsubaraFrequency},

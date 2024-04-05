@@ -1,4 +1,4 @@
-mutable struct NL_ParquetSolver{Q, RefVT}
+mutable struct NL_ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
     # Bare Green function
     Gbare :: NL_MF_G{Q}
 
@@ -116,8 +116,6 @@ mutable struct NL_ParquetSolver{Q, RefVT}
         return new{Q, RefVT}(Gbare, G0, Π0pp, Π0ph, Σ0, F0, G, Πpp, Πph, Σ, F, Fbuff, copy(Fbuff), SGΣ, SGpp, SGph, SGppL, SGphL, SG0pp2, SG0ph2, mode)::NL_ParquetSolver{Q}
     end
 end
-
-Base.eltype(::Type{<:NL_ParquetSolver{Q}}) where {Q} = Q
 
 function Base.show(io::IO, S::NL_ParquetSolver{Q}) where {Q}
     print(io, "$(nameof(typeof(S))){$Q}, U = $(real(bare_vertex(S.F0, aCh, pSp))), T = $(temperature(S))\n")
@@ -265,27 +263,39 @@ end
 #     return NL_ParquetSolver(numG, numΣ, numK1, numK2, numK3, G, Σ, RefVertex(U, Fp_p, Fp_x, Ft_p, Ft_x))::NL_ParquetSolver{Q}
 # end
 
-# # symmetry group initialization
-# function init_sym_grp!(
-#     S::NL_ParquetSolver
-# )::Nothing
+# symmetry group initialization
+function init_sym_grp!(
+    S::NL_ParquetSolver
+)::Nothing
 
-#     # self-energy
-#     S.SGΣ = SymmetryGroup([Symmetry{1}(sΣ)], S.Σ)
+    mK_Σ = meshes(S.Σ, 2)
+    mK_Γ = meshes(S.F.γp.K1, 2)
 
-#     # particle-particle channel
-#     S.SGpp[1] = SymmetryGroup([Symmetry{1}(sK1pp)], S.F.γp.K1)
+    # self-energy
+    S.SGΣ = SymmetryGroup(Symmetry{2}[
+        Symmetry{2}(w -> sΣ_conj(w,)),
+        Symmetry{2}(w -> sΣ_ref(w, mK_Σ)),
+        Symmetry{2}(w -> sΣ_rot(w, mK_Σ))
+    ], S.Σ);
+
+    # Vertices in the particle-particle channel
+    S.SGpp[1] = SymmetryGroup(Symmetry{2}[
+        Symmetry{2}(w -> sK1_conj(w,)),
+        Symmetry{2}(w -> sK1_ref(w, mK_Γ)),
+        Symmetry{2}(w -> sK1_rot(w, mK_Γ)),
+    ], S.F.γp.K1);
+
 #     S.SGpp[2] = SymmetryGroup([Symmetry{2}(sK2pp1), Symmetry{2}(sK2pp2)], S.F.γp.K2)
 #     S.SGpp[3] = SymmetryGroup([Symmetry{3}(sK3pp1), Symmetry{3}(sK3pp2), Symmetry{3}(sK3pp3)], S.F.γp.K3)
-#     S.SGppL[1] = S.SGpp[1]
+    S.SGppL[1] = S.SGpp[1]
 #     S.SGppL[2] = S.SGpp[2]
 #     S.SGppL[3] = SymmetryGroup([Symmetry{3}(sK3pp1), Symmetry{3}(sK3pp3)], S.F.γp.K3)
 
 #     # particle-hole channels
-#     S.SGph[1] = SymmetryGroup([Symmetry{1}(sK1ph)], S.F.γt.K1)
+    S.SGph[1] = S.SGpp[1]
 #     S.SGph[2] = SymmetryGroup([Symmetry{2}(sK2ph1), Symmetry{2}(sK2ph2)], S.F.γt.K2)
 #     S.SGph[3] = SymmetryGroup([Symmetry{3}(sK3ph1), Symmetry{3}(sK3ph2), Symmetry{3}(sK3ph3)], S.F.γt.K3)
-#     S.SGphL[1] = S.SGph[1]
+    S.SGphL[1] = S.SGph[1]
 #     S.SGphL[2] = S.SGph[2]
 #     S.SGphL[3] = SymmetryGroup([Symmetry{3}(sK3ph1), Symmetry{3}(sK3ph3)], S.F.γt.K3)
 
@@ -295,8 +305,8 @@ end
 #         S.SG0ph2 = SymmetryGroup([Symmetry{2}(sK2ph1), Symmetry{2}(sK2ph2)], S.F0.γt.K2)
 #     end
 
-#     return nothing
-# end
+    return nothing
+end
 
 # getter methods
 function MatsubaraFunctions.temperature(

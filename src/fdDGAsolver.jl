@@ -22,11 +22,6 @@ module fdDGAsolver
     include("refvertex.jl")
     include("vertex.jl")
 
-    include("nonlocal/symmetries.jl")
-    include("nonlocal/channel.jl")
-    include("nonlocal/vertex.jl")
-    include("nonlocal/ParquetSolver.jl")
-
     include("models/siam.jl")
     include("models/hubbard.jl")
 
@@ -35,6 +30,13 @@ module fdDGAsolver
     include("dyson.jl")
     include("SDE.jl")
     include("BSE.jl")
+
+    include("nonlocal/symmetries.jl")
+    include("nonlocal/channel.jl")
+    include("nonlocal/vertex.jl")
+    include("nonlocal/ParquetSolver.jl")
+    include("nonlocal/BSE.jl")
+
     include("solve.jl")
 
     export

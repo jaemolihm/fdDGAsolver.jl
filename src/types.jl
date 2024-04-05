@@ -32,7 +32,6 @@ const NL_MF_K2{Q} = MeshFunction{3, Q, Tuple{BMesh, FMesh, KMesh}, Array{Q, 3}}
 const NL_MF_K3{Q} = MeshFunction{4, Q, Tuple{BMesh, FMesh, FMesh, KMesh}, Array{Q, 4}}
 
 
-
 struct InfiniteMatsubaraFrequency; end
 const νInf = InfiniteMatsubaraFrequency()
 
@@ -40,3 +39,5 @@ Base.:+(::MatsubaraFrequency{Boson}, ::InfiniteMatsubaraFrequency) = InfiniteMat
 Base.:-(::MatsubaraFrequency{Boson}, ::InfiniteMatsubaraFrequency) = InfiniteMatsubaraFrequency()
 Base.:+(::InfiniteMatsubaraFrequency, ::MatsubaraFrequency{Boson}) = InfiniteMatsubaraFrequency()
 Base.:-(::InfiniteMatsubaraFrequency, ::MatsubaraFrequency{Boson}) = InfiniteMatsubaraFrequency()
+
+const kInf = BrillouinPoint(0, 0)

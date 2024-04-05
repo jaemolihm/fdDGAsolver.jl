@@ -1,4 +1,8 @@
-mutable struct ParquetSolver{Q, RefVT}
+abstract type AbstractSolver{Q}; end
+
+Base.eltype(::Type{<: AbstractSolver{Q}}) where {Q} = Q
+
+mutable struct ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
     # Bare Green function
     Gbare :: MF_G{Q}
 
@@ -113,7 +117,6 @@ mutable struct ParquetSolver{Q, RefVT}
     end
 end
 
-Base.eltype(::Type{<:ParquetSolver{Q}}) where {Q} = Q
 
 function Base.show(io::IO, S::ParquetSolver{Q}) where {Q}
     print(io, "$(nameof(typeof(S))){$Q}, U = $(real(bare_vertex(S.F0, aCh, pSp))), T = $(temperature(S))\n")

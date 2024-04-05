@@ -7,6 +7,9 @@ using Test
     # Test symmetry of the Green function
     using fdDGAsolver: sΣ_conj, sΣ_ref, sΣ_rot
 
+    using MPI
+    MPI.Init()
+
     T = 0.5
 
     k1 = 2pi * SVector(1., 0.)
@@ -19,10 +22,10 @@ using Test
 
     # compute the symmetry group
     SG = SymmetryGroup(Symmetry{2}[
-        Symmetry{2}(w -> sΣ_conj(w, mK)),
-        Symmetry{2}(w -> sΣ_ref( w, mK)),
-        Symmetry{2}(w -> sΣ_rot( w, mK))
-        ], G);
+        Symmetry{2}(w -> sΣ_conj(w,)),
+        Symmetry{2}(w -> sΣ_ref(w, mK)),
+        Symmetry{2}(w -> sΣ_rot(w, mK))
+    ], G);
 
     # Check G satisfies symmetry
     @test SG(G) < 1e-14
@@ -43,3 +46,41 @@ using Test
         @test G_sym == G
     end
 end;
+
+
+@testset "nonlocal symmetry K1" begin
+    T = 0.2
+    U = 2.0
+    μ = -2.0
+    t1 = 1.0
+
+    k1 = 2pi * SVector(1., 0.)
+    k2 = 2pi * SVector(0., 1.)
+
+    nmax = 4
+    nG  = 8nmax
+    nΣ  = 8nmax
+    nK1 = 4nmax
+    nK2 = (2nmax, nmax)
+    nK3 = (2nmax, nmax)
+
+    mK_G = BrillouinZoneMesh(BrillouinZone(6, k1, k2))
+    mK_Γ = BrillouinZoneMesh(BrillouinZone(3, k1, k2))
+
+    S = parquet_solver_hubbard_parquet_approximation(nG, nΣ, nK1, nK2, nK3, mK_G, mK_Γ; T, U, μ, t1)
+
+    fdDGAsolver.Dyson!(S)
+    fdDGAsolver.bubbles!(S)
+
+    # Compute BSE without symmetries
+    fdDGAsolver.BSE_K1!(S, pCh);
+    fdDGAsolver.BSE_K1!(S, aCh);
+    fdDGAsolver.BSE_K1!(S, tCh);
+
+    # Now initialize symmetries and test symmetry of the K1 vertices
+    fdDGAsolver.init_sym_grp!(S)
+    @test S.SGpp[1](S.Fbuff.γp.K1) < 1e-10
+    @test S.SGph[1](S.Fbuff.γt.K1) < 1e-10
+    @test S.SGph[1](S.Fbuff.γa.K1) < 1e-10
+
+end
