@@ -8,7 +8,7 @@ function SDE_channel_L_ph(S :: ParquetSolver{Q}) :: MF_K2{Q} where {Q}
 end
 
 function SDE_channel_L_pp(
-    Πpp   :: MF_K2{Q},
+    Πpp   :: MF_Π{Q},
     F     :: Vertex{Q},
     SGpp2 :: SymmetryGroup
     ;
@@ -40,7 +40,7 @@ function SDE_channel_L_pp(
 end
 
 function SDE_channel_L_ph(
-    Πph   :: MF_K2{Q},
+    Πph   :: MF_Π{Q},
     F     :: Vertex{Q},
     SGph2 :: SymmetryGroup
     ;
@@ -84,8 +84,8 @@ end
 function SDE!(
     Σ     :: MF_G{Q},
     G     :: MF_G{Q},
-    Πpp   :: MF_K2{Q},
-    Πph   :: MF_K2{Q},
+    Πpp   :: MF_Π{Q},
+    Πph   :: MF_Π{Q},
     F     :: Vertex{Q},
     SGΣ   :: SymmetryGroup,
     SGpp2 :: SymmetryGroup,
@@ -147,8 +147,8 @@ end
 function SDE_U2(
     Σ   :: MF_G{Q},
     G   :: MF_G{Q},
-    Πpp :: MF_K2{Q},
-    Πph :: MF_K2{Q},
+    Πpp :: MF_Π{Q},
+    Πph :: MF_Π{Q},
     SGΣ :: SymmetryGroup,
     U   :: Number,
     ;

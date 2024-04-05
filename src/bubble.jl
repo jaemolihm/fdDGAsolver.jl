@@ -1,7 +1,7 @@
 
 function bubbles!(
-    Πpp :: MF_K2{Q},
-    Πph :: MF_K2{Q},
+    Πpp :: MF_Π{Q},
+    Πph :: MF_Π{Q},
     G   :: MF_G{Q},
     ) :: Nothing where {Q}
 
