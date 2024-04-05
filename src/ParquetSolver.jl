@@ -301,8 +301,8 @@ function MatsubaraFunctions.temperature(
     return MatsubaraFunctions.temperature(S.F)
 end
 
-numG(S::ParquetSolver)::Int64 = N(grids(S.G, 1))
-numΣ(S::ParquetSolver)::Int64 = N(grids(S.Σ, 1))
+numG(S::ParquetSolver)::Int64 = N(meshes(S.G, 1))
+numΣ(S::ParquetSolver)::Int64 = N(meshes(S.Σ, 1))
 numK1(S::ParquetSolver)::Int64 = numK1(S.F)
 numK2(S::ParquetSolver)::NTuple{2,Int64} = numK2(S.F)
 numK3(S::ParquetSolver)::NTuple{2,Int64} = numK3(S.F)
