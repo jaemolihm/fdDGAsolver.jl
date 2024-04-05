@@ -16,14 +16,12 @@ function BSE_K1!(
             ω = value(meshes(S.Π0ph, 2)[i])
 
             # vertices
-            Fdl  = S.F(Ω, νInf, ω, tCh, dSp; γp = false, γa = false)
-            F0dr = S.F0(Ω, ω, νInf, tCh, dSp; γp = false, γa = false)
+            Fl  = S.F( Ω, νInf, ω, tCh, dSp)
+            F0r = S.F0(Ω, ω, νInf, tCh, dSp)
+            FLr = S.FL(Ω, ω, νInf, tCh, dSp)
 
-            # 1ℓ part
-            val -= (Πslice[i] - Π0slice[i]) * Fdl * F0dr
-
-            # central part
-            val -= Πslice[i] * Fdl * (2 * box_eval(S.FL.γt.K2, Ω, ω) - box_eval(S.FL.γa.K2, Ω, ω))
+            # 1ℓ and central part
+            val -= Fl * ((Πslice[i] - Π0slice[i]) * F0r + Πslice[i] * FLr)
         end
 
         return temperature(S) * val

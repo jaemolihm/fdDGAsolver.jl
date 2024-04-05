@@ -75,4 +75,26 @@ using Test
         @test S2.F(Ω, ν, νp, ch, sp) ≈ S_fd.F(Ω, ν, νp, ch, sp) atol = 4e-4
     end
 
+    # Test Vertex evaluation
+
+    Ω = MatsubaraFrequency(T, 1, Boson)
+    ω = MatsubaraFrequency(T, 3, Fermion)
+
+    # If one of the fermionic frequency is νInf, other channels should not be evaluated
+    for F0 in (true, false), ch in (pCh, tCh, aCh), sp in (pSp, xSp, dSp)
+        x = S.F(Ω, ω, νInf, ch, sp; F0, γp = (ch === pCh), γt = (ch === tCh), γa = (ch === aCh))
+        y = S.F(Ω, ω, νInf, ch, sp; F0)
+        @test x ≈ y
+
+        x = S.F(Ω, νInf, ω, ch, sp; F0, γp = (ch === pCh), γt = (ch === tCh), γa = (ch === aCh))
+        y = S.F(Ω, νInf, ω, ch, sp; F0)
+        @test x ≈ y
+    end
+
+    @test S.F(Ω, ω, νInf, pCh, pSp) ≈ S.F.γp(Ω, ω, νInf) + S.F.F0.γp(Ω, ω, νInf) + S.F.F0.F0(Ω, ω, νInf, pCh, pSp)
+    @test S.F(Ω, ω, νInf, tCh, pSp) ≈ S.F.γt(Ω, ω, νInf) + S.F.F0.γt(Ω, ω, νInf) + S.F.F0.F0(Ω, ω, νInf, tCh, pSp)
+    @test S.F(Ω, ω, νInf, aCh, pSp) ≈ S.F.γa(Ω, ω, νInf) + S.F.F0.γa(Ω, ω, νInf) + S.F.F0.F0(Ω, ω, νInf, aCh, pSp)
+    @test S.F(Ω, νInf, ω, pCh, pSp) ≈ S.F.γp(Ω, νInf, ω) + S.F.F0.γp(Ω, νInf, ω) + S.F.F0.F0(Ω, νInf, ω, pCh, pSp)
+    @test S.F(Ω, νInf, ω, tCh, pSp) ≈ S.F.γt(Ω, νInf, ω) + S.F.F0.γt(Ω, νInf, ω) + S.F.F0.F0(Ω, νInf, ω, tCh, pSp)
+    @test S.F(Ω, νInf, ω, aCh, pSp) ≈ S.F.γa(Ω, νInf, ω) + S.F.F0.γa(Ω, νInf, ω) + S.F.F0.F0(Ω, νInf, ω, aCh, pSp)
 end

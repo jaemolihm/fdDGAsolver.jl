@@ -31,6 +31,11 @@ const NL_MF_Π{Q}  = MeshFunction{4, Q, Tuple{BMesh, FMesh, KMesh, KMesh}, Array
 struct InfiniteMatsubaraFrequency; end
 const νInf = InfiniteMatsubaraFrequency()
 
+Base.:+(::MatsubaraFrequency{Boson}, ::InfiniteMatsubaraFrequency) = InfiniteMatsubaraFrequency()
+Base.:-(::MatsubaraFrequency{Boson}, ::InfiniteMatsubaraFrequency) = InfiniteMatsubaraFrequency()
+Base.:+(::InfiniteMatsubaraFrequency, ::MatsubaraFrequency{Boson}) = InfiniteMatsubaraFrequency()
+Base.:-(::InfiniteMatsubaraFrequency, ::MatsubaraFrequency{Boson}) = InfiniteMatsubaraFrequency()
+
 
 """
     function convert_frequency(

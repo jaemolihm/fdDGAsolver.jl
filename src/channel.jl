@@ -263,25 +263,30 @@ end
     Ω  :: MatsubaraFrequency,
     ν  :: MatsubaraFrequency,
     νp :: MatsubaraFrequency
+    ;
+    K1 :: Bool = true,
+    K2 :: Bool = true,
+    K3 :: Bool = true,
     )  :: Q where {Q}
 
     val = zero(Q)
 
     if is_inbounds(Ω, meshes(γ.K1, 1))
-        val += γ.K1[Ω]
+        K1 && (val += γ.K1[Ω])
 
         if is_inbounds(Ω, meshes(γ.K2, 1))
             ν1_inbounds = is_inbounds(ν, meshes(γ.K2, 2))
             ν2_inbounds = is_inbounds(νp, meshes(γ.K2, 2))
 
             if ν1_inbounds && ν2_inbounds
-                val += γ.K2[Ω, ν] + γ.K2[Ω, νp] + box_eval(γ.K3, Ω, ν, νp)
+                K2 && (val += γ.K2[Ω, ν] + γ.K2[Ω, νp])
+                K3 && (val += box_eval(γ.K3, Ω, ν, νp))
 
             elseif ν1_inbounds
-                val += γ.K2[Ω, ν]
+                K2 && (val += γ.K2[Ω, ν])
 
             elseif ν2_inbounds
-                val += γ.K2[Ω, νp]
+                K2 && (val += γ.K2[Ω, νp])
             end
         end
     end
@@ -294,16 +299,27 @@ end
     Ω  :: MatsubaraFrequency,
     ν  :: InfiniteMatsubaraFrequency,
     νp :: MatsubaraFrequency
+    ;
+    K1 :: Bool = true,
+    K2 :: Bool = true,
+    K3 :: Bool = true,
     )  :: Q where {Q}
 
     # Implement special case ν = ∞
 
     val = zero(Q)
 
-    if is_inbounds(Ω, meshes(γ.K1, 1))
-        val += γ.K1[Ω]
+    if K1
+        if is_inbounds(Ω, meshes(γ.K1, 1))
+            val += γ.K1[Ω]
 
-        if is_inbounds(Ω, meshes(γ.K2, 1)) && is_inbounds(νp, meshes(γ.K2, 2))
+            if K2 && is_inbounds(Ω, meshes(γ.K2, 1)) && is_inbounds(νp, meshes(γ.K2, 2))
+                val += γ.K2[Ω, νp]
+            end
+        end
+    else
+        # K1 not included
+        if K2 && is_inbounds(Ω, meshes(γ.K2, 1)) && is_inbounds(νp, meshes(γ.K2, 2))
             val += γ.K2[Ω, νp]
         end
     end
@@ -315,16 +331,27 @@ end
     Ω  :: MatsubaraFrequency,
     ν  :: MatsubaraFrequency,
     νp :: InfiniteMatsubaraFrequency
+    ;
+    K1 :: Bool = true,
+    K2 :: Bool = true,
+    K3 :: Bool = true,
     )  :: Q where {Q}
 
     # Implement special case νp = ∞
 
     val = zero(Q)
 
-    if is_inbounds(Ω, meshes(γ.K1, 1))
-        val += γ.K1[Ω]
+    if K1
+        if is_inbounds(Ω, meshes(γ.K1, 1))
+            K1 && (val += γ.K1[Ω])
 
-        if is_inbounds(Ω, meshes(γ.K2, 1)) && is_inbounds(ν, meshes(γ.K2, 2))
+            if K2 && is_inbounds(Ω, meshes(γ.K2, 1)) && is_inbounds(ν, meshes(γ.K2, 2))
+                val += γ.K2[Ω, ν]
+            end
+        end
+    else
+        # K1 not included
+        if K2 && is_inbounds(Ω, meshes(γ.K2, 1)) && is_inbounds(ν, meshes(γ.K2, 2))
             val += γ.K2[Ω, ν]
         end
     end
@@ -336,13 +363,17 @@ end
     Ω  :: MatsubaraFrequency,
     ν  :: InfiniteMatsubaraFrequency,
     νp :: InfiniteMatsubaraFrequency
+    ;
+    K1 :: Bool = true,
+    K2 :: Bool = true,
+    K3 :: Bool = true,
     )  :: Q where {Q}
 
     # Implement special case ν = ∞ and νp = ∞
 
     val = zero(Q)
 
-    if is_inbounds(Ω, meshes(γ.K1, 1))
+    if K1 && is_inbounds(Ω, meshes(γ.K1, 1))
         val += γ.K1[Ω]
     end
 

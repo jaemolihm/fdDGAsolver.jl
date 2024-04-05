@@ -49,6 +49,13 @@ using Test
     end
     @test fdDGAsolver.νInf === fdDGAsolver.InfiniteMatsubaraFrequency()
 
+
+    for iΩ in [-100, -1, 0, 1, 100], iω in [-100, -1, 0, 1, 100]
+        Ω = MatsubaraFrequency(T, iΩ, Boson);
+        ω = MatsubaraFrequency(T, iω, Fermion);
+        @test box_eval(γ.K2, Ω, ω) ≈ γ(Ω, ω, νInf; K1 = false)
+    end
+
     # Test IO
     testfile = dirname(@__FILE__) * "/test.h5"
     file = h5open(testfile, "w")

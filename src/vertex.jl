@@ -169,8 +169,8 @@ end
 # evaluators for parallel spin component
 @inline function (F :: Vertex{Q})(
     Ω  :: MatsubaraFrequency,
-    ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
-    νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    ν  :: MatsubaraFrequency,
+    νp :: MatsubaraFrequency,
        :: Type{Ch},
        :: Type{pSp}
     ;
@@ -200,6 +200,50 @@ end
 
     return val
 end
+
+
+
+# Special cases where either ν or νp is an InfiniteMatsubaraFrequency
+@inline function (F :: Vertex{Q})(
+    Ω  :: MatsubaraFrequency,
+    ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+       :: Type{Ch},
+       :: Type{pSp}
+    ;
+    F0 :: Bool = true,
+    γp :: Bool = true,
+    γt :: Bool = true,
+    γa :: Bool = true
+    )  :: Q where {Q, Ch <: ChannelTag}
+
+    val = zero(Q)
+
+    if F0
+        val += F.F0(Ω, ν, νp, Ch, pSp; F0, γp, γt, γa)
+    end
+
+    # This function is called only if either ν or νp is an InfiniteMatsubaraFrequency.
+    # Otherwise, the specific case of having all MatsubaraFrequency's is called.
+
+    # If ν or νp is an InfiniteMatsubaraFrequency, reducible vertices is nonzero
+    # only for the same channel evaluated.
+
+    if Ch === pCh && γp
+        val += F.γp(convert_frequency(Ω, ν, νp, Ch, pCh)...)
+    end
+
+    if Ch === tCh &&γt
+        val += F.γt(convert_frequency(Ω, ν, νp, Ch, tCh)...)
+    end
+
+    if Ch === aCh &&γa
+        val += F.γa(convert_frequency(Ω, ν, νp, Ch, aCh)...)
+    end
+
+    return val
+end
+
 
 # evaluators for crossed spin component
 @inline function (F :: Vertex{Q})(
