@@ -355,29 +355,34 @@ function reduce!(
     γ :: NL_Channel
     ) :: Nothing
 
-    for iΩ in eachindex(meshes(γ.K2, 1))
-        Ω = value(meshes(γ.K2, 1)[iΩ])
-        K1val = γ.K1[Ω]
+    for iP in eachindex(get_P_mesh(γ))
+        P = value(get_P_mesh(γ)[iP])
 
-        for iν in eachindex(meshes(γ.K2, 2))
-            ν = value(meshes(γ.K2, 2)[iν])
-            γ.K2[Ω, ν] -= K1val
-        end
-    end
+        for iΩ in eachindex(meshes(γ.K2, 1))
+            Ω = value(meshes(γ.K2, 1)[iΩ])
+            K1val = γ.K1[Ω, P]
 
-    for iΩ in eachindex(meshes(γ.K3, 1))
-        Ω = value(meshes(γ.K3, 1)[iΩ])
-        K1val = γ.K1[Ω]
-
-        for iν in eachindex(meshes(γ.K3, 2))
-            ν = value(meshes(γ.K3, 2)[iν])
-            K2val = γ.K2[Ω, ν]
-
-            for iνp in eachindex(meshes(γ.K3, 3))
-                νp = value(meshes(γ.K3, 3)[iνp])
-                γ.K3[Ω, ν, νp] -= K1val + K2val + γ.K2[Ω, νp]
+            for iν in eachindex(meshes(γ.K2, 2))
+                ν = value(meshes(γ.K2, 2)[iν])
+                γ.K2[Ω, ν, P] -= K1val
             end
         end
+
+        for iΩ in eachindex(meshes(γ.K3, 1))
+            Ω = value(meshes(γ.K3, 1)[iΩ])
+            K1val = γ.K1[Ω, P]
+
+            for iν in eachindex(meshes(γ.K3, 2))
+                ν = value(meshes(γ.K3, 2)[iν])
+                K2val = γ.K2[Ω, ν, P]
+
+                for iνp in eachindex(meshes(γ.K3, 3))
+                    νp = value(meshes(γ.K3, 3)[iνp])
+                    γ.K3[Ω, ν, νp, P] -= K1val + K2val + γ.K2[Ω, νp, P]
+                end
+            end
+        end
+
     end
 
     return nothing

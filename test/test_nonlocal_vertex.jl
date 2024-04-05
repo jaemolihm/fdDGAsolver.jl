@@ -22,4 +22,28 @@ using Test
     @test γ(Ω, νInf, ω, P_)    ≈ γ.K1[Ω, P] + γ.K2[Ω, ω, P]
     @test γ(Ω, ν, νInf, P_)    ≈ γ.K1[Ω, P] + γ.K2[Ω, ν, P]
     @test γ(Ω, νInf, νInf, P_) ≈ γ.K1[Ω, P]
+
+    # Test reduce
+    x1 = γ(Ω, ν, ω, P; K1 = false, K2 = false, K3 = true)
+    x2 = γ(Ω, νInf, ω, P; K1 = false, K2 = true, K3 = false)
+    x3 = γ(Ω, ν, νInf, P; K1 = false, K2 = true, K3 = false)
+    x4 = γ(Ω, νInf, νInf, P; K1 = true, K2 = false, K3 = false)
+    fdDGAsolver.reduce!(γ)
+    @test γ(Ω, ν, ω, P) ≈ x1
+    @test γ(Ω, νInf, ω, P) ≈ x2
+    @test γ(Ω, ν, νInf, P) ≈ x3
+    @test γ(Ω, νInf, νInf, P) ≈ x4
+
+    # Test IO
+    testfile = dirname(@__FILE__) * "/test.h5"
+    file = h5open(testfile, "w")
+    save!(file, "f", γ)
+    close(file)
+
+    file = h5open(testfile, "r")
+    γp = fdDGAsolver.load_nonlocal_channel(file, "f")
+    @test γ == γp
+    close(file)
+
+    rm(testfile; force=true)
 end

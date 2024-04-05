@@ -34,8 +34,16 @@ using Test
     unflatten!(γ_copy, flatten(γ))
     @test γ == γ_copy
 
-    # Test reduce!
+    # Test reduce
+    x1 = γ(Ω, ν, ω; K1 = false, K2 = false, K3 = true)
+    x2 = γ(Ω, νInf, ω; K1 = false, K2 = true, K3 = false)
+    x3 = γ(Ω, ν, νInf; K1 = false, K2 = true, K3 = false)
+    x4 = γ(Ω, νInf, νInf; K1 = true, K2 = false, K3 = false)
     fdDGAsolver.reduce!(γ)
+    @test γ(Ω, ν, ω) ≈ x1
+    @test γ(Ω, νInf, ω) ≈ x2
+    @test γ(Ω, ν, νInf) ≈ x3
+    @test γ(Ω, νInf, νInf) ≈ x4
 
     # Test evaluation
     for νInf in [MatsubaraFrequency(T, 10^10, Fermion), fdDGAsolver.νInf]
