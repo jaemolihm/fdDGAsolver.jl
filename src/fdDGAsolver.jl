@@ -12,6 +12,7 @@ module fdDGAsolver
     end
 
     include("matsubarafunctions_piracy.jl")
+    include("box_eval.jl")
 
     include("types.jl")
     include("symmetries.jl")
