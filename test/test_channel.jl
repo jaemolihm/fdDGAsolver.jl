@@ -35,6 +35,9 @@ using Test
     @test γ == γ_copy
 
     # Test reduce
+    Ω = MatsubaraFrequency(T, 1, Boson)
+    ν = MatsubaraFrequency(T, 2, Fermion)
+    ω = MatsubaraFrequency(T, -1, Fermion)
     x1 = γ(Ω, ν, ω; K1 = false, K2 = false, K3 = true)
     x2 = γ(Ω, νInf, ω; K1 = false, K2 = true, K3 = false)
     x3 = γ(Ω, ν, νInf; K1 = false, K2 = true, K3 = false)

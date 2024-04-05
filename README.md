@@ -6,3 +6,4 @@
 
 ### TODO
 * In `ParquetSolver`, `S.FL` have zero K1 vertices, so evaluations of K1 can be avoided.
+* `channel.jl` and `nonlocal/channel.jl` has many duplicates. Same for `vertex.jl`

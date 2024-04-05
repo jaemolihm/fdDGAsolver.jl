@@ -55,7 +55,8 @@ end
 function get_P_mesh(
     γ :: NL_Channel
     ) :: KMesh
-    meshes(γ.K1, 2)
+
+    return meshes(γ.K1, 2)
 end
 
 function numK1(

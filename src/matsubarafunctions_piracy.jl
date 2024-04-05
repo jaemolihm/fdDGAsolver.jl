@@ -35,6 +35,17 @@ function Base.:getindex(
     return f.data[i1, i2, i3, i4]
 end
 
+
+# To solve dispatch ambiguity
+function Base.:getindex(f :: MeshFunction{3, Q}, x :: Vararg{Union{Int, UnitRange, Colon}, 3}
+    ) where {Q <: Number}
+    return f.data[x...]
+end
+function Base.:getindex(f :: MeshFunction{4, Q}, x :: Vararg{Union{Int, UnitRange, Colon}, 4}
+    ) where {Q <: Number}
+    return f.data[x...]
+end
+
 function Base.:setindex!(
     f :: MeshFunction{3, Q},
     val :: Qp,

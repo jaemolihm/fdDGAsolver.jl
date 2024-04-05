@@ -87,23 +87,12 @@ end
 
 function MatsubaraFunctions.set!(
     γ1  :: Channel{Q},
-    val :: Number
+    val :: Number,
     )   :: Nothing where {Q}
 
     set!(γ1.K1, Q(val))
     set!(γ1.K2, Q(val))
     set!(γ1.K3, Q(val))
-
-    return nothing
-end
-
-function reset!(
-    γ :: Channel
-    ) :: Nothing
-
-    set!(γ.K1, 0)
-    set!(γ.K2, 0)
-    set!(γ.K3, 0)
 
     return nothing
 end
