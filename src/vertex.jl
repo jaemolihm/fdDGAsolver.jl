@@ -250,6 +250,30 @@ end
     return -F(Ω, νp, ν, tCh, pSp; F0 = F0, γp = γp, γt = γa, γa = γt)
 end
 
+# evaluators for density spin component
+@inline function (F :: Vertex{Q})(
+    Ω  :: MatsubaraFrequency,
+    ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+       :: Type{Ch},
+       :: Type{dSp}
+    ;
+    F0 :: Bool = true,
+    γp :: Bool = true,
+    γt :: Bool = true,
+    γa :: Bool = true
+    )  :: Q where {Q, Ch <: ChannelTag}
+
+    val = zero(Q)
+
+    val += F(Ω, ν, νp, Ch, pSp; F0, γp, γt, γa) * 2
+
+    val += F(Ω, ν, νp, Ch, xSp; F0, γp, γt, γa)
+
+    return val
+end
+
+
 @inline bare_vertex(F :: Vertex) =  bare_vertex(F.F0)
 @inline bare_vertex(F :: Vertex, :: Type{Ch}, :: Type{Sp}) where {Ch <: ChannelTag, Sp <: SpinTag} = bare_vertex(F.F0, Ch, Sp)
 

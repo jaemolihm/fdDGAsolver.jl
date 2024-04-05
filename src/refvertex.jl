@@ -166,6 +166,9 @@ end
 @inline bare_vertex(F :: RefVertex, :: Type{pCh}, :: Type{xSp}) = -F.U
 @inline bare_vertex(F :: RefVertex, :: Type{tCh}, :: Type{xSp}) = -F.U
 @inline bare_vertex(F :: RefVertex, :: Type{aCh}, :: Type{xSp}) = -F.U
+@inline bare_vertex(F :: RefVertex{Q}, :: Type{pCh}, :: Type{dSp}) where {Q} = zero(Q)
+@inline bare_vertex(F :: RefVertex{Q}, :: Type{tCh}, :: Type{dSp}) where {Q} = zero(Q)
+@inline bare_vertex(F :: RefVertex{Q}, :: Type{aCh}, :: Type{dSp}) where {Q} = zero(Q)
 
 # save to HDF5
 function MatsubaraFunctions.save!(

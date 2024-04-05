@@ -68,8 +68,8 @@ function fixed_point!(
     if strategy == :fdPA
         # calculate FL
         BSE_L_K2!(S, pCh)
-        BSE_L_K2!(S, tCh)
         BSE_L_K2!(S, aCh)
+        BSE_L_K2!(S, tCh)
 
         BSE_L_K3!(S, Γpp, F0p, pCh)
         BSE_L_K3!(S, Γt, Γa, F0t, F0a, tCh)
@@ -78,8 +78,8 @@ function fixed_point!(
 
     # calculate Fbuff
     BSE_K1!(S, pCh)
-    BSE_K1!(S, tCh)
     BSE_K1!(S, aCh)
+    BSE_K1!(S, tCh)
 
     BSE_K2!(S, pCh)
     BSE_K2!(S, tCh)

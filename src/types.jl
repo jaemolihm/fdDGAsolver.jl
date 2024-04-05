@@ -6,8 +6,9 @@ struct aCh <: ChannelTag end
 
 # spin components
 abstract type SpinTag end
-struct pSp <: SpinTag end
-struct xSp <: SpinTag end
+struct pSp <: SpinTag end  # parallel
+struct xSp <: SpinTag end  # crossed
+struct dSp <: SpinTag end  # density
 
 # Mesh aliases
 const FMesh = Mesh{MeshPoint{MatsubaraFrequency{Fermion}}, MatsubaraDomain}
