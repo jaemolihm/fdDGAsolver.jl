@@ -15,7 +15,7 @@ function BSE_L_K2!(
 
             # vertices
             Γd  = S.F(Ω, ν, ω, tCh, dSp; F0 = false, γt = false)
-            F0d = S.F0(Ω, ω, νInf, tCh, dSp; γp = false, γa = false)
+            F0d = S.F0(Ω, ω, νInf, tCh, dSp)
 
             val -= Π0slice[i] * Γd * F0d
         end
@@ -52,21 +52,22 @@ function BSE_K2!(
             ω = value(meshes(S.Π0ph, 2)[i])
 
             # vertices
-            Fdl  = S.F(Ω, ν, ω, tCh, dSp)
-            F0dr = S.F0(Ω, ω, νInf, tCh, dSp; γp = false, γa = false)
+            Fl  = S.F(Ω, ν, ω, tCh, dSp)
+            F0r = S.F0(Ω, ω, νInf, tCh, dSp)
+            FLr = S.FL(Ω, ω, νInf, tCh, dSp)
 
-            # 1ℓ part
-            val -= (Πslice[i] - Π0slice[i]) * Fdl * F0dr
-
-            # central part
-            val -= Πslice[i] * Fdl * (2 * box_eval(S.FL.γt.K2, Ω, ω) - box_eval(S.FL.γa.K2, Ω, ω))
+            # 1ℓ and central part
+            val -= Fl * ((Πslice[i] - Π0slice[i]) * F0r + Πslice[i] * FLr)
         end
 
-        return (2 * S.FL.γt.K2[Ω, ν] - S.FL.γa.K2[Ω, ν]) + temperature(S) * val
+        return temperature(S) * val
     end
 
     # compute K2
     S.SGph[2](S.Fbuff.γt.K2, InitFunction{2, Q}(diagram); mode = S.mode)
+
+    add!(S.Fbuff.γt.K2, S.FL.γt.K2, 2)
+    add!(S.Fbuff.γt.K2, S.FL.γa.K2, -1)
 
     # Currently S.Fbuff.γt.K2 has γtd = 2 γtp + γtx = 2 γtp - γax
     # We want to store γtp = (γtd + γax) / 2

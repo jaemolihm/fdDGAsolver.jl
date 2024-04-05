@@ -15,7 +15,7 @@ function BSE_L_K2!(
 
             # vertices
             Γp  = S.F(Ω, ν, ω, aCh, pSp; F0 = false, γa = false)
-            F0p = S.F0(Ω, ω, νInf, aCh, pSp; γp = false, γt = false)
+            F0p = S.F0(Ω, ω, νInf, aCh, pSp)
 
             val += Γp * Π0slice[i] * F0p
         end
@@ -47,18 +47,21 @@ function BSE_K2!(
             ω = value(meshes(S.Π0ph, 2)[i])
 
             # vertices
-            Fpl  = S.F(Ω, ν, ω, aCh, pSp)
-            F0pr = S.F0(Ω, ω, νInf, aCh, pSp; γp = false, γt = false)
+            Fl  = S.F(Ω, ν, ω, aCh, pSp)
+            F0r = S.F0(Ω, ω, νInf, aCh, pSp)
+            FLr = S.FL(Ω, ω, νInf, aCh, pSp)
 
             # 1ℓ and central part
-            val += Fpl * ((Πslice[i] - Π0slice[i]) * F0pr + Πslice[i] * box_eval(S.FL.γa.K2, Ω, ω))
+            val += Fl * ((Πslice[i] - Π0slice[i]) * F0r + Πslice[i] * FLr)
         end
 
-        return S.FL.γa.K2[Ω, ν] + temperature(S) * val
+        return temperature(S) * val
     end
 
     # compute K2
     S.SGph[2](S.Fbuff.γa.K2, InitFunction{2, Q}(diagram); mode = S.mode)
+
+    add!(S.Fbuff.γa.K2, S.FL.γa.K2)
 
     return nothing
 end

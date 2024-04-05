@@ -11,6 +11,8 @@ module fdDGAsolver
         using NLsolve
     end
 
+    include("matsubarafunctions_piracy.jl")
+
     include("types.jl")
     include("symmetries.jl")
     # include("sum_me.jl")
