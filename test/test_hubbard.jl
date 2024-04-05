@@ -8,10 +8,10 @@ using Test
     MPI.Init()
 
     T = 0.5
-    t1 = 1.0
+    t1 = 1.3
     μ = 0.2
 
-    nG = 10
+    nG = 5
     mG = MatsubaraMesh(T, nG, Fermion)
 
     k1 = 2pi * SVector(1., 0.)
@@ -30,5 +30,23 @@ using Test
         @test Gbare(ν, SVector{2, Float64}(π, π)) ≈ 1 / (im * ν + μ - 4t1)
         @test Gbare(ν, SVector(0.2 + 2π, 0.4 - 2π)) ≈ Gbare(ν, SVector(0.2, 0.4))
     end
+
+    # Test Dyson
+
+    G = MeshFunction(mG, mK)
+    Σ = MeshFunction(mG, mK)
+
+    set!(Σ, 0)
+    fdDGAsolver.Dyson!(G, Σ, Gbare)
+    @test absmax(G - Gbare) < 1e-10
+
+    set!(Σ, -0.5 + 0.2im)
+    fdDGAsolver.Dyson!(G, Σ, Gbare)
+    ν, k = π * T, SVector(π/2, 0.)
+    @test G(ν, k) ≈ 1 / (1 / Gbare(ν, k) + Σ(ν, k))
+
+    # We store im * G and im * Σ in the variables G and Σ. Hence, the variables G and Σ
+    # should satisfy the ordinary Dyson equation G⁻¹ = Gbare⁻¹ - Σ when multiplied by -im.
+    @test 1 / (-im * G(ν, k)) ≈ 1 / (-im * Gbare(ν, k)) - (-im * Σ(ν, k))
 
 end

@@ -1,18 +1,3 @@
-function Dyson!(
-    S :: ParquetSolver
-    ) :: Nothing
-
-    Δ = π / 5
-    D = 10.0
-    e = 0.
-    for iν in eachindex(meshes(S.G, 1))
-        ν = value(meshes(S.G, 1)[iν])
-        # S.G and S.Σ is im * G and im * Σ, so -Σ in the Dyson equation becomes +Σ.
-        S.G[ν] = 1 / (1 / S.Gbare[ν] + S.Σ(ν))
-    end
-
-    return nothing
-end
 
 function SDE_channel_L_pp(S :: ParquetSolver{Q}) :: MF_K2{Q} where {Q}
     SDE_channel_L_pp(S.Πpp, S.F, S.SGpp[2]; S.mode)

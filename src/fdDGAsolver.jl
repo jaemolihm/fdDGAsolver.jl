@@ -23,6 +23,7 @@ module fdDGAsolver
 
     include("ParquetSolver.jl")
     include("bubble.jl")
+    include("dyson.jl")
     include("SDE.jl")
     include("BSE.jl")
     include("solve.jl")
