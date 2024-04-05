@@ -21,6 +21,8 @@ module fdDGAsolver
     include("refvertex.jl")
     include("vertex.jl")
 
+    include("nonlocal/channel.jl")
+
     include("models/siam.jl")
     include("models/hubbard.jl")
 
