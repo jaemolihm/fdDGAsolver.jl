@@ -22,6 +22,7 @@ module fdDGAsolver
     include("refvertex.jl")
     include("vertex.jl")
 
+    include("nonlocal/symmetries.jl")
     include("nonlocal/channel.jl")
     include("nonlocal/vertex.jl")
     include("nonlocal/ParquetSolver.jl")
