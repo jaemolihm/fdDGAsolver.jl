@@ -17,7 +17,10 @@ module fdDGAsolver
     include("channel.jl")
     include("refvertex.jl")
     include("vertex.jl")
-    include("siam.jl")
+
+    include("models/siam.jl")
+    include("models/hubbard.jl")
+
     include("ParquetSolver.jl")
     include("bubble.jl")
     include("SDE.jl")
