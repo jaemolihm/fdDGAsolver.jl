@@ -1,4 +1,4 @@
-function Dyson!(S :: ParquetSolver) :: Nothing
+function Dyson!(S :: Union{ParquetSolver, NL_ParquetSolver}) :: Nothing
     Dyson!(S.G, S.Σ, S.Gbare)
 end
 

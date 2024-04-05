@@ -4,6 +4,41 @@ using HDF5
 using StaticArrays
 using Test
 
+@testset "NL bubbles" begin
+
+    # Test bubbles are correct when Π and G have different BZ mesh
+
+    T = 0.5
+    μ = 0.
+    t1 = 1.0
+
+    k1 = 2pi * SVector(1., 0.)
+    k2 = 2pi * SVector(0., 1.)
+
+    mG  = MatsubaraMesh(T, 5, Fermion)
+    mΠΩ = MatsubaraMesh(T, 5, Boson)
+    mΠν = MatsubaraMesh(T, 5, Fermion)
+
+    mK_G = BrillouinZoneMesh(BrillouinZone(6, k1, k2))
+    mK_Π = BrillouinZoneMesh(BrillouinZone(3, k1, k2))
+
+    G1 = hubbard_bare_Green(mG, mK_G; μ, t1)
+    G2 = hubbard_bare_Green(mG, mK_Π; μ, t1)
+
+    Πpp1 = MeshFunction(mΠΩ, mΠν, mK_Π, mK_Π)
+    Πph1 = copy(Πpp1)
+    Πpp2 = copy(Πpp1)
+    Πph2 = copy(Πpp1)
+
+    fdDGAsolver.bubbles!(Πpp1, Πph1, G1)
+    fdDGAsolver.bubbles!(Πpp2, Πph2, G2)
+
+    @test Πpp1.data ≈ Πpp2.data
+    @test Πph1.data ≈ Πph2.data
+
+end
+
+
 @testset "NL_Channel" begin
     T = 0.5
     k1 = 2pi * SVector(1., 0.)
