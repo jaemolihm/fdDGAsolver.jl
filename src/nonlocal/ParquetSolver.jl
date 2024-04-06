@@ -279,6 +279,7 @@ function init_sym_grp!(
     ], S.Σ);
 
     # Vertices in the particle-particle channel
+
     S.SGpp[1] = SymmetryGroup(Symmetry{2}[
         Symmetry{2}(w -> sK1_conj(w,)),
         Symmetry{2}(w -> sK1_ref(w, mK_Γ)),
@@ -292,13 +293,25 @@ function init_sym_grp!(
         Symmetry{3}(w -> sK2_rot(w, mK_Γ)),
     ], S.F.γp.K2)
 
-#     S.SGpp[3] = SymmetryGroup([Symmetry{3}(sK3pp1), Symmetry{3}(sK3pp2), Symmetry{3}(sK3pp3)], S.F.γp.K3)
+    S.SGpp[3] = SymmetryGroup([
+        Symmetry{4}(w -> sK3pp1( w, mK_Γ)),
+        Symmetry{4}(w -> sK3pp2( w, mK_Γ)),
+        Symmetry{4}(w -> sK3pp3( w, mK_Γ)),
+        Symmetry{4}(w -> sK3_ref(w, mK_Γ)),
+        Symmetry{4}(w -> sK3_rot(w, mK_Γ)),
+    ], S.F.γp.K3)
 
     S.SGppL[1] = S.SGpp[1]
     S.SGppL[2] = S.SGpp[2]
-#     S.SGppL[3] = SymmetryGroup([Symmetry{3}(sK3pp1), Symmetry{3}(sK3pp3)], S.F.γp.K3)
+    S.SGppL[3] = SymmetryGroup([
+        Symmetry{4}(w -> sK3pp1( w, mK_Γ)),
+        Symmetry{4}(w -> sK3pp3( w, mK_Γ)),
+        Symmetry{4}(w -> sK3_ref(w, mK_Γ)),
+        Symmetry{4}(w -> sK3_rot(w, mK_Γ)),
+    ], S.F.γp.K3)
 
-#     # particle-hole channels
+    # particle-hole channels
+
     S.SGph[1] = S.SGpp[1]
 
     S.SGph[2] = SymmetryGroup([
@@ -308,11 +321,22 @@ function init_sym_grp!(
         Symmetry{3}(w -> sK2_rot(w, mK_Γ)),
     ], S.F.γt.K2)
 
-#     S.SGph[3] = SymmetryGroup([Symmetry{3}(sK3ph1), Symmetry{3}(sK3ph2), Symmetry{3}(sK3ph3)], S.F.γt.K3)
+    S.SGph[3] = SymmetryGroup([
+        Symmetry{4}(w -> sK3ph1( w, mK_Γ)),
+        Symmetry{4}(w -> sK3ph2( w, mK_Γ)),
+        Symmetry{4}(w -> sK3ph3( w, mK_Γ)),
+        Symmetry{4}(w -> sK3_ref(w, mK_Γ)),
+        Symmetry{4}(w -> sK3_rot(w, mK_Γ)),
+    ], S.F.γt.K3)
 
     S.SGphL[1] = S.SGph[1]
     S.SGphL[2] = S.SGph[2]
-#     S.SGphL[3] = SymmetryGroup([Symmetry{3}(sK3ph1), Symmetry{3}(sK3ph3)], S.F.γt.K3)
+    S.SGphL[3] = SymmetryGroup([
+        Symmetry{4}(w -> sK3ph1( w, mK_Γ)),
+        Symmetry{4}(w -> sK3ph3( w, mK_Γ)),
+        Symmetry{4}(w -> sK3_ref(w, mK_Γ)),
+        Symmetry{4}(w -> sK3_rot(w, mK_Γ)),
+    ], S.F.γt.K3)
 
     # # For F0
     # if S.SG0pp2 !== nothing

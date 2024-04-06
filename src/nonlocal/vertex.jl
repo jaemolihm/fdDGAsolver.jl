@@ -280,7 +280,7 @@ end
     νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     P  :: BrillouinPoint,
     k  :: Union{BrillouinPoint, SWaveBrillouinPoint},
-    kp :: BrillouinPoint,
+    kp :: Union{BrillouinPoint, SWaveBrillouinPoint},
        :: Type{pCh},
        :: Type{xSp}
     ;
@@ -290,7 +290,13 @@ end
     γa :: Bool = true
     )  :: Q where {Q}
 
-    return -F(Ω, ν, Ω - νp, P, k, P - kp, pCh, pSp; F0 = F0, γp = γp, γt = γa, γa = γt)
+    if kp isa SWaveBrillouinPoint
+        Pmkp = SWaveBrillouinPoint()
+    else
+        Pmkp = P - kp
+    end
+
+    return -F(Ω, ν, Ω - νp, P, k, Pmkp, pCh, pSp; F0 = F0, γp = γp, γt = γa, γa = γt)
 end
 
 @inline function (F :: NL_Vertex{Q})(
@@ -437,7 +443,62 @@ end
         val += F.F0(Ω, ν, νp, P, k, kp, Ch, pSp; F0, γp, γt, γa)
     end
 
-    # k isa SWaveBrillouinPoint, sum over the k momentum.
+    # kp isa SWaveBrillouinPoint, sum over the kp momentum.
+    # We use the fact that NL_Vertex has only bosonic momentum dependence.
+
+    if γp
+        if Ch === pCh
+            # Vertices in the same channel as Ch does not have any k dependence.
+            # So we just use ordinary evaluation.
+            val += F.γp(convert_frequency(Ω, ν, νp, Ch, pCh)..., P)
+        else
+            # Vertices in the different channel will be integrated over the bosonic momentum.
+            val += F.γp(convert_frequency(Ω, ν, νp, Ch, pCh)..., SWaveBrillouinPoint())
+        end
+    end
+
+    if γt
+        if Ch === tCh
+            val += F.γt(convert_frequency(Ω, ν, νp, Ch, tCh)..., P)
+        else
+            val += F.γt(convert_frequency(Ω, ν, νp, Ch, tCh)..., SWaveBrillouinPoint())
+        end
+    end
+
+    if γa
+        if Ch === aCh
+            val += F.γa(convert_frequency(Ω, ν, νp, Ch, aCh)..., P)
+        else
+            val += F.γa(convert_frequency(Ω, ν, νp, Ch, aCh)..., SWaveBrillouinPoint())
+        end
+    end
+
+    return val
+end
+
+@inline function (F :: NL_Vertex{Q})(
+    Ω  :: MatsubaraFrequency,
+    ν  :: MatsubaraFrequency,
+    νp :: MatsubaraFrequency,
+    P  :: BrillouinPoint,
+    k  :: SWaveBrillouinPoint,
+    kp :: SWaveBrillouinPoint,
+       :: Type{Ch},
+       :: Type{pSp}
+    ;
+    F0 :: Bool = true,
+    γp :: Bool = true,
+    γt :: Bool = true,
+    γa :: Bool = true
+    )  :: Q where {Q, Ch <: ChannelTag}
+
+    val = zero(Q)
+
+    if F0
+        val += F.F0(Ω, ν, νp, P, k, kp, Ch, pSp; F0, γp, γt, γa)
+    end
+
+    # k and kp are SWaveBrillouinPoint, sum over the k and kp momentum.
     # We use the fact that NL_Vertex has only bosonic momentum dependence.
 
     if γp

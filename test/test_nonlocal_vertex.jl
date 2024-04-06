@@ -202,11 +202,15 @@ end
                 (false, false, true, false),
                 (false, false, false, true),
             ]
-                val = mapreduce(+, mK) do q
+                val1 = mapreduce(+, mK) do q
                     F(Ω, ν, ω, P, value(q), k, Ch, Sp; γa, γp, γt, F0)
                 end / length(mK)
+                val2 = mapreduce(+, mK) do q
+                    F(Ω, ν, ω, P, k, value(q), Ch, Sp; γa, γp, γt, F0)
+                end / length(mK)
 
-                @test F(Ω, ν, ω, P, kSW, k, Ch, Sp; γa, γp, γt, F0) ≈ val
+                @test F(Ω, ν, ω, P, kSW, k, Ch, Sp; γa, γp, γt, F0) ≈ val1
+                @test F(Ω, ν, ω, P, k, kSW, Ch, Sp; γa, γp, γt, F0) ≈ val2
             end
         end
     end

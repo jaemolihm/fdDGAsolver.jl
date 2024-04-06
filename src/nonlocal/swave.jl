@@ -46,3 +46,19 @@ function Base.getindex(
     return sum(view(f, i1, i2, i3, :)) / length(meshes(f, 4))
 
 end
+
+function Base.getindex(
+    f  :: NL_MF_Π{Q},
+    w1 :: Union{MeshPoint, <: AbstractValue, Int},
+    w2 :: Union{MeshPoint, <: AbstractValue, Int},
+    P  :: BrillouinPoint,
+       :: SWaveBrillouinPoint,
+    )  :: Q where{Q}
+
+    i1 = MatsubaraFunctions.mesh_index(w1, meshes(f, 1))
+    i2 = MatsubaraFunctions.mesh_index(w2, meshes(f, 2))
+    i3 = MatsubaraFunctions.mesh_index(P,  meshes(f, 3))
+
+    return sum(view(f, i1, i2, i3, :)) / length(meshes(f, 4))
+
+end

@@ -127,3 +127,39 @@ function Base.:setindex!(f :: MeshFunction{5, Q}, val :: Qp, x :: Vararg{Union{I
     f.data[x...] = val
     return nothing
 end
+
+
+# Same for view
+
+function Base.:view(f :: MeshFunction{4, Q}, x :: Vararg{Union{MeshPoint, <: AbstractValue, Int, UnitRange, Colon}, 4}
+    ) where {Q <: Number}
+
+    i1 = MatsubaraFunctions.mesh_index(x[1], meshes(f, 1))
+    i2 = MatsubaraFunctions.mesh_index(x[2], meshes(f, 2))
+    i3 = MatsubaraFunctions.mesh_index(x[3], meshes(f, 3))
+    i4 = MatsubaraFunctions.mesh_index(x[4], meshes(f, 4))
+    return view(f.data, i1, i2, i3, i4)
+end
+
+function Base.:view(f :: MeshFunction{5, Q}, x :: Vararg{Union{MeshPoint, <: AbstractValue, Int, UnitRange, Colon}, 5}
+    ) where {Q <: Number}
+
+    i1 = MatsubaraFunctions.mesh_index(x[1], meshes(f, 1))
+    i2 = MatsubaraFunctions.mesh_index(x[2], meshes(f, 2))
+    i3 = MatsubaraFunctions.mesh_index(x[3], meshes(f, 3))
+    i4 = MatsubaraFunctions.mesh_index(x[4], meshes(f, 4))
+    i5 = MatsubaraFunctions.mesh_index(x[5], meshes(f, 5))
+    return view(f.data, i1, i2, i3, i4, i5)
+end
+
+# Avoid amgibuity
+
+function Base.:view(f :: MeshFunction{4, Q}, x :: Vararg{Union{Int, UnitRange, Colon}, 4}
+    ) where {Q <: Number}
+    return view(f.data, x...)
+end
+
+function Base.:view(f :: MeshFunction{5, Q}, x :: Vararg{Union{Int, UnitRange, Colon}, 5}
+    ) where {Q <: Number}
+    return view(f.data, x...)
+end

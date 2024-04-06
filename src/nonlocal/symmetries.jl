@@ -96,28 +96,28 @@ function sK2pp2(
     return (w[1], w[1] - w[2], w[3]), Operation()
 end
 
-# function sK3pp1(
-#     w :: NTuple{3, MatsubaraFrequency},
-#     ) :: Tuple{NTuple{3, MatsubaraFrequency}, Operation}
+function sK3pp1(
+    w :: Tuple{MatsubaraFrequency, MatsubaraFrequency, MatsubaraFrequency, BrillouinPoint{2}},
+    m :: KMesh,
+    )
+    return (-w[1], -w[2], -w[3], fold_back(-w[4], m)), Operation(sgn = false, con = true)
+end
 
-#     return (-w[1], -w[2], -w[3]), Operation(sgn = false, con = true)
-# end
+function sK3pp2(
+    w :: Tuple{MatsubaraFrequency, MatsubaraFrequency, MatsubaraFrequency, BrillouinPoint{2}},
+    m :: KMesh,
+    )
+    return (w[1], w[3], w[2], w[4]), Operation()
+end
 
-# function sK3pp2(
-#     w :: NTuple{3, MatsubaraFrequency},
-#     ) :: Tuple{NTuple{3, MatsubaraFrequency}, Operation}
+function sK3pp3(
+    w :: Tuple{MatsubaraFrequency, MatsubaraFrequency, MatsubaraFrequency, BrillouinPoint{2}},
+    m :: KMesh,
+    )
+    return (w[1], w[1] - w[2], w[1] - w[3], w[4]), Operation()
+end
 
-#     return (w[1], w[3], w[2]), Operation()
-# end
-
-# function sK3pp3(
-#     w :: NTuple{3, MatsubaraFrequency},
-#     ) :: Tuple{NTuple{3, MatsubaraFrequency}, Operation}
-
-#     return (w[1], w[1] - w[2], w[1] - w[3]), Operation()
-# end
-
-# # particle-hole symmetries
+# particle-hole symmetries
 
 function sK2ph1(
     w :: Tuple{MatsubaraFrequency, MatsubaraFrequency, BrillouinPoint{2}},
@@ -133,23 +133,23 @@ function sK2ph2(
     return (-w[1], w[1] + w[2], fold_back(-w[3], m)), Operation()
 end
 
-# function sK3ph1(
-#     w :: NTuple{3, MatsubaraFrequency},
-#     ) :: Tuple{NTuple{3, MatsubaraFrequency}, Operation}
+function sK3ph1(
+    w :: Tuple{MatsubaraFrequency, MatsubaraFrequency, MatsubaraFrequency, BrillouinPoint{2}},
+    m :: KMesh,
+    )
+    return sK3pp1(w, m)
+end
 
-#     return sK3pp1(w)
-# end
+function sK3ph2(
+    w :: Tuple{MatsubaraFrequency, MatsubaraFrequency, MatsubaraFrequency, BrillouinPoint{2}},
+    m :: KMesh,
+    )
+    return sK3pp2(w, m)
+end
 
-# function sK3ph2(
-#     w :: NTuple{3, MatsubaraFrequency},
-#     ) :: Tuple{NTuple{3, MatsubaraFrequency}, Operation}
-
-#     return sK3pp2(w)
-# end
-
-# function sK3ph3(
-#     w :: NTuple{3, MatsubaraFrequency},
-#     ) :: Tuple{NTuple{3, MatsubaraFrequency}, Operation}
-
-#     return (-w[1], w[1] + w[2], w[1] + w[3]), Operation()
-# end
+function sK3ph3(
+    w :: Tuple{MatsubaraFrequency, MatsubaraFrequency, MatsubaraFrequency, BrillouinPoint{2}},
+    m :: KMesh,
+    )
+    return (-w[1], w[1] + w[2], w[1] + w[3], fold_back(-w[4], m)), Operation()
+end
