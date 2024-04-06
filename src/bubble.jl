@@ -26,14 +26,15 @@ function bubbles!(
 
     set!(Πpp, 0)
     set!(Πph, 0)
+    meshK_G = meshes(G, 2)
 
     for iP in eachindex(meshes(Πpp, 3)), ik in eachindex(meshes(Πpp, 4))
         P = euclidean(meshes(Πpp, 3)[iP], meshes(Πpp, 3))
         k = euclidean(meshes(Πpp, 4)[ik], meshes(Πpp, 4))
 
-        ind_k   = MatsubaraFunctions.mesh_index(    k, meshes(G, 2))
-        ind_Pmk = MatsubaraFunctions.mesh_index(P - k, meshes(G, 2))
-        ind_Ppk = MatsubaraFunctions.mesh_index(P + k, meshes(G, 2))
+        k_G   = meshK_G[MatsubaraFunctions.mesh_index(    k, meshK_G)]
+        Pmk_G = meshK_G[MatsubaraFunctions.mesh_index(P - k, meshK_G)]
+        Ppk_G = meshK_G[MatsubaraFunctions.mesh_index(P + k, meshK_G)]
 
         for iΩ in eachindex(meshes(Πpp, 1)), iν in eachindex(meshes(Πpp, 2))
             Ω = value(meshes(Πpp, 1)[iΩ])
@@ -41,14 +42,15 @@ function bubbles!(
 
             if is_inbounds(ν, meshes(G, 1))
                 if is_inbounds(Ω - ν, meshes(G, 1))
-                    Πpp[iΩ, iν, iP, ik] = G[ν, ind_k] * G[Ω - ν, ind_Pmk]
+                    Πpp[iΩ, iν, iP, ik] = G[ν, k_G] * G[Ω - ν, Pmk_G]
                 end
 
                 if is_inbounds(Ω + ν, meshes(G, 1))
-                    Πph[iΩ, iν, iP, ik] = G[ν, ind_k] * G[Ω + ν, ind_Ppk]
+                    Πph[iΩ, iν, iP, ik] = G[ν, k_G] * G[Ω + ν, Ppk_G]
                 end
             end
         end
+
     end
 
     return nothing

@@ -22,12 +22,13 @@ using Test
 
     Gbare = hubbard_bare_Green(mG, mK; μ, t1)
 
+    # Gbare stores im * G_physical, so we test -im * Gbare = G_physical
     for ν in 2π * T * ((-2:2) .+ 1/2)
-        @test Gbare(ν, SVector(0., 0.)  ) ≈ 1 / (im * ν + μ + 4t1)
-        @test Gbare(ν, SVector(0., π/2) ) ≈ 1 / (im * ν + μ + 2t1)
-        @test Gbare(ν, SVector(0., π)   ) ≈ 1 / (im * ν + μ + 0t1)
-        @test Gbare(ν, SVector(0., 3π/2)) ≈ 1 / (im * ν + μ + 2t1)
-        @test Gbare(ν, SVector{2, Float64}(π, π)) ≈ 1 / (im * ν + μ - 4t1)
+        @test -im * Gbare(ν, SVector(0., 0.)  ) ≈ 1 / (im * ν + μ + 4t1)
+        @test -im * Gbare(ν, SVector(0., π/2) ) ≈ 1 / (im * ν + μ + 2t1)
+        @test -im * Gbare(ν, SVector(0., π)   ) ≈ 1 / (im * ν + μ + 0t1)
+        @test -im * Gbare(ν, SVector(0., 3π/2)) ≈ 1 / (im * ν + μ + 2t1)
+        @test -im * Gbare(ν, SVector{2, Float64}(π, π)) ≈ 1 / (im * ν + μ - 4t1)
         @test Gbare(ν, SVector(0.2 + 2π, 0.4 - 2π)) ≈ Gbare(ν, SVector(0.2, 0.4))
     end
 
