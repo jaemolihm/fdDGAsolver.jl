@@ -17,9 +17,9 @@ function BSE_K1!(
             q = value(meshes(S.Π0ph, 4)[i.I[2]])
 
             # vertices
-            Fl  = S.F( Ω, νInf, ω, P, k0,  q, tCh, dSp)
-            F0r = S.F0(Ω, ω, νInf, P,  q, k0, tCh, dSp)
-            FLr = S.FL(Ω, ω, νInf, P,  q, k0, tCh, dSp)
+            Fl  = S.F( Ω, νInf,    ω, P, k0,  q, tCh, dSp)
+            F0r = S.F0(Ω,    ω, νInf, P,  q, k0, tCh, dSp)
+            FLr = S.FL(Ω,    ω, νInf, P,  q, k0, tCh, dSp)
 
             # 1ℓ and central part
             val -= Fl * ((Πslice[i] - Π0slice[i]) * F0r + Πslice[i] * FLr)

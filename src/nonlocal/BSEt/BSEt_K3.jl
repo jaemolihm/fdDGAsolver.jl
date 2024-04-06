@@ -21,7 +21,7 @@ function BSE_L_K3!(
             val -= Γslice[i] * Π0 * F0slice[i]
         end
 
-        return temperature(S) * val / numP_Γ(S)
+        return temperature(S) * val
     end
 
     # compute K3
@@ -48,7 +48,7 @@ function BSE_K3!(
 
         Ω, ν, νp, P = wtpl
         val      = zero(Q)
-        Γslice  = view(Γ,  Ω, νp,  :, P)
+        Γslice  = view(Γ,  Ω, νp,  :, P)  # using symmetry Γ[Ω, ω, νp] = Γ[Ω, νp, ω]
         Fslice  = view(F,  Ω,  ν,  :, P)
         F0slice = view(F0, Ω,  :, νp, P)
 
@@ -68,7 +68,7 @@ function BSE_K3!(
             end
         end
 
-        return 2 * S.FL.γt.K3[Ω, ν, νp, P] - S.FL.γa.K3[Ω, ν, νp, P] + temperature(S) * val / numP_Γ(S)
+        return 2 * S.FL.γt.K3[Ω, ν, νp, P] - S.FL.γa.K3[Ω, ν, νp, P] + temperature(S) * val
     end
 
     # compute K3

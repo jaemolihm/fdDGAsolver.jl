@@ -21,7 +21,7 @@ function BSE_L_K3!(
             val -= Γslice[i] * Π0 * F0slice[i]
         end
 
-        return temperature(S) * val / numP_Γ(S)
+        return temperature(S) * val
     end
 
     # compute K3
@@ -63,7 +63,7 @@ function BSE_K3!(
             end
         end
 
-        return S.FL.γp.K3[Ω, ν, νp, P] + temperature(S) * val / numP_Γ(S)
+        return S.FL.γp.K3[Ω, ν, νp, P] + temperature(S) * val
     end
 
     # compute K3

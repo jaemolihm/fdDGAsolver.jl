@@ -48,7 +48,7 @@ using Test
 end;
 
 @testset "nonlocal symmetry vertex scPA" begin
-    T = 0.2
+    T = 0.5
     U = 2.0
     μ = -2.0
     t1 = 1.0
@@ -57,7 +57,7 @@ end;
     k1 = 2pi * SVector(1., 0.)
     k2 = 2pi * SVector(0., 1.)
 
-    nmax = 4
+    nmax = 3
     nG  = 8nmax
     nΣ  = 8nmax
     nK1 = 4nmax
@@ -69,10 +69,9 @@ end;
 
     S = parquet_solver_hubbard_parquet_approximation(nG, nΣ, nK1, nK2, nK3, mK_G, mK_Γ; T, U, μ, t1, t2, mode = :threads)
 
-    # Iterate the solver without symmetries
+    # Solve without symmetries
 
-    fdDGAsolver.iterate_solver!(S; update_Σ = false, strategy = :scPA)
-    fdDGAsolver.iterate_solver!(S; update_Σ = false, strategy = :scPA)
+    res = fdDGAsolver.solve!(S; strategy = :scPA, update_Σ = false, verbose = false);
 
     # Check vertices are nonzero
 
@@ -98,20 +97,20 @@ end;
         @test S.SGph[1](S.F.γt.K1) < 1e-10
 
         # These error can be reduced using larger nmax
-        @test S.SGpp[2](S.F.γp.K2) < 4e-2
-        @test S.SGph[2](S.F.γa.K2) < 4e-2
-        @test S.SGph[2](S.F.γt.K2) < 4e-2
+        @test S.SGpp[2](S.F.γp.K2) < 1e-3
+        @test S.SGph[2](S.F.γa.K2) < 1e-3
+        @test S.SGph[2](S.F.γt.K2) < 1e-3
 
-        @test S.SGpp[3](S.F.γp.K3) < 4e-2
-        @test S.SGph[3](S.F.γa.K3) < 4e-2
-        @test S.SGph[3](S.F.γt.K3) < 4e-2
+        @test S.SGpp[3](S.F.γp.K3) < 2e-2
+        @test S.SGph[3](S.F.γa.K3) < 1e-3
+        @test S.SGph[3](S.F.γt.K3) < 2e-3
     end
 
 end
 
 
 @testset "nonlocal symmetry vertex fdPA" begin
-    T = 0.2
+    T = 0.5
     U = 2.0
     μ = -2.0
     t1 = 1.0
@@ -135,10 +134,9 @@ end
     S.G0 = hubbard_bare_Green(meshes(S.G0)...; μ = 1.0, t1 = 0.5)
     fdDGAsolver.bubbles!(S.Π0pp, S.Π0ph, S.G0)
 
-    # Iterate the solver without symmetries
+    # Solve without symmetries
 
-    fdDGAsolver.iterate_solver!(S; update_Σ = false, strategy = :fdPA)
-    fdDGAsolver.iterate_solver!(S; update_Σ = false, strategy = :fdPA)
+    res = fdDGAsolver.solve!(S; strategy = :fdPA, update_Σ = false, verbose = false);
 
     # Check vertices are nonzero
 
@@ -157,13 +155,12 @@ end
 
     @testset "symmetry error" begin
         # These symmetry are exact only when the fdPA is converged (?)
-        @test S.SGppL[2](S.FL.γp.K2) < 0.02
-        @test S.SGphL[2](S.FL.γa.K2) < 0.02
-        @test S.SGphL[2](S.FL.γt.K2) < 0.15
-
-        @test S.SGppL[3](S.FL.γp.K3) < 0.02
-        @test S.SGphL[3](S.FL.γa.K3) < 0.02
-        @test S.SGphL[3](S.FL.γt.K3) < 0.02
+        @test S.SGppL[2](S.FL.γp.K2) < 3e-3
+        @test S.SGphL[2](S.FL.γa.K2) < 3e-4
+        @test S.SGphL[2](S.FL.γt.K2) < 1e-3
+        @test S.SGppL[3](S.FL.γp.K3) < 3e-3
+        @test S.SGphL[3](S.FL.γa.K3) < 4e-4
+        @test S.SGphL[3](S.FL.γt.K3) < 1e-3
     end
 
 end
