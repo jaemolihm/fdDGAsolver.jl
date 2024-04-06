@@ -539,12 +539,14 @@ end
 
 # reducer
 function reduce!(
-    F :: NL_Vertex
+    F :: NL_Vertex,
+    ;
+    max_class :: Int = 3,
     ) :: Nothing
 
-    reduce!(F.γp)
-    reduce!(F.γt)
-    reduce!(F.γa)
+    reduce!(F.γp; max_class)
+    reduce!(F.γt; max_class)
+    reduce!(F.γa; max_class)
 
     return nothing
 end
