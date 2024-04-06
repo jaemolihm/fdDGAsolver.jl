@@ -83,15 +83,17 @@ mutable struct NL_ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
         # single-particle Green's function and self-energy
         # The self-energy has the same momentum resolution as the vertex mk_Γ,
         # which is coarser than that of the bare and full Green functions mk_G.
+        # Initialization: G = Gbare, Σ = 0
         mK_G = meshes(Gbare, 2)
         G = MeshFunction(MatsubaraMesh(T, nG, Fermion), mK_G; data_t = Q)
         Σ = MeshFunction(MatsubaraMesh(T, nΣ, Fermion), mK_Γ; data_t = Q)
-        set!(G, 0)
+        set!(G, Gbare)
         set!(Σ, 0)
 
         # bubbles
         Πpp = copy(Π0pp)
         Πph = copy(Π0pp)
+        bubbles!(Πpp, Πph, G)
 
         # channel-decomposed two-particle vertex
         F = NL_Vertex(F0, T, nK1, nK2, nK3, mK_Γ)
@@ -160,108 +162,6 @@ function parquet_solver_hubbard_parquet_approximation(
     NL_ParquetSolver(nG, nΣ, nK1, nK2, nK3, mK_Γ, Gbare, G0, Σ0, F0; mode)
 end
 
-# # construct from CTINT input data
-# function NL_ParquetSolver(
-#     data::HDF5.File,
-#     T::Float64,
-#     U::Float64,
-#     numG::Int64,
-#     numΣ::Int64,
-#     numK1::Int64,
-#     numK2::NTuple{2,Int64},
-#     numK3::NTuple{2,Int64},
-#     ::Type{Q}=ComplexF64,
-# ) where {Q}
-
-#     println("Loading reference system ...")
-
-#     # load G
-#     Gdat = read(data, "G")
-#     Gidx = read(data, "G_last_idx")
-#     gG = MatsubaraMesh(T, Gidx + 1, Fermion)
-#     @assert typeof(Gdat) == Vector{Q}
-#     @assert last_index(gG) == Gidx
-#     Garr = Array{Q,2}(undef, length(Gdat), 1)
-#     Garr[:] .= Gdat
-#     G = MeshFunction(gG, Garr)
-
-#     # load Σ
-#     Σdat = read(data, "Σ")
-#     Σidx = read(data, "Σ_last_idx")
-#     gΣ = MatsubaraMesh(T, Σidx + 1, Fermion)
-#     @assert typeof(Σdat) == Vector{Q}
-#     @assert last_index(gΣ) == Σidx
-#     Σarr = Array{Q,2}(undef, length(Σdat), 1)
-#     Σarr[:] .= Σdat
-#     Σ = MeshFunction(gΣ, Σarr)
-
-#     # load χ2
-#     χ2dat = permutedims(read(data, "χ2pp_p"), (2, 1))[:, 1]
-#     χ2idx = read(data, "χ2_last_idx")
-#     gχ2 = MatsubaraMesh(T, χ2idx + 1, Boson)
-#     @assert typeof(χ2dat) == Vector{Q}
-#     @assert last_index(gχ2) == χ2idx
-#     χ2arr = Array{Q,2}(undef, length(χ2dat), 1)
-#     χ2arr[:] .= χ2dat
-#     χ2 = MeshFunction(g2, χ2arr)
-
-#     # load χ3
-#     χ3dat = permutedims(read(data, "χ3pp_p"), (3, 2, 1))[:, :, 1]
-#     χ3idxΩ = read(data, "χ3_last_idx_Ω")
-#     χ3idxν = read(data, "χ3_last_idx_ν")
-#     gχ3Ω = MatsubaraMesh(T, χ3idxΩ + 1, Boson)
-#     gχ3ν = MatsubaraMesh(T, χ3idxν + 1, Fermion)
-#     @assert typeof(χ3dat) == Matrix{Q}
-#     @assert last_index(gχ3Ω) == χ3idxΩ
-#     @assert last_index(gχ3ν) == χ3idxν
-#     χ3arr = Array{Q,3}(undef, size(χ3dat, 1), size(χ3dat, 2), 1)
-#     χ3arr[:, :, 1] .= χ3dat
-#     χ3 = MeshFunction(gχ3Ω, gχ3ν, χ3arr)
-
-#     # load F
-#     Fp_p_dat = permutedims(read(data, "Fpp_p"), (4, 3, 2, 1))[:, :, :, 1]
-#     Fp_x_dat = permutedims(read(data, "Fpp_x"), (4, 3, 2, 1))[:, :, :, 1]
-#     Ft_p_dat = permutedims(read(data, "Fph_p"), (4, 3, 2, 1))[:, :, :, 1]
-#     Ft_x_dat = permutedims(read(data, "Fph_x"), (4, 3, 2, 1))[:, :, :, 1]
-#     FidxΩ = read(data, "F_last_idx_Ω")
-#     Fidxν = read(data, "F_last_idx_ν")
-#     gFΩ = MatsubaraMesh(T, FidxΩ + 1, Boson)
-#     gFν = MatsubaraMesh(T, Fidxν + 1, Fermion)
-#     @assert typeof(Fp_p_dat) == Array{Q,3}
-#     @assert typeof(Fp_x_dat) == Array{Q,3}
-#     @assert typeof(Ft_p_dat) == Array{Q,3}
-#     @assert typeof(Ft_x_dat) == Array{Q,3}
-#     @assert typeof(χ3dat) == Matrix{Q}
-#     @assert last_index(gFΩ) == FidxΩ
-#     @assert last_index(gFν) == Fidxν
-#     Fp_p_arr = Array{Q,4}(undef, size(Fp_p_dat, 1), size(Fp_p_dat, 2), size(Fp_p_dat, 3), 1)
-#     Fp_x_arr = deepcopy(Fp_p_arr)
-#     Ft_p_arr = deepcopy(Fp_p_arr)
-#     Ft_x_arr = deepcopy(Fp_p_arr)
-#     Fp_p_arr[:, :, :, 1] .= Fp_p_dat
-#     Fp_x_arr[:, :, :, 1] .= Fp_x_dat
-#     Ft_p_arr[:, :, :, 1] .= Ft_p_dat
-#     Ft_x_arr[:, :, :, 1] .= Ft_x_dat
-#     Fp_p = MeshFunction(gFΩ, gFν, gFν, Fp_p_arr)
-#     Fp_x = MeshFunction(gFΩ, gFν, gFν, Fp_x_arr)
-#     Ft_p = MeshFunction(gFΩ, gFν, gFν, Ft_p_arr)
-#     Ft_x = MeshFunction(gFΩ, gFν, gFν, Ft_x_arr)
-
-#     # from χ2 compute K1
-#     K1 = deepcopy(χ2)
-#     mult!(K1, -U * U)
-
-#     # from χ3 and K1 compute K2
-#     K2 = deepcopy(χ3)
-
-#     for Ω in grids(K2, 1), ν in grids(K2, 2)
-#         # minus sign because we factor out (-i) from G
-#         K2[Ω, ν] = -U * χ3(Ω, ν) / G(ν) / G(Ω - ν) - K1(Ω) - U
-#     end
-
-#     println("Building target system ...")
-#     return NL_ParquetSolver(numG, numΣ, numK1, numK2, numK3, G, Σ, RefVertex(U, Fp_p, Fp_x, Ft_p, Ft_x))::NL_ParquetSolver{Q}
-# end
 
 # symmetry group initialization
 function init_sym_grp!(
@@ -347,50 +247,6 @@ function init_sym_grp!(
     return nothing
 end
 
-# getter methods
-function MatsubaraFunctions.temperature(
-    S::NL_ParquetSolver
-)::Float64
-
-    return MatsubaraFunctions.temperature(S.F)
-end
-
-numG(S::NL_ParquetSolver)::Int64 = N(meshes(S.G, 1))
-numΣ(S::NL_ParquetSolver)::Int64 = N(meshes(S.Σ, 1))
-numK1(S::NL_ParquetSolver)::Int64 = numK1(S.F)
-numK2(S::NL_ParquetSolver)::NTuple{2,Int64} = numK2(S.F)
-numK3(S::NL_ParquetSolver)::NTuple{2,Int64} = numK3(S.F)
+# getter methods (some of them is defined for AbstractSolver)
 numP_G(S::NL_ParquetSolver)::Int64 = length(meshes(S.G, 2))
 numP_Γ(S::NL_ParquetSolver)::Int64 = numP(S.F)
-
-# flattening and unflattening of solver
-function MatsubaraFunctions.flatten(
-    S::NL_ParquetSolver{Q}
-)::Vector{Q} where {Q}
-
-    return vcat(flatten(S.F), flatten(S.Σ))
-end
-
-function MatsubaraFunctions.flatten!(
-    S::NL_ParquetSolver{Q},
-    x::Vector{Q}
-)::Nothing where {Q}
-
-    lenΣ = length(S.Σ.data)
-    flatten!(S.F, @view x[1:end-lenΣ])
-    flatten!(S.Σ, @view x[end-lenΣ+1:end])
-
-    return nothing
-end
-
-function MatsubaraFunctions.unflatten!(
-    S::NL_ParquetSolver{Q},
-    x::Vector{Q}
-)::Nothing where {Q}
-
-    lenΣ = length(S.Σ.data)
-    unflatten!(S.F, @view x[1:end-lenΣ])
-    unflatten!(S.Σ, @view x[end-lenΣ+1:end])
-
-    return nothing
-end

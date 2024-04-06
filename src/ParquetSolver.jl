@@ -84,14 +84,16 @@ mutable struct ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
         bubbles!(Π0pp, Π0ph, G0)
 
         # single-particle Green's function and self-energy
+        # Initialization: G = Gbare, Σ = 0
         G = MeshFunction(MatsubaraMesh(T, nG, Fermion); data_t=Q)
         Σ = MeshFunction(MatsubaraMesh(T, nΣ, Fermion); data_t=Q)
-        set!(G, 0)
+        set!(G, Gbare)
         set!(Σ, 0)
 
         # bubbles
         Πpp = copy(Π0pp)
         Πph = copy(Π0pp)
+        bubbles!(Πpp, Πph, G)
 
         # channel-decomposed two-particle vertex
         F = Vertex(F0, T, nK1, nK2, nK3)
@@ -298,28 +300,28 @@ end
 
 # getter methods
 function MatsubaraFunctions.temperature(
-    S::ParquetSolver
+    S::AbstractSolver
 )::Float64
 
     return MatsubaraFunctions.temperature(S.F)
 end
 
-numG(S::ParquetSolver)::Int64 = N(meshes(S.G, 1))
-numΣ(S::ParquetSolver)::Int64 = N(meshes(S.Σ, 1))
-numK1(S::ParquetSolver)::Int64 = numK1(S.F)
-numK2(S::ParquetSolver)::NTuple{2,Int64} = numK2(S.F)
-numK3(S::ParquetSolver)::NTuple{2,Int64} = numK3(S.F)
+numG(S::AbstractSolver)::Int64 = N(meshes(S.G, 1))
+numΣ(S::AbstractSolver)::Int64 = N(meshes(S.Σ, 1))
+numK1(S::AbstractSolver)::Int64 = numK1(S.F)
+numK2(S::AbstractSolver)::NTuple{2,Int64} = numK2(S.F)
+numK3(S::AbstractSolver)::NTuple{2,Int64} = numK3(S.F)
 
 # flattening and unflattening of solver
 function MatsubaraFunctions.flatten(
-    S::ParquetSolver{Q}
+    S::AbstractSolver{Q}
 )::Vector{Q} where {Q}
 
     return vcat(flatten(S.F), flatten(S.Σ))
 end
 
 function MatsubaraFunctions.flatten!(
-    S::ParquetSolver{Q},
+    S::AbstractSolver{Q},
     x::Vector{Q}
 )::Nothing where {Q}
 
@@ -331,13 +333,31 @@ function MatsubaraFunctions.flatten!(
 end
 
 function MatsubaraFunctions.unflatten!(
-    S::ParquetSolver{Q},
+    S::AbstractSolver{Q},
     x::Vector{Q}
 )::Nothing where {Q}
 
     lenΣ = length(S.Σ.data)
     unflatten!(S.F, @view x[1:end-lenΣ])
     unflatten!(S.Σ, @view x[end-lenΣ+1:end])
+
+    return nothing
+end
+
+# save solver to HDF5
+function MatsubaraFunctions.save!(
+    f::HDF5.File,
+    label::String,
+    S::AbstractSolver
+)::Nothing
+
+    MatsubaraFunctions.save!(f, "G0", S.G0)
+    MatsubaraFunctions.save!(f, "Σ0", S.Σ0)
+    MatsubaraFunctions.save!(f, "F0", S.F0)
+
+    MatsubaraFunctions.save!(f, "G", S.G)
+    MatsubaraFunctions.save!(f, "Σ", S.Σ)
+    MatsubaraFunctions.save!(f, "F", S.F)
 
     return nothing
 end

@@ -30,6 +30,7 @@ module fdDGAsolver
     include("dyson.jl")
     include("SDE.jl")
     include("BSE.jl")
+    include("build_K3_cache.jl")
 
     include("nonlocal/swave.jl")
     include("nonlocal/symmetries.jl")
@@ -37,6 +38,7 @@ module fdDGAsolver
     include("nonlocal/vertex.jl")
     include("nonlocal/ParquetSolver.jl")
     include("nonlocal/BSE.jl")
+    include("nonlocal/build_K3_cache.jl")
 
     include("solve.jl")
 
@@ -50,6 +52,7 @@ module fdDGAsolver
         NL_Channel, NL_Vertex,
         ParquetSolver,
         NL_ParquetSolver,
+        parquet_solver_siam_parquet_approximation,
         parquet_solver_hubbard_parquet_approximation
 
 end

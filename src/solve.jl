@@ -3,9 +3,10 @@
 function fixed_point!(
     R::Vector{Q},
     x::Vector{Q},
-    S::ParquetSolver
+    S::AbstractSolver{Q}
     ;
-    strategy :: Symbol = :fdPA
+    strategy :: Symbol = :fdPA,
+    update_Σ :: Bool = true,
 )::Nothing where {Q}
 
     @assert strategy in (:fdPA, :scPA) "Calculation strategy unknown"
@@ -13,57 +14,18 @@ function fixed_point!(
     # update solver from input vector
     unflatten!(S, x)
 
-    # update G
-    Dyson!(S)
+    if update_Σ
+        # If Σ is not updated, G and bubbles are already set at the initialization step,
+        # so they don't need to be updated here.
 
-    # update bubbles
-    bubbles!(S)
+        # update G
+        Dyson!(S)
 
-    # build vertices
-    # Γpx : Target   , p-channel irreducible, spin cross
-    # F0p : Reference, p-channel full       , spin cross
-    # F0a : Reference, a-channel full       , spin parallel
-    # F0t : Reference, t-channel full       , spin density
-    g = MatsubaraMesh(temperature(S), 2 * numK1(S), Fermion)
-    Γpx = MeshFunction(meshes(S.F.γp.K3, 1), g, meshes(S.F.γp.K3, 2); data_t=Q)
-    F0p = copy(Γpx)
-    F0a = copy(Γpx)
-    F0t = copy(Γpx)
-
-    Threads.@threads for i in CartesianIndices(Γpx.data)
-        Ω = value(meshes(Γpx, 1)[i.I[1]])
-        ν = value(meshes(Γpx, 2)[i.I[2]])
-        νp = value(meshes(Γpx, 3)[i.I[3]])
-        Γpx[i] = S.F(Ω, ν, νp, pCh, xSp; F0=false, γp=false)
-        F0p[i] = S.F0(Ω, ν, νp, pCh, xSp)
-        F0a[i] = S.F0(Ω, ν, νp, aCh, pSp)
-        F0t[i] = S.F0(Ω, ν, νp, tCh, pSp) * 2 - F0a[i]
+        # update bubbles
+        bubbles!(S)
     end
 
-    # Γpp : Target, p-channel irreducible, spin parallel
-    # Γa  : Target, a-channel irreducible, spin parallel
-    # Γt  : Target, t-channel irreducible, spin density
-    # Fp  : Target, a-channel full,        spin parallel
-    # Fa  : Target, a-channel full,        spin parallel
-    # Ft  : Target, a-channel full,        spin density
-    Γpp = MeshFunction(meshes(S.F.γp.K3, 1), meshes(S.F.γp.K3, 2), g; data_t=Q)
-    Γa = deepcopy(Γpp)
-    Γt = deepcopy(Γpp)
-    Fp = deepcopy(Γpp)
-    Fa = deepcopy(Γpp)
-    Ft = deepcopy(Γpp)
-
-    Threads.@threads for i in CartesianIndices(Γpp.data)
-        Ω = value(meshes(Γpp, 1)[i.I[1]])
-        ν = value(meshes(Γpp, 2)[i.I[2]])
-        νp = value(meshes(Γpp, 3)[i.I[3]])
-        Γpp[i] = S.F(Ω, ν, νp, pCh, pSp; F0=false, γp=false)
-        Γa[i] = S.F(Ω, ν, νp, aCh, pSp; F0=false, γa=false)
-        Γt[i] = S.F(Ω, ν, νp, tCh, pSp; F0=false, γt=false) * 2 - Γa[i]
-        Fp[i] = S.F(Ω, ν, νp, pCh, pSp)
-        Fa[i] = S.F(Ω, ν, νp, aCh, pSp)
-        Ft[i] = S.F(Ω, ν, νp, tCh, pSp) * 2 - Fa[i]
-    end
+    Γpx, F0p, F0a, F0t, Γpp, Γa, Γt, Fp, Fa, Ft = build_K3_cache(S)
 
     if strategy == :fdPA
         # calculate FL
@@ -72,8 +34,8 @@ function fixed_point!(
         BSE_L_K2!(S, tCh)
 
         BSE_L_K3!(S, Γpp, F0p, pCh)
-        BSE_L_K3!(S, Γa, F0a, aCh)
-        BSE_L_K3!(S, Γt, F0t, tCh)
+        BSE_L_K3!(S, Γa,  F0a, aCh)
+        BSE_L_K3!(S, Γt,  F0t, tCh)
     end
 
     # calculate Fbuff
@@ -86,33 +48,37 @@ function fixed_point!(
     BSE_K2!(S, tCh)
 
     BSE_K3!(S, Γpx, Fp, F0p, pCh)
-    BSE_K3!(S, Γa, Fa, F0a, aCh)
-    BSE_K3!(S, Γt, Ft, F0t, tCh)
+    BSE_K3!(S, Γa,  Fa, F0a, aCh)
+    BSE_K3!(S, Γt,  Ft, F0t, tCh)
 
     # update F
     set!(S.F, S.Fbuff)
     reduce!(S.F)
 
     # update Σ
-    if strategy === :scPA
-        SDE!(S)
-    elseif strategy === :fdPA
-        # Σ = SDE(ΔΓ, Π, G)
-        SDE!(S; include_U² = false, include_Hartree = false)
-        #   + SDE(Γ₀, Π, G)
-        add!(S.Σ, SDE!(copy(S.Σ), S.G, S.Πpp, S.Πph, S.F0, S.SGΣ, S.SG0pp2, S.SG0ph2; S.mode))
-        #   - SDE(Γ₀, Π₀, G₀)
-        add!(S.Σ, SDE!(copy(S.Σ), S.G0, S.Π0pp, S.Π0ph, S.F0, S.SGΣ, S.SG0pp2, S.SG0ph2; S.mode) * -1)
-        #   + Σ₀
-        add!(S.Σ, S.Σ0)
+    if update_Σ
 
-        # # Using K12
-        # SDE_using_K12!(S)
-        # add!(S.Σ, SDE_using_K12!(copy(S.Σ), S.G - S.G0, S.F0, S.SGΣ; S.mode, include_Hartree = false))
-        # add!(S.Σ, SDE_using_K12!(copy(S.Σ), S.G0, S.F0, S.SGΣ; S.mode, include_Hartree = false))
+        if strategy === :scPA
+            SDE!(S)
+        elseif strategy === :fdPA
+            # Σ = SDE(ΔΓ, Π, G)
+            SDE!(S; include_U² = false, include_Hartree = false)
+            #   + SDE(Γ₀, Π, G)
+            add!(S.Σ, SDE!(copy(S.Σ), S.G, S.Πpp, S.Πph, S.F0, S.SGΣ, S.SG0pp2, S.SG0ph2; S.mode))
+            #   - SDE(Γ₀, Π₀, G₀)
+            add!(S.Σ, SDE!(copy(S.Σ), S.G0, S.Π0pp, S.Π0ph, S.F0, S.SGΣ, S.SG0pp2, S.SG0ph2; S.mode) * -1)
+            #   + Σ₀
+            add!(S.Σ, S.Σ0)
+
+            # # Using K12
+            # SDE_using_K12!(S)
+            # add!(S.Σ, SDE_using_K12!(copy(S.Σ), S.G - S.G0, S.F0, S.SGΣ; S.mode, include_Hartree = false))
+            # add!(S.Σ, SDE_using_K12!(copy(S.Σ), S.G0, S.F0, S.SGΣ; S.mode, include_Hartree = false))
+        end
+
+        self_energy_sanity_check(S.Σ)
+
     end
-
-    self_energy_sanity_check(S.Σ)
 
     # calculate residue
     flatten!(S, R)
@@ -123,16 +89,16 @@ end
 
 # run the solver
 function solve!(
-    S::ParquetSolver
+    S::AbstractSolver,
     ;
     parallel_mode :: Symbol = :serial,
-    strategy::Symbol = :fdPA,
-    maxiter::Int64=100,
-    tol::Float64=1e-4,
-    δ::Float64=0.85,
-    mem::Int64=8,
-    verbose :: Bool = true,
-)
+    maxiter  :: Int64 = 100,
+    tol      :: Float64 = 1e-4,
+    δ        :: Float64 = 0.85,
+    mem      :: Int64 = 8,
+    verbose  :: Bool = true,
+    kwargs_fixed_point...
+    )
 
     verbose && mpi_println("Converging parquet equations.")
     verbose && mpi_println("parallel_mode = $parallel_mode ...")
@@ -140,7 +106,7 @@ function solve!(
     S.mode = parallel_mode
 
     ti = time()
-    res = nlsolve((R, x) -> fixed_point!(R, x, S; strategy), flatten(S),
+    res = nlsolve((R, x) -> fixed_point!(R, x, S; kwargs_fixed_point...), flatten(S),
         method=:anderson,
         iterations=maxiter,
         ftol=tol,
@@ -153,24 +119,3 @@ function solve!(
 
     return res
 end
-
-# save solver to HDF5
-function MatsubaraFunctions.save!(
-    f::HDF5.File,
-    label::String,
-    S::ParquetSolver
-)::Nothing
-
-    MatsubaraFunctions.save!(f, "G0", S.G0)
-    MatsubaraFunctions.save!(f, "Σ0", S.Σ0)
-    MatsubaraFunctions.save!(f, "F0", S.F0)
-
-    MatsubaraFunctions.save!(f, "G", S.G)
-    MatsubaraFunctions.save!(f, "Σ", S.Σ)
-    MatsubaraFunctions.save!(f, "F", S.F)
-
-    return nothing
-end
-
-export
-    parquet_solver_siam_parquet_approximation
