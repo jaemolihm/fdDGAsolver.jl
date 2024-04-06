@@ -1,14 +1,16 @@
-__precompile__(false)
+__precompile__(true)
 module fdDGAsolver
 
     using PrecompileTools
 
     @recompile_invalidations begin
         using MPI
+        MPI.Init()
         using MatsubaraFunctions
         using Polyester
         using HDF5
         using NLsolve
+        using StaticArrays
     end
 
     include("matsubarafunctions_piracy.jl")
@@ -41,6 +43,30 @@ module fdDGAsolver
     include("nonlocal/build_K3_cache.jl")
 
     include("solve.jl")
+
+    @compile_workload begin
+        MPI.Init()
+
+        T = 0.2
+        U = 2.0
+        μ = 0.0
+        t1 = 1.0
+
+        nmax = 2
+        nG  = 12nmax
+        nΣ  = 12nmax
+        nK1 = 8nmax
+        nK2 = (2nmax, nmax)
+        nK3 = (2nmax, nmax)
+
+        k1 = 2pi * SVector(1., 0.)
+        k2 = 2pi * SVector(0., 1.)
+        mK_G = BrillouinZoneMesh(BrillouinZone(4, k1, k2))
+        mK_Γ = BrillouinZoneMesh(BrillouinZone(2, k1, k2))
+
+        S = parquet_solver_hubbard_parquet_approximation(nG, nΣ, nK1, nK2, nK3, mK_G, mK_Γ; T, U, μ, t1, mode = :hybrid)
+        iterate_solver!(S; update_Σ = false)
+    end
 
     export
         pCh, tCh, aCh,
