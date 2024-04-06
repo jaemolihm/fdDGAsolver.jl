@@ -87,21 +87,36 @@ end;
     fdDGAsolver.BSE_K1!(S, aCh);
     fdDGAsolver.BSE_K1!(S, tCh);
 
+    fdDGAsolver.BSE_L_K2!(S, pCh);
     fdDGAsolver.BSE_L_K2!(S, aCh);
+    fdDGAsolver.BSE_L_K2!(S, tCh);
+    fdDGAsolver.BSE_K2!(S, pCh);
     fdDGAsolver.BSE_K2!(S, aCh);
+    fdDGAsolver.BSE_K2!(S, tCh);
 
     @test absmax(S.Fbuff.γp.K1) > 0
-    @test absmax(S.Fbuff.γt.K1) > 0
     @test absmax(S.Fbuff.γa.K1) > 0
+    @test absmax(S.Fbuff.γt.K1) > 0
+    @test absmax(S.FL.γp.K2) > 0
     @test absmax(S.FL.γa.K2) > 0
+    @test absmax(S.FL.γt.K2) > 0
+    @test absmax(S.Fbuff.γp.K2) > 0
     @test absmax(S.Fbuff.γa.K2) > 0
+    @test absmax(S.Fbuff.γt.K2) > 0
 
     # Now initialize symmetries and test symmetry of the K1 vertices
     fdDGAsolver.init_sym_grp!(S)
+
     @test S.SGpp[1](S.Fbuff.γp.K1) < 1e-10
-    @test S.SGph[1](S.Fbuff.γt.K1) < 1e-10
     @test S.SGph[1](S.Fbuff.γa.K1) < 1e-10
-    @test S.SGphL[2](S.FL.γa.K2)   < 1e-10
+    @test S.SGph[1](S.Fbuff.γt.K1) < 1e-10
+
+    @test S.SGpp[2](S.Fbuff.γp.K2) < 3e-3  # This improves for large nmax
     @test S.SGph[2](S.Fbuff.γa.K2) < 1e-2  # This improves for large nmax
+    @test S.SGph[2](S.Fbuff.γt.K2) < 7e-3  # This improves for large nmax
+
+    @test S.SGppL[2](S.FL.γp.K2)   < 1e-10
+    @test S.SGphL[2](S.FL.γa.K2)   < 1e-10
+    @test S.SGphL[2](S.FL.γt.K2)   < 1e-10
 
 end
