@@ -247,6 +247,18 @@ function init_sym_grp!(
     return nothing
 end
 
+function reset_sym_grp!(S :: NL_ParquetSolver)
+    (; F, Σ) = S
+
+    S.SGΣ = SymmetryGroup(Σ)
+    S.SGpp = SymmetryGroup[SymmetryGroup(F.γp.K1), SymmetryGroup(F.γp.K2), SymmetryGroup(F.γp.K3)]
+    S.SGph = SymmetryGroup[SymmetryGroup(F.γp.K1), SymmetryGroup(F.γp.K2), SymmetryGroup(F.γp.K3)]
+    S.SGppL = SymmetryGroup[SymmetryGroup(F.γp.K1), SymmetryGroup(F.γp.K2), SymmetryGroup(F.γp.K3)]
+    S.SGphL = SymmetryGroup[SymmetryGroup(F.γp.K1), SymmetryGroup(F.γp.K2), SymmetryGroup(F.γp.K3)]
+
+    return nothing
+end
+
 # getter methods (some of them is defined for AbstractSolver)
 numP_G(S::NL_ParquetSolver)::Int64 = length(meshes(S.G, 2))
 numP_Γ(S::NL_ParquetSolver)::Int64 = numP(S.F)

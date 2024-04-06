@@ -1,18 +1,11 @@
 
-# fixed-point equation
-function fixed_point!(
-    R::Vector{Q},
-    x::Vector{Q},
-    S::AbstractSolver{Q}
-    ;
+# Parquet iteration
+function iterate_solver!(S :: AbstractSolver;
     strategy :: Symbol = :fdPA,
     update_Σ :: Bool = true,
-)::Nothing where {Q}
+    ) ::Nothing
 
     @assert strategy in (:fdPA, :scPA) "Calculation strategy unknown"
-
-    # update solver from input vector
-    unflatten!(S, x)
 
     if update_Σ
         # If Σ is not updated, G and bubbles are already set at the initialization step,
@@ -25,7 +18,7 @@ function fixed_point!(
         bubbles!(S)
     end
 
-    Γpx, F0p, F0a, F0t, Γpp, Γa, Γt, Fp, Fa, Ft = build_K3_cache(S)
+    (; Γpx, F0p, F0a, F0t, Γpp, Γa, Γt, Fp, Fa, Ft) = build_K3_cache(S)
 
     if strategy == :fdPA
         # calculate FL
@@ -80,6 +73,25 @@ function fixed_point!(
 
     end
 
+    return nothing
+
+end
+
+# fixed-point equation
+function fixed_point!(
+    R :: Vector{Q},
+    x :: Vector{Q},
+    S :: AbstractSolver{Q}
+    ;
+    kwargs_solver...
+    ) :: Nothing where {Q}
+
+    # update solver from input vector
+    unflatten!(S, x)
+
+    # Iterate the solver
+    iterate_solver!(S; kwargs_solver...)
+
     # calculate residue
     flatten!(S, R)
     R .-= x
@@ -97,7 +109,7 @@ function solve!(
     δ        :: Float64 = 0.85,
     mem      :: Int64 = 8,
     verbose  :: Bool = true,
-    kwargs_fixed_point...
+    kwargs_solver...  # passed to the iterate_solver function
     )
 
     verbose && mpi_println("Converging parquet equations.")
@@ -106,7 +118,7 @@ function solve!(
     S.mode = parallel_mode
 
     ti = time()
-    res = nlsolve((R, x) -> fixed_point!(R, x, S; kwargs_fixed_point...), flatten(S),
+    res = nlsolve((R, x) -> fixed_point!(R, x, S; kwargs_solver...), flatten(S),
         method=:anderson,
         iterations=maxiter,
         ftol=tol,
