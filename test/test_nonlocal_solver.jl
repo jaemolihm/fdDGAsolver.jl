@@ -8,7 +8,7 @@ using Test
     MPI.Init()
 
     T = 0.5
-    U = 1.0
+    U = 3.0
     μ = 0.
     t1 = 1.0
 
@@ -26,6 +26,9 @@ using Test
 
     S = parquet_solver_hubbard_parquet_approximation(nG, nΣ, nK1, nK2, nK3, mK_G, mK_Γ; T, U, μ, t1)
 
+    # Fill in random dummy data
+    unflatten!(S, rand(ComplexF64, length(flatten(S))))
+
     @test fdDGAsolver.numG(S) == nG
     @test fdDGAsolver.numΣ(S) == nΣ
     @test fdDGAsolver.numK1(S) == nK1
@@ -38,7 +41,28 @@ using Test
 
     S_copy = parquet_solver_hubbard_parquet_approximation(nG, nΣ, nK1, nK2, nK3, mK_G, mK_Γ; T, U, μ, t1)
     set!(S_copy.F, 0)
-    S.F.γa.K3.data .= rand(size(S.F.γa.K3.data)...)
     unflatten!(S_copy, flatten(S))
     @test absmax(S.F.γa.K3 - S_copy.F.γa.K3) < 1e-10
+
+    # Test IO
+
+    testfile = dirname(@__FILE__) * "/test.h5"
+    f = h5open(testfile, "w")
+    save!(f, "", S)
+    close(f)
+
+    f = h5open(testfile, "r")
+    F_load = fdDGAsolver.load_nonlocal_vertex(f, "F")
+    close(f)
+
+    rm(testfile; force=true)
+
+    @test F_load.γa == S.F.γa
+    @test F_load.γp == S.F.γp
+    @test F_load.γt == S.F.γt
+    @test F_load.F0.U == S.F.F0.U
+    @test F_load.F0.Fp_p == S.F.F0.Fp_p
+    @test F_load.F0.Fp_x == S.F.F0.Fp_x
+    @test F_load.F0.Ft_p == S.F.F0.Ft_p
+    @test F_load.F0.Ft_x == S.F.F0.Ft_x
 end

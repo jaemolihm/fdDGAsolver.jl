@@ -550,7 +550,7 @@ function reduce!(
 end
 
 # save to HDF5
-function save_vertex!(
+function MatsubaraFunctions.save!(
     file  :: HDF5.File,
     label :: String,
     F     :: NL_Vertex
@@ -571,9 +571,9 @@ function load_nonlocal_vertex(
     )     :: NL_Vertex
 
     F0 = load_refvertex(file, label * "/F0")
-    γp = load_channel(file, label * "/γp")
-    γt = load_channel(file, label * "/γt")
-    γa = load_channel(file, label * "/γa")
+    γp = load_nonlocal_channel(file, label * "/γp")
+    γt = load_nonlocal_channel(file, label * "/γt")
+    γa = load_nonlocal_channel(file, label * "/γa")
 
     return NL_Vertex(F0, γp, γt, γa)
 end

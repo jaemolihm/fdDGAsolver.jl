@@ -358,7 +358,7 @@ function reduce!(
 end
 
 # save to HDF5
-function save_vertex!(
+function MatsubaraFunctions.save!(
     file  :: HDF5.File,
     label :: String,
     F     :: Vertex

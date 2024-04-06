@@ -208,7 +208,7 @@ function MatsubaraFunctions.save!(
 
     grp = create_group(file, label)
 
-    attributes(grp)["U"] = String(F.U)
+    attributes(grp)["U"] = F.U
 
     MatsubaraFunctions.save!(file, label * "/Fp_p", F.Fp_p)
     MatsubaraFunctions.save!(file, label * "/Fp_x", F.Fp_x)
@@ -225,10 +225,10 @@ function load_refvertex(
 
     U = read_attribute(file[label], "U")
 
-    Fp_p = load_matsubara_function(file, label * "/Fp_p")
-    Fp_x = load_matsubara_function(file, label * "/Fp_x")
-    Ft_p = load_matsubara_function(file, label * "/Ft_p")
-    Ft_x = load_matsubara_function(file, label * "/Ft_x")
+    Fp_p = load_mesh_function(file, label * "/Fp_p")
+    Fp_x = load_mesh_function(file, label * "/Fp_x")
+    Ft_p = load_mesh_function(file, label * "/Ft_p")
+    Ft_x = load_mesh_function(file, label * "/Ft_x")
 
     return RefVertex(U, Fp_p, Fp_x, Ft_p, Ft_x)
 end
