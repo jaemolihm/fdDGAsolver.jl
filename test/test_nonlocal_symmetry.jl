@@ -48,7 +48,7 @@ using Test
 end;
 
 
-@testset "nonlocal symmetry K1" begin
+@testset "nonlocal symmetry vertex" begin
     T = 0.2
     U = 2.0
     μ = -2.0
@@ -72,15 +72,36 @@ end;
     fdDGAsolver.Dyson!(S)
     fdDGAsolver.bubbles!(S)
 
+    # Set G0 to some auxiliary value for testing
+    S.G0 = hubbard_bare_Green(meshes(S.G0)...; μ = 1.0, t1 = 0.5)
+    fdDGAsolver.bubbles!(S.Π0pp, S.Π0ph, S.G0)
+
     # Compute BSE without symmetries
     fdDGAsolver.BSE_K1!(S, pCh);
     fdDGAsolver.BSE_K1!(S, aCh);
     fdDGAsolver.BSE_K1!(S, tCh);
+
+    set!(S.F, S.Fbuff)
+
+    fdDGAsolver.BSE_K1!(S, pCh);
+    fdDGAsolver.BSE_K1!(S, aCh);
+    fdDGAsolver.BSE_K1!(S, tCh);
+
+    fdDGAsolver.BSE_L_K2!(S, aCh);
+    fdDGAsolver.BSE_K2!(S, aCh);
+
+    @test absmax(S.Fbuff.γp.K1) > 0
+    @test absmax(S.Fbuff.γt.K1) > 0
+    @test absmax(S.Fbuff.γa.K1) > 0
+    @test absmax(S.FL.γa.K2) > 0
+    @test absmax(S.Fbuff.γa.K2) > 0
 
     # Now initialize symmetries and test symmetry of the K1 vertices
     fdDGAsolver.init_sym_grp!(S)
     @test S.SGpp[1](S.Fbuff.γp.K1) < 1e-10
     @test S.SGph[1](S.Fbuff.γt.K1) < 1e-10
     @test S.SGph[1](S.Fbuff.γa.K1) < 1e-10
+    @test S.SGphL[2](S.FL.γa.K2)   < 1e-10
+    @test S.SGph[2](S.Fbuff.γa.K2) < 1e-2  # This improves for large nmax
 
 end
