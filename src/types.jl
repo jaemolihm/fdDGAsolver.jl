@@ -40,4 +40,4 @@ Base.:-(::MatsubaraFrequency{Boson}, ::InfiniteMatsubaraFrequency) = InfiniteMat
 Base.:+(::InfiniteMatsubaraFrequency, ::MatsubaraFrequency{Boson}) = InfiniteMatsubaraFrequency()
 Base.:-(::InfiniteMatsubaraFrequency, ::MatsubaraFrequency{Boson}) = InfiniteMatsubaraFrequency()
 
-const kInf = BrillouinPoint(0, 0)
+const k0 = BrillouinPoint(0, 0)

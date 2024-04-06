@@ -1,0 +1,48 @@
+# S-wave Brillouin point. When used to evaluate vertex, integrate over the corresponding momentum.
+struct SWaveBrillouinPoint; end
+const kSW = SWaveBrillouinPoint()
+
+MatsubaraFunctions.fold_back(:: SWaveBrillouinPoint, :: KMesh) = SWaveBrillouinPoint()
+
+
+function Base.getindex(
+    f  :: NL_MF_K1{Q},
+    w1 :: Union{MeshPoint, <: AbstractValue, Int, UnitRange, Colon},
+       :: SWaveBrillouinPoint,
+    )  :: Q where{Q}
+
+    i1 = MatsubaraFunctions.mesh_index(w1, meshes(f, 1))
+
+    return sum(view(f, i1, :)) / length(meshes(f, 2))
+
+end
+
+function Base.getindex(
+    f  :: NL_MF_K2{Q},
+    w1 :: Union{MeshPoint, <: AbstractValue, Int},
+    w2 :: Union{MeshPoint, <: AbstractValue, Int},
+       :: SWaveBrillouinPoint,
+    )  :: Q where{Q}
+
+    i1 = MatsubaraFunctions.mesh_index(w1, meshes(f, 1))
+    i2 = MatsubaraFunctions.mesh_index(w2, meshes(f, 2))
+
+    return sum(view(f, i1, i2, :)) / length(meshes(f, 3))
+
+end
+
+function Base.getindex(
+    f  :: NL_MF_K3{Q},
+    w1 :: Union{MeshPoint, <: AbstractValue, Int},
+    w2 :: Union{MeshPoint, <: AbstractValue, Int},
+    w3 :: Union{MeshPoint, <: AbstractValue, Int},
+       :: SWaveBrillouinPoint,
+    )  :: Q where{Q}
+
+    i1 = MatsubaraFunctions.mesh_index(w1, meshes(f, 1))
+    i2 = MatsubaraFunctions.mesh_index(w2, meshes(f, 2))
+    i3 = MatsubaraFunctions.mesh_index(w3, meshes(f, 3))
+
+    return sum(view(f, i1, i2, i3, :)) / length(meshes(f, 4))
+
+end

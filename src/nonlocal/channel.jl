@@ -220,9 +220,9 @@ end
     Ω  :: MatsubaraFrequency,
     ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
-    P_ :: BrillouinPoint,
-    k  :: BrillouinPoint,
-    kp :: BrillouinPoint,
+    P_ :: Union{BrillouinPoint, SWaveBrillouinPoint},
+    k  :: Union{BrillouinPoint, SWaveBrillouinPoint},
+    kp :: Union{BrillouinPoint, SWaveBrillouinPoint},
     ;
     K1 :: Bool = true,
     K2 :: Bool = true,
@@ -239,7 +239,7 @@ end
     Ω  :: MatsubaraFrequency,
     ν  :: MatsubaraFrequency,
     νp :: MatsubaraFrequency,
-    P_ :: BrillouinPoint,
+    P_ :: Union{BrillouinPoint, SWaveBrillouinPoint},
     ;
     K1 :: Bool = true,
     K2 :: Bool = true,
@@ -259,7 +259,12 @@ end
 
             if ν1_inbounds && ν2_inbounds
                 K2 && (val += γ.K2[Ω, ν, P] + γ.K2[Ω, νp, P])
-                K3 && (val += box_eval(γ.K3, Ω, ν, νp, P))
+
+                if (K3 && is_inbounds( Ω, meshes(γ.K3, 1)) &&
+                          is_inbounds( ν, meshes(γ.K3, 2)) &&
+                          is_inbounds(νp, meshes(γ.K3, 3)))
+                    val += γ.K3[Ω, ν, νp, P]
+                end
 
             elseif ν1_inbounds
                 K2 && (val += γ.K2[Ω, ν, P])
@@ -278,7 +283,7 @@ end
     Ω  :: MatsubaraFrequency,
     ν  :: InfiniteMatsubaraFrequency,
     νp :: MatsubaraFrequency,
-    P_ :: BrillouinPoint,
+    P_ :: Union{BrillouinPoint, SWaveBrillouinPoint},
     ;
     K1 :: Bool = true,
     K2 :: Bool = true,
@@ -313,7 +318,7 @@ end
     Ω  :: MatsubaraFrequency,
     ν  :: MatsubaraFrequency,
     νp :: InfiniteMatsubaraFrequency,
-    P_ :: BrillouinPoint,
+    P_ :: Union{BrillouinPoint, SWaveBrillouinPoint},
     ;
     K1 :: Bool = true,
     K2 :: Bool = true,
@@ -348,7 +353,7 @@ end
     Ω  :: MatsubaraFrequency,
     ν  :: InfiniteMatsubaraFrequency,
     νp :: InfiniteMatsubaraFrequency,
-    P_ :: BrillouinPoint,
+    P_ :: Union{BrillouinPoint, SWaveBrillouinPoint},
     ;
     K1 :: Bool = true,
     K2 :: Bool = true,
@@ -374,9 +379,9 @@ end
     Ω  :: MatsubaraFrequency,
     ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
-    P  :: BrillouinPoint,
-    k  :: BrillouinPoint,
-    kp :: BrillouinPoint,
+    P  :: Union{BrillouinPoint, SWaveBrillouinPoint},
+    k  :: Union{BrillouinPoint, SWaveBrillouinPoint},
+    kp :: Union{BrillouinPoint, SWaveBrillouinPoint},
     args...
     ;
     kwargs...
@@ -384,7 +389,6 @@ end
 
     return γ(Ω, ν, νp, args...; kwargs...)
 end
-
 
 
 # reducer

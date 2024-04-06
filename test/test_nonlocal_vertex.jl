@@ -40,12 +40,19 @@ end
 
 
 @testset "NL_Channel" begin
+    using fdDGAsolver: kSW
+
     T = 0.5
     k1 = 2pi * SVector(1., 0.)
     k2 = 2pi * SVector(0., 1.)
     mK = BrillouinZoneMesh(BrillouinZone(3, k1, k2))
 
     γ = fdDGAsolver.NL_Channel(T, 5, (4, 3), (2, 3), mK);
+    @test fdDGAsolver.numK1(γ) == 5
+    @test fdDGAsolver.numK2(γ) == (4, 3)
+    @test fdDGAsolver.numK3(γ) == (2, 3)
+    @test fdDGAsolver.numP(γ) == length(mK)
+
     γ.K1.data .= rand(ComplexF64, size(γ.K1.data)...)
     γ.K2.data .= rand(ComplexF64, size(γ.K2.data)...)
     γ.K3.data .= rand(ComplexF64, size(γ.K3.data)...)
@@ -59,10 +66,6 @@ end
     @test γ(Ω, ν, νInf, P_)    ≈ γ.K1[Ω, P] + γ.K2[Ω, ν, P]
     @test γ(Ω, νInf, νInf, P_) ≈ γ.K1[Ω, P]
 
-    @test fdDGAsolver.numK1(γ) == 5
-    @test fdDGAsolver.numK2(γ) == (4, 3)
-    @test fdDGAsolver.numK3(γ) == (2, 3)
-    @test fdDGAsolver.numP(γ) == length(mK)
 
     # Test evaluation with 3 momentum arguments
     # NL_Channel has no fermionic frequency dependence.
@@ -72,7 +75,7 @@ end
     for ν in [MatsubaraFrequency(T, 2, Fermion), νInf]
         for ω in [MatsubaraFrequency(T, -1, Fermion), νInf]
             for (K1, K2, K3) in Iterators.product((true, false), (true, false), (true, false))
-                @test γ(Ω, ν, ω, P_; K1, K2, K3) == γ(Ω, ν, ω, P_, k1, k2; K1, K2, K3)
+                @test γ(Ω, ν, ω, P_, k1, k2; K1, K2, K3) == γ(Ω, ν, ω, P_; K1, K2, K3)
             end
         end
     end
@@ -135,4 +138,76 @@ end
     @test F(Ω, ν, ω, P, k, q, pCh, pSp) ≈ U + F.γp.K1(Ω, P) + F.γt.K1(Ω - ν - ω, P - k - q) + F.γa.K1(ν - ω, k - q)
     @test F(Ω, ν, ω, P, k, q, tCh, pSp) ≈ U + F.γt.K1(Ω, P) + F.γp.K1(Ω + ν + ω, P + k + q) + F.γa.K1(ω - ν, q - k)
     @test F(Ω, ν, ω, P, k, q, aCh, pSp) ≈ U + F.γa.K1(Ω, P) + F.γp.K1(Ω + ν + ω, P + k + q) + F.γt.K1(ν - ω, k - q)
+end
+
+@testset "NL SWaveBrillouinPoint" begin
+    # Test vertex evaluation using s-wave form factor kSW
+    using fdDGAsolver: kSW
+
+    T = 0.5
+    k1 = 2pi * SVector(1., 0.)
+    k2 = 2pi * SVector(0., 1.)
+    mK = BrillouinZoneMesh(BrillouinZone(3, k1, k2))
+
+    # Swave evaluation for NL_Channel
+
+    γ = fdDGAsolver.NL_Channel(T, 5, (4, 3), (2, 3), mK);
+    γ.K1.data .= rand(ComplexF64, size(γ.K1.data)...)
+    γ.K2.data .= rand(ComplexF64, size(γ.K2.data)...)
+    γ.K3.data .= rand(ComplexF64, size(γ.K3.data)...)
+    Ω = MatsubaraFrequency(T, 1, Boson)
+    ν = MatsubaraFrequency(T, 2, Fermion)
+    ω = MatsubaraFrequency(T, -1, Fermion)
+
+    function _test_swave(Γ, ωs...)
+        # Compare Γ(ωs..., kSW) with a manual average over the momentum index
+        mesh_P = meshes(Γ, length(ωs) + 1)
+        val = mapreduce(+, mesh_P) do P
+            Γ(ωs..., value(P))
+        end / length(mesh_P)
+
+        @test Γ[ωs..., kSW] ≈ val
+    end
+    _test_swave(γ.K1, Ω)
+    _test_swave(γ.K2, Ω, ν)
+    _test_swave(γ.K3, Ω, ν, ω)
+
+    for ν in [MatsubaraFrequency(T, 2, Fermion), νInf]
+        for ω in [MatsubaraFrequency(T, -1, Fermion), νInf]
+            k0 = BrillouinPoint(0, 0)
+
+            val = mapreduce(+, mK) do P
+                γ(Ω, ν, ω, value(P), k0, k0)
+            end / length(mK)
+
+            @test γ(Ω, ν, ω, kSW, k0, k0) ≈ val
+        end
+    end
+
+
+    # Swave evaluation for NL_Vertex
+
+    F = fdDGAsolver.NL_Vertex(RefVertex(T, 2.), T, 10, (4, 3), (2, 1), mK)
+    unflatten!(F, rand(ComplexF64, length(flatten(F))))
+
+    for P_ in mK, k_ in mK
+        P = value(P_)
+        k = value(k_)
+
+        for Ch in (aCh, pCh, tCh), Sp in (pSp, xSp, dSp)
+            for (γa, γp, γt, F0) in [
+                (true, true, true, true),
+                (true, false, false, false),
+                (false, true, false, false),
+                (false, false, true, false),
+                (false, false, false, true),
+            ]
+                val = mapreduce(+, mK) do q
+                    F(Ω, ν, ω, P, value(q), k, Ch, Sp; γa, γp, γt, F0)
+                end / length(mK)
+
+                @test F(Ω, ν, ω, P, kSW, k, Ch, Sp; γa, γp, γt, F0) ≈ val
+            end
+        end
+    end
 end

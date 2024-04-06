@@ -52,6 +52,8 @@ end
        :: Type{Ch_to},
     ) where {Ch_from <: ChannelTag, Ch_to <: ChannelTag}
 
+    # Momentum convention is the same as the frequency convention
+
     if Ch_from === Ch_to
         return Ω, ν, νp
 

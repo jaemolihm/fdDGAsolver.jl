@@ -31,6 +31,7 @@ module fdDGAsolver
     include("SDE.jl")
     include("BSE.jl")
 
+    include("nonlocal/swave.jl")
     include("nonlocal/symmetries.jl")
     include("nonlocal/channel.jl")
     include("nonlocal/vertex.jl")
