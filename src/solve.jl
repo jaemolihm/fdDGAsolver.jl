@@ -103,7 +103,7 @@ end
 function solve!(
     S::AbstractSolver,
     ;
-    parallel_mode :: Symbol = :serial,
+    parallel_mode :: Union{Nothing, Symbol} = nothing,
     maxiter  :: Int64 = 100,
     tol      :: Float64 = 1e-4,
     δ        :: Float64 = 0.85,
@@ -112,10 +112,12 @@ function solve!(
     kwargs_solver...  # passed to the iterate_solver function
     )
 
-    verbose && mpi_println("Converging parquet equations.")
-    verbose && mpi_println("parallel_mode = $parallel_mode ...")
+    if parallel_mode !== nothing
+        S.mode = parallel_mode
+    end
 
-    S.mode = parallel_mode
+    verbose && mpi_println("Converging parquet equations.")
+    verbose && mpi_println("parallelization mode : $(S.mode)")
 
     ti = time()
     res = nlsolve((R, x) -> fixed_point!(R, x, S; kwargs_solver...), flatten(S),
