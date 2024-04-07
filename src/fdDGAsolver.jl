@@ -51,6 +51,7 @@ module fdDGAsolver
     include("nonlocal/build_K3_cache.jl")
 
     include("nonlocal_2/BSE.jl")
+    include("nonlocal_2/SDE.jl")
 
 
     @compile_workload begin
@@ -70,10 +71,13 @@ module fdDGAsolver
 
         k1 = 2pi * SVector(1., 0.)
         k2 = 2pi * SVector(0., 1.)
-        mK_G = BrillouinZoneMesh(BrillouinZone(4, k1, k2))
+        mK_G = BrillouinZoneMesh(BrillouinZone(2, k1, k2))
         mK_Γ = BrillouinZoneMesh(BrillouinZone(2, k1, k2))
 
         S = parquet_solver_hubbard_parquet_approximation(nG, nΣ, nK1, nK2, nK3, mK_G, mK_Γ; T, U, μ, t1, mode = :hybrid)
+        iterate_solver!(S; strategy = :scPA)
+
+        S = parquet_solver_hubbard_parquet_approximation_NL2(nG, nΣ, nK1, nK2, nK3, mK_G, mK_Γ; T, U, μ, t1, mode = :hybrid)
         iterate_solver!(S; strategy = :scPA)
     end
 
