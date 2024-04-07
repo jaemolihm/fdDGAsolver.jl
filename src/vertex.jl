@@ -1,4 +1,7 @@
-struct Vertex{Q, VT}
+abstract type AbstractVertex{Q}; end
+Base.eltype(::Type{<: AbstractVertex{Q}}) where {Q} = Q
+
+struct Vertex{Q, VT} <: AbstractVertex{Q}
     F0 :: VT
     γp :: Channel{Q}
     γt :: Channel{Q}
@@ -41,28 +44,28 @@ end
 
 # getter methods
 function MatsubaraFunctions.temperature(
-    F :: Vertex
+    F :: AbstractVertex
     ) :: Float64
 
     return MatsubaraFunctions.temperature(F.γp)
 end
 
 function numK1(
-    F :: Vertex
+    F :: AbstractVertex
     ) :: Int64
 
     return numK1(F.γp)
 end
 
 function numK2(
-    F :: Vertex
+    F :: AbstractVertex
     ) :: NTuple{2, Int64}
 
     return numK2(F.γp)
 end
 
 function numK3(
-    F :: Vertex
+    F :: AbstractVertex
     ) :: NTuple{2, Int64}
 
     return numK3(F.γp)
@@ -70,8 +73,8 @@ end
 
 # setter methods
 function MatsubaraFunctions.set!(
-    F1 :: Vertex,
-    F2 :: Vertex
+    F1 :: AbstractVertex,
+    F2 :: AbstractVertex
     )  :: Nothing
 
     set!(F1.γp, F2.γp)
@@ -81,29 +84,22 @@ function MatsubaraFunctions.set!(
     return nothing
 end
 
-function reset!(
-    F :: Vertex
+function MatsubaraFunctions.set!(
+    F :: AbstractVertex,
+    val :: Number,
     ) :: Nothing
 
-    reset!(F.γp)
-    reset!(F.γt)
-    reset!(F.γa)
+    set!(F.γp, val)
+    set!(F.γt, val)
+    set!(F.γa, val)
 
     return nothing
 end
 
-# copy
-function Base.:copy(
-    F :: Vertex{Q}
-    ) :: Vertex{Q} where {Q}
-
-    return Vertex(copy(F.F0), copy(F.γp), copy(F.γt), copy(F.γa))
-end
-
 # addition
 function MatsubaraFunctions.add!(
-    F1 :: Vertex,
-    F2 :: Vertex
+    F1 :: AbstractVertex,
+    F2 :: AbstractVertex
     )  :: Nothing
 
     add!(F1.γp, F2.γp)
@@ -115,7 +111,7 @@ end
 
 # maximum absolute value
 function MatsubaraFunctions.absmax(
-    F :: Vertex
+    F :: AbstractVertex
     ) :: Float64
 
     return max(absmax(F.γp), absmax(F.γt), absmax(F.γa))
@@ -123,7 +119,7 @@ end
 
 # flatten into vector
 function MatsubaraFunctions.flatten!(
-    F :: Vertex,
+    F :: AbstractVertex,
     x :: AbstractVector
     ) :: Nothing
 
@@ -139,7 +135,7 @@ function MatsubaraFunctions.flatten!(
 end
 
 function MatsubaraFunctions.flatten(
-    F :: Vertex{Q}
+    F :: AbstractVertex{Q}
     ) :: Vector{Q} where {Q}
 
     xp = flatten(F.γp)
@@ -151,7 +147,7 @@ end
 
 # unflatten from vector
 function MatsubaraFunctions.unflatten!(
-    F :: Vertex,
+    F :: AbstractVertex,
     x :: AbstractVector
     ) :: Nothing
 
@@ -165,6 +161,16 @@ function MatsubaraFunctions.unflatten!(
     @assert offset == length(x) "Dimension mismatch between vertex and target vector"
     return nothing
 end
+
+
+# copy
+function Base.:copy(
+    F :: Vertex{Q}
+    ) :: Vertex{Q} where {Q}
+
+    return Vertex(copy(F.F0), copy(F.γp), copy(F.γt), copy(F.γa))
+end
+
 
 # evaluators for parallel spin component
 @inline function (F :: Vertex{Q})(
@@ -347,7 +353,7 @@ end
 
 # reducer
 function reduce!(
-    F :: Vertex
+    F :: AbstractVertex
     ;
     max_class :: Int = 3,
     ) :: Nothing
@@ -363,7 +369,7 @@ end
 function MatsubaraFunctions.save!(
     file  :: HDF5.File,
     label :: String,
-    F     :: Vertex
+    F     :: AbstractVertex
     )     :: Nothing
 
     MatsubaraFunctions.save!(file, label * "/F0", F.F0)

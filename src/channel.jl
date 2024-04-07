@@ -1,6 +1,10 @@
 # 2-particle reducible vertex in the asymptotic decomposition
 
-struct Channel{Q <: Number}
+abstract type AbstractReducibleVertex{Q}; end
+Base.eltype(::Type{<: AbstractReducibleVertex{Q}}) where {Q} = Q
+
+
+struct Channel{Q <: Number} <: AbstractReducibleVertex{Q}
     K1 :: MF_K1{Q}
     K2 :: MF_K2{Q}
     K3 :: MF_K3{Q}
@@ -45,28 +49,28 @@ end
 
 # getter methods
 function MatsubaraFunctions.temperature(
-    γ :: Channel
+    γ :: AbstractReducibleVertex
     ) :: Float64
 
     return MatsubaraFunctions.temperature(meshes(γ.K1, 1))
 end
 
 function numK1(
-    γ :: Channel
+    γ :: AbstractReducibleVertex
     ) :: Int64
 
     return N(meshes(γ.K1, 1))
 end
 
 function numK2(
-    γ :: Channel
+    γ :: AbstractReducibleVertex
     ) :: NTuple{2, Int64}
 
     return N(meshes(γ.K2, 1)), N(meshes(γ.K2, 2))
 end
 
 function numK3(
-    γ :: Channel
+    γ :: AbstractReducibleVertex
     ) :: NTuple{2, Int64}
 
     return N(meshes(γ.K3, 1)), N(meshes(γ.K3, 2))
@@ -74,8 +78,8 @@ end
 
 # setter methods
 function MatsubaraFunctions.set!(
-    γ1 :: Channel,
-    γ2 :: Channel
+    γ1 :: AbstractReducibleVertex,
+    γ2 :: AbstractReducibleVertex
     )  :: Nothing
 
     set!(γ1.K1, γ2.K1)
@@ -86,7 +90,7 @@ function MatsubaraFunctions.set!(
 end
 
 function MatsubaraFunctions.set!(
-    γ1  :: Channel{Q},
+    γ1  :: AbstractReducibleVertex{Q},
     val :: Number,
     )   :: Nothing where {Q}
 
@@ -99,24 +103,16 @@ end
 
 # comparison
 function Base.:(==)(
-    γ1 :: Channel,
-    γ2 :: Channel
+    γ1 :: AbstractReducibleVertex,
+    γ2 :: AbstractReducibleVertex
     )  :: Bool
     return (γ1.K1 == γ2.K1) && (γ1.K2 == γ2.K2) && (γ1.K3 == γ2.K3)
 end
 
-# copy
-function Base.:copy(
-    γ :: Channel
-    ) :: Channel
-
-    return Channel(copy(γ.K1), copy(γ.K2), copy(γ.K3))
-end
-
 # addition
 function MatsubaraFunctions.add!(
-    γ1 :: Channel,
-    γ2 :: Channel
+    γ1 :: AbstractReducibleVertex,
+    γ2 :: AbstractReducibleVertex
     )  :: Nothing
 
     add!(γ1.K1, γ2.K1)
@@ -128,7 +124,7 @@ end
 
 # length of channel
 function Base.length(
-    γ :: Channel
+    γ :: AbstractReducibleVertex
     ) :: Int64
 
     return length(γ.K1.data) + length(γ.K2.data) + length(γ.K3.data)
@@ -136,7 +132,7 @@ end
 
 # maximum absolute value
 function MatsubaraFunctions.absmax(
-    γ :: Channel
+    γ :: AbstractReducibleVertex
     ) :: Float64
 
     return max(absmax(γ.K1), absmax(γ.K2), absmax(γ.K3))
@@ -144,7 +140,7 @@ end
 
 # flatten into vector
 function MatsubaraFunctions.flatten!(
-    γ :: Channel,
+    γ :: AbstractReducibleVertex,
     x :: AbstractVector
     ) :: Nothing
 
@@ -167,7 +163,7 @@ function MatsubaraFunctions.flatten!(
 end
 
 function MatsubaraFunctions.flatten(
-    γ :: Channel{Q}
+    γ :: AbstractReducibleVertex{Q}
     ) :: Vector{Q} where {Q}
 
     x = Array{Q}(undef, length(γ))
@@ -178,7 +174,7 @@ end
 
 # unflatten from vector
 function MatsubaraFunctions.unflatten!(
-    γ :: Channel,
+    γ :: AbstractReducibleVertex,
     x :: AbstractVector
     ) :: Nothing
 
@@ -198,6 +194,13 @@ function MatsubaraFunctions.unflatten!(
 
     @assert offset == length(x) "Dimension mismatch between channel and target vector"
     return nothing
+end
+
+# copy
+function Base.:copy(
+    γ :: Channel{Q}
+    ) :: Channel{Q} where {Q}
+    return Channel(copy(γ.K1), copy(γ.K2), copy(γ.K3))
 end
 
 # evaluator
@@ -369,7 +372,7 @@ end
 function MatsubaraFunctions.save!(
     file  :: HDF5.File,
     label :: String,
-    γ     :: Channel
+    γ     :: AbstractReducibleVertex
     )     :: Nothing
 
     MatsubaraFunctions.save!(file, label * "/K1", γ.K1)

@@ -1,4 +1,4 @@
-struct NL_Vertex{Q, VT}
+struct NL_Vertex{Q, VT} <: AbstractVertex{Q}
     F0 :: VT
     γp :: NL_Channel{Q}
     γt :: NL_Channel{Q}
@@ -30,7 +30,6 @@ struct NL_Vertex{Q, VT}
     end
 end
 
-Base.eltype(::Type{<: NL_Vertex{Q}}) where {Q} = Q
 
 function Base.show(io::IO, Γ::NL_Vertex{Q}) where {Q}
     print(io, "$(nameof(typeof(Γ))){$Q}, U = $(Γ.F0.U), T = $(temperature(Γ))\n")
@@ -41,39 +40,11 @@ function Base.show(io::IO, Γ::NL_Vertex{Q}) where {Q}
 end
 
 # getter methods
-function MatsubaraFunctions.temperature(
-    F :: NL_Vertex
-    ) :: Float64
-
-    return MatsubaraFunctions.temperature(F.γp)
-end
-
 function get_P_mesh(
     F :: NL_Vertex
     ) :: KMesh
 
     return get_P_mesh(F.γp)
-end
-
-function numK1(
-    F :: NL_Vertex
-    ) :: Int64
-
-    return numK1(F.γp)
-end
-
-function numK2(
-    F :: NL_Vertex
-    ) :: NTuple{2, Int64}
-
-    return numK2(F.γp)
-end
-
-function numK3(
-    F :: NL_Vertex
-    ) :: NTuple{2, Int64}
-
-    return numK3(F.γp)
 end
 
 function numP(
@@ -83,103 +54,12 @@ function numP(
     return numP(F.γp)
 end
 
-# setter methods
-function MatsubaraFunctions.set!(
-    F1 :: NL_Vertex,
-    F2 :: NL_Vertex
-    )  :: Nothing
-
-    set!(F1.γp, F2.γp)
-    set!(F1.γt, F2.γt)
-    set!(F1.γa, F2.γa)
-
-    return nothing
-end
-
-function MatsubaraFunctions.set!(
-    F   :: NL_Vertex,
-    val :: Number,
-    )   :: Nothing
-
-    set!(F.γp, val)
-    set!(F.γt, val)
-    set!(F.γa, val)
-
-    return nothing
-end
-
 # copy
 function Base.:copy(
     F :: NL_Vertex{Q}
     ) :: NL_Vertex{Q} where {Q}
 
     return NL_Vertex(copy(F.F0), copy(F.γp), copy(F.γt), copy(F.γa))
-end
-
-# addition
-function MatsubaraFunctions.add!(
-    F1 :: NL_Vertex,
-    F2 :: NL_Vertex
-    )  :: Nothing
-
-    add!(F1.γp, F2.γp)
-    add!(F1.γt, F2.γt)
-    add!(F1.γa, F2.γa)
-
-    return nothing
-end
-
-# maximum absolute value
-function MatsubaraFunctions.absmax(
-    F :: NL_Vertex
-    ) :: Float64
-
-    return max(absmax(F.γp), absmax(F.γt), absmax(F.γa))
-end
-
-# flatten into vector
-function MatsubaraFunctions.flatten!(
-    F :: NL_Vertex,
-    x :: AbstractVector
-    ) :: Nothing
-
-    offset = 0
-    len_γ  = length(F.γp)
-
-    flatten!(F.γp, @view x[1 + offset : offset + len_γ]); offset += len_γ
-    flatten!(F.γt, @view x[1 + offset : offset + len_γ]); offset += len_γ
-    flatten!(F.γa, @view x[1 + offset : offset + len_γ]); offset += len_γ
-
-    @assert offset == length(x) "Dimension mismatch between vertex and target vector"
-    return nothing
-end
-
-function MatsubaraFunctions.flatten(
-    F :: NL_Vertex{Q}
-    ) :: Vector{Q} where {Q}
-
-    xp = flatten(F.γp)
-    xt = flatten(F.γt)
-    xa = flatten(F.γa)
-
-    return vcat(xp, xt, xa)
-end
-
-# unflatten from vector
-function MatsubaraFunctions.unflatten!(
-    F :: NL_Vertex,
-    x :: AbstractVector
-    ) :: Nothing
-
-    offset = 0
-    len_γ  = length(F.γp)
-
-    unflatten!(F.γp, @view x[1 + offset : offset + len_γ]); offset += len_γ
-    unflatten!(F.γt, @view x[1 + offset : offset + len_γ]); offset += len_γ
-    unflatten!(F.γa, @view x[1 + offset : offset + len_γ]); offset += len_γ
-
-    @assert offset == length(x) "Dimension mismatch between vertex and target vector"
-    return nothing
 end
 
 # evaluators for parallel spin component
@@ -536,35 +416,6 @@ end
 @inline bare_vertex(F :: NL_Vertex) =  bare_vertex(F.F0)
 @inline bare_vertex(F :: NL_Vertex, :: Type{Ch}, :: Type{Sp}) where {Ch <: ChannelTag, Sp <: SpinTag} = bare_vertex(F.F0, Ch, Sp)
 
-
-# reducer
-function reduce!(
-    F :: NL_Vertex,
-    ;
-    max_class :: Int = 3,
-    ) :: Nothing
-
-    reduce!(F.γp; max_class)
-    reduce!(F.γt; max_class)
-    reduce!(F.γa; max_class)
-
-    return nothing
-end
-
-# save to HDF5
-function MatsubaraFunctions.save!(
-    file  :: HDF5.File,
-    label :: String,
-    F     :: NL_Vertex
-    )     :: Nothing
-
-    MatsubaraFunctions.save!(file, label * "/F0", F.F0)
-    MatsubaraFunctions.save!(file, label * "/γp", F.γp)
-    MatsubaraFunctions.save!(file, label * "/γt", F.γt)
-    MatsubaraFunctions.save!(file, label * "/γa", F.γa)
-
-    return nothing
-end
 
 # load from HDF5
 function load_nonlocal_vertex(

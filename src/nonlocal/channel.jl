@@ -1,6 +1,6 @@
 # 2-particle reducible vertex in the asymptotic decomposition
 
-struct NL_Channel{Q <: Number}
+struct NL_Channel{Q <: Number} <: AbstractReducibleVertex{Q}
     K1 :: NL_MF_K1{Q}
     K2 :: NL_MF_K2{Q}
     K3 :: NL_MF_K3{Q}
@@ -45,39 +45,11 @@ struct NL_Channel{Q <: Number}
 end
 
 # getter methods
-function MatsubaraFunctions.temperature(
-    γ :: NL_Channel
-    ) :: Float64
-
-    return MatsubaraFunctions.temperature(meshes(γ.K1, 1))
-end
-
 function get_P_mesh(
     γ :: NL_Channel
     ) :: KMesh
 
     return meshes(γ.K1, 2)
-end
-
-function numK1(
-    γ :: NL_Channel
-    ) :: Int64
-
-    return N(meshes(γ.K1, 1))
-end
-
-function numK2(
-    γ :: NL_Channel
-    ) :: NTuple{2, Int64}
-
-    return N(meshes(γ.K2, 1)), N(meshes(γ.K2, 2))
-end
-
-function numK3(
-    γ :: NL_Channel
-    ) :: NTuple{2, Int64}
-
-    return N(meshes(γ.K3, 1)), N(meshes(γ.K3, 2))
 end
 
 function numP(
@@ -87,133 +59,13 @@ function numP(
     return length(meshes(γ.K1, 2))
 end
 
-# setter methods
-function MatsubaraFunctions.set!(
-    γ1 :: NL_Channel,
-    γ2 :: NL_Channel
-    )  :: Nothing
-
-    set!(γ1.K1, γ2.K1)
-    set!(γ1.K2, γ2.K2)
-    set!(γ1.K3, γ2.K3)
-
-    return nothing
-end
-
-function MatsubaraFunctions.set!(
-    γ1  :: NL_Channel{Q},
-    val :: Number
-    )   :: Nothing where {Q}
-
-    set!(γ1.K1, Q(val))
-    set!(γ1.K2, Q(val))
-    set!(γ1.K3, Q(val))
-
-    return nothing
-end
-
-# comparison
-function Base.:(==)(
-    γ1 :: NL_Channel,
-    γ2 :: NL_Channel
-    )  :: Bool
-    return (γ1.K1 == γ2.K1) && (γ1.K2 == γ2.K2) && (γ1.K3 == γ2.K3)
-end
-
 # copy
 function Base.:copy(
-    γ :: NL_Channel
-    ) :: NL_Channel
-
+    γ :: NL_Channel{Q}
+    ) :: NL_Channel{Q} where {Q}
     return NL_Channel(copy(γ.K1), copy(γ.K2), copy(γ.K3))
 end
 
-# addition
-function MatsubaraFunctions.add!(
-    γ1 :: NL_Channel,
-    γ2 :: NL_Channel
-    )  :: Nothing
-
-    add!(γ1.K1, γ2.K1)
-    add!(γ1.K2, γ2.K2)
-    add!(γ1.K3, γ2.K3)
-
-    return nothing
-end
-
-# length of channel
-function Base.length(
-    γ :: NL_Channel
-    ) :: Int64
-
-    return length(γ.K1.data) + length(γ.K2.data) + length(γ.K3.data)
-end
-
-# maximum absolute value
-function MatsubaraFunctions.absmax(
-    γ :: NL_Channel
-    ) :: Float64
-
-    return max(absmax(γ.K1), absmax(γ.K2), absmax(γ.K3))
-end
-
-# flatten into vector
-function MatsubaraFunctions.flatten!(
-    γ :: NL_Channel,
-    x :: AbstractVector
-    ) :: Nothing
-
-    offset = 0
-    lenK1  = length(γ.K1.data)
-    lenK2  = length(γ.K2.data)
-    lenK3  = length(γ.K3.data)
-
-    flatten!(γ.K1, @view x[1 + offset : offset + lenK1])
-    offset += lenK1
-
-    flatten!(γ.K2, @view x[1 + offset : offset + lenK2])
-    offset += lenK2
-
-    flatten!(γ.K3, @view x[1 + offset : offset + lenK3])
-    offset += lenK3
-
-    @assert offset == length(x) "Dimension mismatch between channel and target vector"
-    return nothing
-end
-
-function MatsubaraFunctions.flatten(
-    γ :: NL_Channel{Q}
-    ) :: Vector{Q} where {Q}
-
-    x = Array{Q}(undef, length(γ))
-    flatten!(γ, x)
-
-    return x
-end
-
-# unflatten from vector
-function MatsubaraFunctions.unflatten!(
-    γ :: NL_Channel,
-    x :: AbstractVector
-    ) :: Nothing
-
-    offset = 0
-    lenK1  = length(γ.K1.data)
-    lenK2  = length(γ.K2.data)
-    lenK3  = length(γ.K3.data)
-
-    unflatten!(γ.K1, @view x[1 + offset : offset + lenK1])
-    offset += lenK1
-
-    unflatten!(γ.K2, @view x[1 + offset : offset + lenK2])
-    offset += lenK2
-
-    unflatten!(γ.K3, @view x[1 + offset : offset + lenK3])
-    offset += lenK3
-
-    @assert offset == length(x) "Dimension mismatch between channel and target vector"
-    return nothing
-end
 
 # evaluator
 @inline function (γ :: NL_Channel{Q})(
@@ -436,20 +288,6 @@ function reduce!(
         end
 
     end
-
-    return nothing
-end
-
-# save to HDF5
-function MatsubaraFunctions.save!(
-    file  :: HDF5.File,
-    label :: String,
-    γ     :: NL_Channel
-    )     :: Nothing
-
-    MatsubaraFunctions.save!(file, label * "/K1", γ.K1)
-    MatsubaraFunctions.save!(file, label * "/K2", γ.K2)
-    MatsubaraFunctions.save!(file, label * "/K3", γ.K3)
 
     return nothing
 end
