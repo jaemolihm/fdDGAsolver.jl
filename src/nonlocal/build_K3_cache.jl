@@ -1,5 +1,7 @@
 # Build cache MeshFunction for K3 BSE
-function build_K3_cache(S :: NL_ParquetSolver{Q}) where {Q}
+function build_K3_cache(
+    S :: Union{NL_ParquetSolver{Q}, NL2_ParquetSolver{Q}}
+    ) where {Q}
 
     # Vertices multiplied by bubbles from the left
 

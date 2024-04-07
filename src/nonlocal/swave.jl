@@ -64,21 +64,22 @@ function Base.getindex(
 end
 
 
-function Base.getindex(
-    f  :: NL2_MF_K2{Q},
-    w1 :: Union{MeshPoint, <: AbstractValue, Int},
-    w2 :: Union{MeshPoint, <: AbstractValue, Int},
-    k1 :: BrillouinPoint,
-       :: SWaveBrillouinPoint,
-    )  :: Q where{Q}
+# NL2_MF_K2 and NL_MF_Π are the same
+# function Base.getindex(
+#     f  :: NL2_MF_K2{Q},
+#     w1 :: Union{MeshPoint, <: AbstractValue, Int},
+#     w2 :: Union{MeshPoint, <: AbstractValue, Int},
+#     k1 :: BrillouinPoint,
+#        :: SWaveBrillouinPoint,
+#     )  :: Q where{Q}
 
-    i1 = MatsubaraFunctions.mesh_index(w1, meshes(f, 1))
-    i2 = MatsubaraFunctions.mesh_index(w2, meshes(f, 2))
-    i3 = MatsubaraFunctions.mesh_index(k1, meshes(f, 3))
+#     i1 = MatsubaraFunctions.mesh_index(w1, meshes(f, 1))
+#     i2 = MatsubaraFunctions.mesh_index(w2, meshes(f, 2))
+#     i3 = MatsubaraFunctions.mesh_index(k1, meshes(f, 3))
 
-    return sum(view(f, i1, i2, i3, :)) / length(meshes(f, 4))
+#     return sum(view(f, i1, i2, i3, :)) / length(meshes(f, 4))
 
-end
+# end
 
 function Base.getindex(
     f  :: NL2_MF_K2{Q},

@@ -163,89 +163,89 @@ function parquet_solver_hubbard_parquet_approximation_NL2(
 end
 
 
-# # symmetry group initialization
-# function init_sym_grp!(
-#     S::NL2_ParquetSolver
-# )::Nothing
+# symmetry group initialization
+function init_sym_grp!(
+    S::NL2_ParquetSolver
+)::Nothing
 
-#     mK_Σ = meshes(S.Σ, 2)
-#     mK_Γ = meshes(S.F.γp.K1, 2)
+    mK_Σ = meshes(S.Σ, 2)
+    mK_Γ = meshes(S.F.γp.K1, 2)
 
-#     # self-energy
-#     S.SGΣ = SymmetryGroup(Symmetry{2}[
-#         Symmetry{2}(w -> sΣ_conj(w,)),
-#         Symmetry{2}(w -> sΣ_ref(w, mK_Σ)),
-#         Symmetry{2}(w -> sΣ_rot(w, mK_Σ))
-#     ], S.Σ);
+    # self-energy
+    S.SGΣ = SymmetryGroup(Symmetry{2}[
+        Symmetry{2}(w -> sΣ_conj(w,)),
+        Symmetry{2}(w -> sΣ_ref(w, mK_Σ)),
+        Symmetry{2}(w -> sΣ_rot(w, mK_Σ))
+    ], S.Σ);
 
-#     # Vertices in the particle-particle channel
+    # Vertices in the particle-particle channel
 
-#     S.SGpp[1] = SymmetryGroup(Symmetry{2}[
-#         Symmetry{2}(w -> sK1_conj(w,)),
-#         Symmetry{2}(w -> sK1_ref(w, mK_Γ)),
-#         Symmetry{2}(w -> sK1_rot(w, mK_Γ)),
-#     ], S.F.γp.K1);
+    S.SGpp[1] = SymmetryGroup(Symmetry{2}[
+        Symmetry{2}(w -> sK1_conj(w,)),
+        Symmetry{2}(w -> sK1_ref(w, mK_Γ)),
+        Symmetry{2}(w -> sK1_rot(w, mK_Γ)),
+    ], S.F.γp.K1);
 
-#     S.SGpp[2] = SymmetryGroup([
-#         Symmetry{3}(w -> sK2pp1( w, mK_Γ)),
-#         Symmetry{3}(w -> sK2pp2( w, mK_Γ)),
-#         Symmetry{3}(w -> sK2_ref(w, mK_Γ)),
-#         Symmetry{3}(w -> sK2_rot(w, mK_Γ)),
-#     ], S.F.γp.K2)
+    S.SGpp[2] = SymmetryGroup([
+        Symmetry{4}(w -> sK2_NL2_pp1( w, mK_Γ)),
+        Symmetry{4}(w -> sK2_NL2_pp2( w, mK_Γ)),
+        Symmetry{4}(w -> sK2_NL2_ref(w, mK_Γ)),
+        Symmetry{4}(w -> sK2_NL2_rot(w, mK_Γ)),
+    ], S.F.γp.K2)
 
-#     S.SGpp[3] = SymmetryGroup([
-#         Symmetry{4}(w -> sK3pp1( w, mK_Γ)),
-#         Symmetry{4}(w -> sK3pp2( w, mK_Γ)),
-#         Symmetry{4}(w -> sK3pp3( w, mK_Γ)),
-#         Symmetry{4}(w -> sK3_ref(w, mK_Γ)),
-#         Symmetry{4}(w -> sK3_rot(w, mK_Γ)),
-#     ], S.F.γp.K3)
+    S.SGpp[3] = SymmetryGroup([
+        Symmetry{4}(w -> sK3pp1( w, mK_Γ)),
+        Symmetry{4}(w -> sK3pp2( w, mK_Γ)),
+        Symmetry{4}(w -> sK3pp3( w, mK_Γ)),
+        Symmetry{4}(w -> sK3_ref(w, mK_Γ)),
+        Symmetry{4}(w -> sK3_rot(w, mK_Γ)),
+    ], S.F.γp.K3)
 
-#     S.SGppL[1] = S.SGpp[1]
-#     S.SGppL[2] = S.SGpp[2]
-#     S.SGppL[3] = SymmetryGroup([
-#         Symmetry{4}(w -> sK3pp1( w, mK_Γ)),
-#         Symmetry{4}(w -> sK3pp3( w, mK_Γ)),
-#         Symmetry{4}(w -> sK3_ref(w, mK_Γ)),
-#         Symmetry{4}(w -> sK3_rot(w, mK_Γ)),
-#     ], S.F.γp.K3)
+    S.SGppL[1] = S.SGpp[1]
+    S.SGppL[2] = S.SGpp[2]
+    S.SGppL[3] = SymmetryGroup([
+        Symmetry{4}(w -> sK3pp1( w, mK_Γ)),
+        Symmetry{4}(w -> sK3pp3( w, mK_Γ)),
+        Symmetry{4}(w -> sK3_ref(w, mK_Γ)),
+        Symmetry{4}(w -> sK3_rot(w, mK_Γ)),
+    ], S.F.γp.K3)
 
-#     # particle-hole channels
+    # particle-hole channels
 
-#     S.SGph[1] = S.SGpp[1]
+    S.SGph[1] = S.SGpp[1]
 
-#     S.SGph[2] = SymmetryGroup([
-#         Symmetry{3}(w -> sK2ph1( w, mK_Γ)),
-#         Symmetry{3}(w -> sK2ph2( w, mK_Γ)),
-#         Symmetry{3}(w -> sK2_ref(w, mK_Γ)),
-#         Symmetry{3}(w -> sK2_rot(w, mK_Γ)),
-#     ], S.F.γt.K2)
+    S.SGph[2] = SymmetryGroup([
+        Symmetry{4}(w -> sK2_NL2_ph1( w, mK_Γ)),
+        Symmetry{4}(w -> sK2_NL2_ph2( w, mK_Γ)),
+        Symmetry{4}(w -> sK2_NL2_ref(w, mK_Γ)),
+        Symmetry{4}(w -> sK2_NL2_rot(w, mK_Γ)),
+    ], S.F.γt.K2)
 
-#     S.SGph[3] = SymmetryGroup([
-#         Symmetry{4}(w -> sK3ph1( w, mK_Γ)),
-#         Symmetry{4}(w -> sK3ph2( w, mK_Γ)),
-#         Symmetry{4}(w -> sK3ph3( w, mK_Γ)),
-#         Symmetry{4}(w -> sK3_ref(w, mK_Γ)),
-#         Symmetry{4}(w -> sK3_rot(w, mK_Γ)),
-#     ], S.F.γt.K3)
+    S.SGph[3] = SymmetryGroup([
+        Symmetry{4}(w -> sK3ph1( w, mK_Γ)),
+        Symmetry{4}(w -> sK3ph2( w, mK_Γ)),
+        Symmetry{4}(w -> sK3ph3( w, mK_Γ)),
+        Symmetry{4}(w -> sK3_ref(w, mK_Γ)),
+        Symmetry{4}(w -> sK3_rot(w, mK_Γ)),
+    ], S.F.γt.K3)
 
-#     S.SGphL[1] = S.SGph[1]
-#     S.SGphL[2] = S.SGph[2]
-#     S.SGphL[3] = SymmetryGroup([
-#         Symmetry{4}(w -> sK3ph1( w, mK_Γ)),
-#         Symmetry{4}(w -> sK3ph3( w, mK_Γ)),
-#         Symmetry{4}(w -> sK3_ref(w, mK_Γ)),
-#         Symmetry{4}(w -> sK3_rot(w, mK_Γ)),
-#     ], S.F.γt.K3)
+    S.SGphL[1] = S.SGph[1]
+    S.SGphL[2] = S.SGph[2]
+    S.SGphL[3] = SymmetryGroup([
+        Symmetry{4}(w -> sK3ph1( w, mK_Γ)),
+        Symmetry{4}(w -> sK3ph3( w, mK_Γ)),
+        Symmetry{4}(w -> sK3_ref(w, mK_Γ)),
+        Symmetry{4}(w -> sK3_rot(w, mK_Γ)),
+    ], S.F.γt.K3)
 
-#     # For F0
-#     # if S.SG0pp2 !== nothing
-#     #     S.SG0pp2 = SymmetryGroup([Symmetry{2}(sK2pp1), Symmetry{2}(sK2pp2)], S.F0.γp.K2)
-#     #     S.SG0ph2 = SymmetryGroup([Symmetry{2}(sK2ph1), Symmetry{2}(sK2ph2)], S.F0.γt.K2)
-#     # end
+    # For F0
+    # if S.SG0pp2 !== nothing
+    #     S.SG0pp2 = SymmetryGroup([Symmetry{2}(sK2pp1), Symmetry{2}(sK2pp2)], S.F0.γp.K2)
+    #     S.SG0ph2 = SymmetryGroup([Symmetry{2}(sK2ph1), Symmetry{2}(sK2ph2)], S.F0.γt.K2)
+    # end
 
-#     return nothing
-# end
+    return nothing
+end
 
 function reset_sym_grp!(S :: NL2_ParquetSolver)
     (; F, Σ) = S

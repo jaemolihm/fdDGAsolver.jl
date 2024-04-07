@@ -33,21 +33,25 @@ module fdDGAsolver
     include("SDE.jl")
     include("BSE.jl")
     include("build_K3_cache.jl")
+    include("solve.jl")
 
     include("nonlocal/swave.jl")
     include("nonlocal/symmetries.jl")
     include("nonlocal/channel.jl")
     include("nonlocal/vertex.jl")
     include("nonlocal/ParquetSolver.jl")
-    include("nonlocal/SDE.jl")
-    include("nonlocal/BSE.jl")
-    include("nonlocal/build_K3_cache.jl")
 
+    include("nonlocal_2/symmetries.jl")
     include("nonlocal_2/channel.jl")
     include("nonlocal_2/vertex.jl")
     include("nonlocal_2/ParquetSolver.jl")
 
-    include("solve.jl")
+    include("nonlocal/SDE.jl")
+    include("nonlocal/BSE.jl")
+    include("nonlocal/build_K3_cache.jl")
+
+    include("nonlocal_2/BSE.jl")
+
 
     @compile_workload begin
         MPI.Init()

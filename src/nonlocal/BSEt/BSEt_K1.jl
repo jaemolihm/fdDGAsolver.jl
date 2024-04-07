@@ -1,6 +1,6 @@
 # Note: K1 contributions to left and right part always vanish
 function BSE_K1!(
-    S :: NL_ParquetSolver{Q},
+    S :: Union{NL_ParquetSolver{Q}, NL2_ParquetSolver{Q}},
       :: Type{tCh}
     ) :: Nothing where {Q}
 
