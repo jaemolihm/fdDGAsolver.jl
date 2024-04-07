@@ -1,5 +1,5 @@
 # S-wave Brillouin point. When used to evaluate vertex, integrate over the corresponding momentum.
-struct SWaveBrillouinPoint; end
+struct SWaveBrillouinPoint <: AbstractValue; end
 const kSW = SWaveBrillouinPoint()
 
 MatsubaraFunctions.fold_back(:: SWaveBrillouinPoint, :: KMesh) = SWaveBrillouinPoint()
