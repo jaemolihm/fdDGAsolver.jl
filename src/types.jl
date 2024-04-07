@@ -31,6 +31,9 @@ const NL_MF_K1{Q} = MeshFunction{2, Q, Tuple{BMesh, KMesh}, Array{Q, 2}}
 const NL_MF_K2{Q} = MeshFunction{3, Q, Tuple{BMesh, FMesh, KMesh}, Array{Q, 3}}
 const NL_MF_K3{Q} = MeshFunction{4, Q, Tuple{BMesh, FMesh, FMesh, KMesh}, Array{Q, 4}}
 
+# MeshFunction aliases : Nonlocal vertex with bosonic and fermionic frequency dependences
+const NL2_MF_K2{Q} = MeshFunction{4, Q, Tuple{BMesh, FMesh, KMesh, KMesh}, Array{Q, 4}}
+
 
 struct InfiniteMatsubaraFrequency; end
 const νInf = InfiniteMatsubaraFrequency()

@@ -43,6 +43,9 @@ module fdDGAsolver
     include("nonlocal/BSE.jl")
     include("nonlocal/build_K3_cache.jl")
 
+    include("nonlocal_2/channel.jl")
+    include("nonlocal_2/vertex.jl")
+
     include("solve.jl")
 
     @compile_workload begin

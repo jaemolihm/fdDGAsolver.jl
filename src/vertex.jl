@@ -130,6 +130,12 @@ function Base.:(==)(
     return (F1.F0 == F2.F0) && (F1.γa == F2.γa) && (F1.γp == F2.γp) && (F1.γt == F2.γt)
 end
 
+function Base.length(
+    F :: AbstractVertex,
+    ) :: Int
+    return length(F.γp) + length(F.γt) + length(F.γa)
+end
+
 # flatten into vector
 function MatsubaraFunctions.flatten!(
     F :: AbstractVertex,
@@ -338,8 +344,8 @@ end
 end
 
 
-@inline bare_vertex(F :: Vertex) =  bare_vertex(F.F0)
-@inline bare_vertex(F :: Vertex, :: Type{Ch}, :: Type{Sp}) where {Ch <: ChannelTag, Sp <: SpinTag} = bare_vertex(F.F0, Ch, Sp)
+@inline bare_vertex(F :: AbstractVertex) =  bare_vertex(F.F0)
+@inline bare_vertex(F :: AbstractVertex, :: Type{Ch}, :: Type{Sp}) where {Ch <: ChannelTag, Sp <: SpinTag} = bare_vertex(F.F0, Ch, Sp)
 
 # # build full vertex in given frequency convention and spin component
 # function mk_vertex(

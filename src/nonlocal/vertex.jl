@@ -1,4 +1,6 @@
-struct NL_Vertex{Q, VT} <: AbstractVertex{Q}
+abstract type AbstractNonlocalVertex{Q} <: AbstractVertex{Q} end
+
+struct NL_Vertex{Q, VT} <: AbstractNonlocalVertex{Q}
     F0 :: VT
     γp :: NL_Channel{Q}
     γt :: NL_Channel{Q}
@@ -42,14 +44,14 @@ end
 
 # getter methods
 function get_P_mesh(
-    F :: NL_Vertex
+    F :: AbstractNonlocalVertex
     ) :: KMesh
 
     return get_P_mesh(F.γp)
 end
 
 function numP(
-    F :: NL_Vertex
+    F :: AbstractNonlocalVertex
     ) :: Int64
 
     return numP(F.γp)
@@ -64,7 +66,7 @@ function Base.:copy(
 end
 
 # evaluators for parallel spin component
-@inline function (F :: NL_Vertex{Q})(
+@inline function (F :: AbstractNonlocalVertex{Q})(
     Ω  :: MatsubaraFrequency,
     ν  :: MatsubaraFrequency,
     νp :: MatsubaraFrequency,
@@ -107,7 +109,7 @@ end
 
 
 # Special cases where either ν or νp is an InfiniteMatsubaraFrequency
-@inline function (F :: NL_Vertex{Q})(
+@inline function (F :: AbstractNonlocalVertex{Q})(
     Ω  :: MatsubaraFrequency,
     ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
@@ -155,7 +157,7 @@ end
 
 
 # evaluators for crossed spin component
-@inline function (F :: NL_Vertex{Q})(
+@inline function (F :: AbstractNonlocalVertex{Q})(
     Ω  :: MatsubaraFrequency,
     ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
@@ -180,7 +182,7 @@ end
     return -F(Ω, ν, Ω - νp, P, k, Pmkp, pCh, pSp; F0 = F0, γp = γp, γt = γa, γa = γt)
 end
 
-@inline function (F :: NL_Vertex{Q})(
+@inline function (F :: AbstractNonlocalVertex{Q})(
     Ω  :: MatsubaraFrequency,
     ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
@@ -199,7 +201,7 @@ end
     return -F(Ω, νp, ν, P, kp, k, aCh, pSp; F0 = F0, γp = γp, γt = γa, γa = γt)
 end
 
-@inline function (F :: NL_Vertex{Q})(
+@inline function (F :: AbstractNonlocalVertex{Q})(
     Ω  :: MatsubaraFrequency,
     ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
@@ -219,7 +221,7 @@ end
 end
 
 # evaluators for density spin component
-@inline function (F :: NL_Vertex{Q})(
+@inline function (F :: AbstractNonlocalVertex{Q})(
     Ω  :: MatsubaraFrequency,
     ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
@@ -411,7 +413,3 @@ end
 
     return val
 end
-
-
-@inline bare_vertex(F :: NL_Vertex) =  bare_vertex(F.F0)
-@inline bare_vertex(F :: NL_Vertex, :: Type{Ch}, :: Type{Sp}) where {Ch <: ChannelTag, Sp <: SpinTag} = bare_vertex(F.F0, Ch, Sp)
