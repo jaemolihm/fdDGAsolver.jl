@@ -19,4 +19,5 @@ println("nthreads = $(Threads.nthreads())")
     include("test_nonlocal_symmetry.jl")
 
     include("test_nonlocal_vertex_2.jl")
+    include("test_nonlocal_solver_2.jl")
 end

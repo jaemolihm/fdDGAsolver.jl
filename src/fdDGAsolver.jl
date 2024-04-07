@@ -45,6 +45,7 @@ module fdDGAsolver
 
     include("nonlocal_2/channel.jl")
     include("nonlocal_2/vertex.jl")
+    include("nonlocal_2/ParquetSolver.jl")
 
     include("solve.jl")
 
@@ -80,10 +81,12 @@ module fdDGAsolver
         RefVertex,
         Vertex,
         NL_Channel, NL_Vertex,
+        NL2_Channel, NL2_Vertex,
+        compute_occupation,
         ParquetSolver,
         NL_ParquetSolver,
         parquet_solver_siam_parquet_approximation,
         parquet_solver_hubbard_parquet_approximation,
-        compute_occupation
+        parquet_solver_hubbard_parquet_approximation_NL2
 
 end
