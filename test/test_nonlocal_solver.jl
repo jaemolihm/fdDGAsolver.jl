@@ -52,7 +52,7 @@ using Test
     close(f)
 
     f = h5open(testfile, "r")
-    F_load = fdDGAsolver.load_nonlocal_vertex(f, "F")
+    F_load = fdDGAsolver.load_vertex(NL_Vertex, f, "F")
     close(f)
 
     rm(testfile; force=true)

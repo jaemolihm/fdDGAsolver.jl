@@ -1,6 +1,9 @@
 abstract type AbstractVertex{Q}; end
 Base.eltype(::Type{<: AbstractVertex{Q}}) where {Q} = Q
 
+# Force implementation of channel_type for AbstractVertex
+channel_type(::Type{<: AbstractVertex}) = error("Not implemented")
+
 struct Vertex{Q, VT} <: AbstractVertex{Q}
     F0 :: VT
     γp :: Channel{Q}
@@ -31,6 +34,8 @@ struct Vertex{Q, VT} <: AbstractVertex{Q}
         return new{Q, VT}(F0, γ, copy(γ), copy(γ)) :: Vertex{Q}
     end
 end
+
+channel_type(::Type{Vertex}) = Channel
 
 Base.eltype(::Type{<: Vertex{Q}}) where {Q} = Q
 
@@ -117,6 +122,14 @@ function MatsubaraFunctions.absmax(
     return max(absmax(F.γp), absmax(F.γt), absmax(F.γa))
 end
 
+# comparison
+function Base.:(==)(
+    F1 :: AbstractVertex{Q},
+    F2 :: AbstractVertex{Q},
+    )  :: Bool where {Q}
+    return (F1.F0 == F2.F0) && (F1.γa == F2.γa) && (F1.γp == F2.γp) && (F1.γt == F2.γt)
+end
+
 # flatten into vector
 function MatsubaraFunctions.flatten!(
     F :: AbstractVertex,
@@ -170,6 +183,7 @@ function Base.:copy(
 
     return Vertex(copy(F.F0), copy(F.γp), copy(F.γt), copy(F.γa))
 end
+
 
 
 # evaluators for parallel spin component
@@ -382,14 +396,15 @@ end
 
 # load from HDF5
 function load_vertex(
+          :: Type{T},
     file  :: HDF5.File,
     label :: String
-    )     :: Vertex
+    )     :: T where {T <: AbstractVertex}
 
     F0 = load_refvertex(file, label * "/F0")
-    γp = load_channel(file, label * "/γp")
-    γt = load_channel(file, label * "/γt")
-    γa = load_channel(file, label * "/γa")
+    γp = load_channel(channel_type(T), file, label * "/γp")
+    γt = load_channel(channel_type(T), file, label * "/γt")
+    γa = load_channel(channel_type(T), file, label * "/γa")
 
-    return Vertex(F0, γp, γt, γa)
+    return T(F0, γp, γt, γa)
 end

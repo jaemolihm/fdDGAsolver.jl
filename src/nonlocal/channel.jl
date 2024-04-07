@@ -291,16 +291,3 @@ function reduce!(
 
     return nothing
 end
-
-# load from HDF5
-function load_nonlocal_channel(
-    file  :: HDF5.File,
-    label :: String
-    )     :: NL_Channel
-
-    K1 = load_mesh_function(file, label * "/K1")
-    K2 = load_mesh_function(file, label * "/K2")
-    K3 = load_mesh_function(file, label * "/K3")
-
-    return NL_Channel(K1, K2, K3)
-end

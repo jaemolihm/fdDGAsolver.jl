@@ -74,8 +74,9 @@ using Test
     close(file)
 
     file = h5open(testfile, "r")
-    γp = fdDGAsolver.load_channel(file, "f")
+    γp = fdDGAsolver.load_channel(fdDGAsolver.Channel, file, "f")
     @test γ == γp
+    @test γp isa fdDGAsolver.Channel
     close(file)
 
     rm(testfile; force=true)

@@ -98,8 +98,9 @@ end
     close(file)
 
     file = h5open(testfile, "r")
-    γp = fdDGAsolver.load_nonlocal_channel(file, "f")
+    γp = fdDGAsolver.load_channel(fdDGAsolver.NL_Channel, file, "f")
     @test γ == γp
+    @test γp isa fdDGAsolver.NL_Channel
     close(file)
 
     rm(testfile; force=true)
@@ -138,6 +139,20 @@ end
     @test F(Ω, ν, ω, P, k, q, pCh, pSp) ≈ U + F.γp.K1(Ω, P) + F.γt.K1(Ω - ν - ω, P - k - q) + F.γa.K1(ν - ω, k - q)
     @test F(Ω, ν, ω, P, k, q, tCh, pSp) ≈ U + F.γt.K1(Ω, P) + F.γp.K1(Ω + ν + ω, P + k + q) + F.γa.K1(ω - ν, q - k)
     @test F(Ω, ν, ω, P, k, q, aCh, pSp) ≈ U + F.γa.K1(Ω, P) + F.γp.K1(Ω + ν + ω, P + k + q) + F.γt.K1(ν - ω, k - q)
+
+    # Test IO
+    testfile = dirname(@__FILE__) * "/test.h5"
+    file = h5open(testfile, "w")
+    save!(file, "f", F)
+    close(file)
+
+    file = h5open(testfile, "r")
+    Fp = fdDGAsolver.load_vertex(fdDGAsolver.NL_Vertex, file, "f")
+    @test F == Fp
+    @test Fp isa fdDGAsolver.NL_Vertex
+    close(file)
+
+    rm(testfile; force=true)
 end
 
 @testset "NL SWaveBrillouinPoint" begin

@@ -384,13 +384,14 @@ end
 
 # load from HDF5
 function load_channel(
+          :: Type{T},
     file  :: HDF5.File,
     label :: String
-    )     :: Channel
+    )     :: T where {T <: AbstractReducibleVertex}
 
     K1 = load_mesh_function(file, label * "/K1")
     K2 = load_mesh_function(file, label * "/K2")
     K3 = load_mesh_function(file, label * "/K3")
 
-    return Channel(K1, K2, K3)
+    return T(K1, K2, K3)
 end

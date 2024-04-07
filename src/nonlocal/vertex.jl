@@ -30,6 +30,7 @@ struct NL_Vertex{Q, VT} <: AbstractVertex{Q}
     end
 end
 
+channel_type(::Type{NL_Vertex}) = NL_Channel
 
 function Base.show(io::IO, Γ::NL_Vertex{Q}) where {Q}
     print(io, "$(nameof(typeof(Γ))){$Q}, U = $(Γ.F0.U), T = $(temperature(Γ))\n")
@@ -412,21 +413,5 @@ end
 end
 
 
-
 @inline bare_vertex(F :: NL_Vertex) =  bare_vertex(F.F0)
 @inline bare_vertex(F :: NL_Vertex, :: Type{Ch}, :: Type{Sp}) where {Ch <: ChannelTag, Sp <: SpinTag} = bare_vertex(F.F0, Ch, Sp)
-
-
-# load from HDF5
-function load_nonlocal_vertex(
-    file  :: HDF5.File,
-    label :: String
-    )     :: NL_Vertex
-
-    F0 = load_refvertex(file, label * "/F0")
-    γp = load_nonlocal_channel(file, label * "/γp")
-    γt = load_nonlocal_channel(file, label * "/γt")
-    γa = load_nonlocal_channel(file, label * "/γa")
-
-    return NL_Vertex(F0, γp, γt, γa)
-end

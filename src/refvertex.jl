@@ -64,6 +64,14 @@ function Base.:copy(
 
 end
 
+# comparison
+function Base.:(==)(
+    F1 :: RefVertex{Q},
+    F2 :: RefVertex{Q},
+    )  :: Bool where {Q}
+    return (F1.U == F2.U) && (F1.Fp_p == F2.Fp_p) && (F1.Fp_x == F2.Fp_x) && (F1.Ft_p == F2.Ft_p) && (F1.Ft_x == F2.Ft_x)
+end
+
 
 # evaluators for parallel spin component
 @inline function (F :: RefVertex{Q})(
