@@ -7,6 +7,8 @@ using Test
 MPI.Init()
 MatsubaraFunctions.DEBUG() = true # enable all checks for testing
 
+println("nthreads = $(Threads.nthreads())")
+
 @testset "fdDGAsolver" begin
     include("test_channel.jl")
     include("test_siam_scPA.jl")

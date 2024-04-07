@@ -66,7 +66,7 @@ module fdDGAsolver
         mK_Γ = BrillouinZoneMesh(BrillouinZone(2, k1, k2))
 
         S = parquet_solver_hubbard_parquet_approximation(nG, nΣ, nK1, nK2, nK3, mK_G, mK_Γ; T, U, μ, t1, mode = :hybrid)
-        iterate_solver!(S; update_Σ = false, strategy = :fdPA)
+        iterate_solver!(S; strategy = :scPA)
     end
 
     export

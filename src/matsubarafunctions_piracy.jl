@@ -163,3 +163,15 @@ function Base.:view(f :: MeshFunction{5, Q}, x :: Vararg{Union{Int, UnitRange, C
     ) where {Q <: Number}
     return view(f.data, x...)
 end
+
+
+# euclidean in MatsubaraFunctions allocates due to type instability of basis(bz)
+# Here I add type annotation to avoid this issue.
+function MatsubaraFunctions.euclidean(
+    k :: BrillouinPoint{2},
+    mesh :: Mesh{MeshPoint{BrillouinPoint{2}}, BrillouinDomain{2}}
+    ) :: SVector{2, Float64}
+
+    b = basis(bz(mesh)) :: SMatrix{2, 2, Float64, 4}
+    return b * (value(k) ./ bz(mesh).L)
+end

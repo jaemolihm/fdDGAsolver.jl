@@ -86,7 +86,7 @@ mutable struct NL_ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
         # Initialization: G = Gbare, Σ = 0
         mK_G = meshes(Gbare, 2)
         G = MeshFunction(MatsubaraMesh(T, nG, Fermion), mK_G; data_t = Q)
-        Σ = MeshFunction(MatsubaraMesh(T, nΣ, Fermion), mK_Γ; data_t = Q)
+        Σ = MeshFunction(MatsubaraMesh(T, nΣ, Fermion), mK_G; data_t = Q)
         set!(G, Gbare)
         set!(Σ, 0)
 
@@ -107,7 +107,7 @@ mutable struct NL_ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
         SGphL = SymmetryGroup[SymmetryGroup(F.γp.K1), SymmetryGroup(F.γp.K2), SymmetryGroup(F.γp.K3)]
 
         # Symmetry group of F0, needed for the BSE of the reference vertex in SDE for fdPA
-        if F0 isa NL_Vertex
+        if F0 isa NL_Vertex || F0 isa Vertex
             SG0pp2 = SymmetryGroup(F0.γp.K2)
             SG0ph2 = SymmetryGroup(F0.γp.K2)
         else
@@ -154,7 +154,7 @@ function parquet_solver_hubbard_parquet_approximation(
 
     # Reference system: G0 = Σ0 = 0, F0 = U (parquet approximation)
     G0 = MeshFunction(mG, mK_G; data_t = Q)
-    Σ0 = MeshFunction(mΣ, mK_Γ; data_t = Q)
+    Σ0 = MeshFunction(mΣ, mK_G; data_t = Q)
     F0 = RefVertex(T, U, Q)
     set!(G0, 0)
     set!(Σ0, 0)
@@ -238,7 +238,7 @@ function init_sym_grp!(
         Symmetry{4}(w -> sK3_rot(w, mK_Γ)),
     ], S.F.γt.K3)
 
-    # # For F0
+    # For F0
     # if S.SG0pp2 !== nothing
     #     S.SG0pp2 = SymmetryGroup([Symmetry{2}(sK2pp1), Symmetry{2}(sK2pp2)], S.F0.γp.K2)
     #     S.SG0ph2 = SymmetryGroup([Symmetry{2}(sK2ph1), Symmetry{2}(sK2ph2)], S.F0.γt.K2)
