@@ -1,11 +1,27 @@
+# Define AbstractSolver interface
 
-function SDE_channel_L_pp(S :: ParquetSolver{Q}) :: MF_K2{Q} where {Q}
+function SDE_channel_L_pp(S :: AbstractSolver)
     SDE_channel_L_pp(S.Πpp, S.F, S.SGpp[2]; S.mode)
 end
 
-function SDE_channel_L_ph(S :: ParquetSolver{Q}) :: MF_K2{Q} where {Q}
+function SDE_channel_L_ph(S :: AbstractSolver)
     SDE_channel_L_ph(S.Πph, S.F, S.SGph[2]; S.mode)
 end
+
+function SDE!(S :: AbstractSolver; include_U² = true, include_Hartree = true)
+    SDE!(S.Σ, S.G, S.Πpp, S.Πph, S.F, S.SGΣ, S.SGpp[2], S.SGph[2]; S.mode, include_U², include_Hartree)
+end
+
+function SDE_U2(S :: AbstractSolver)
+    SDE_U2(S.Σ, S.G, S.Πpp, S.Πph, S.SGΣ, bare_vertex(S.F); S.mode)
+end
+
+function SDE_using_K12!(S :: AbstractSolver; include_Hartree = true)
+    SDE_using_K12!(S.Σ, S.G, S.F, S.SGΣ; S.mode, include_Hartree)
+end
+
+
+# Implementations for ParquetSolver (local vertex)
 
 function SDE_channel_L_pp(
     Πpp   :: MF_Π{Q},
@@ -73,15 +89,6 @@ end
 
 
 function SDE!(
-    S :: ParquetSolver{Q}
-    ;
-    include_U² = true,
-    include_Hartree = true,
-    ) :: MF_G{Q} where {Q}
-    SDE!(S.Σ, S.G, S.Πpp, S.Πph, S.F, S.SGΣ, S.SGpp[2], S.SGph[2]; S.mode, include_U², include_Hartree)
-end
-
-function SDE!(
     Σ     :: MF_G{Q},
     G     :: MF_G{Q},
     Πpp   :: MF_Π{Q},
@@ -138,11 +145,6 @@ function SDE!(
     return Σ
 end
 
-function SDE_U2(
-    S :: ParquetSolver{Q},
-    ) :: MF_G{Q} where {Q}
-    SDE_U2(S.Σ, S.G, S.Πpp, S.Πph, S.SGΣ, bare_vertex(S.F); S.mode)
-end
 
 function SDE_U2(
     Σ   :: MF_G{Q},
@@ -185,9 +187,6 @@ function SDE_U2(
     return Σ_U²
 end
 
-function SDE_using_K12!(S :: ParquetSolver{Q}; include_Hartree = true,) :: MF_G{Q} where {Q}
-    SDE_using_K12!(S.Σ, S.G, S.F, S.SGΣ; S.mode, include_Hartree)
-end
 
 function SDE_using_K12!(
     Σ :: MF_G{Q},
@@ -246,6 +245,3 @@ function compute_occupation(
 ) :: Float64
     return 0.5 + imag(sum(G.data)) * temperature(meshes(G, 1))
 end
-
-export
-    compute_occupation

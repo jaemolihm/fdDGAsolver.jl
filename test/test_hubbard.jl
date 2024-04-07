@@ -76,4 +76,14 @@ using Test
     @test Πpp(Ω, ν, P, k) ≈ Gbare(ν, k) * Gbare(Ω - ν, P - k)
     @test Πph(Ω, ν, P, k) ≈ Gbare(Ω + ν, P + k) * Gbare(ν, k)
 
+    # Test compute_occupation
+
+    mG = MatsubaraMesh(T, 20, Fermion)
+    mK = BrillouinZoneMesh(BrillouinZone(8, k1, k2))
+    @test compute_occupation(hubbard_bare_Green(mG, mK; t1=1., μ=-4.)) ≈ 0.0502663698543071
+    @test compute_occupation(hubbard_bare_Green(mG, mK; t1=1., μ=-2.)) ≈ 0.2057188296739284
+    @test compute_occupation(hubbard_bare_Green(mG, mK; t1=1., μ=0.)) ≈ 0.5
+    @test compute_occupation(hubbard_bare_Green(mG, mK; t1=1., μ=4.)) ≈ 1 - 0.0502663698543071
+    @test compute_occupation(hubbard_bare_Green(mG, mK; t1=1., μ=2.)) ≈ 1 - 0.2057188296739284
+
 end

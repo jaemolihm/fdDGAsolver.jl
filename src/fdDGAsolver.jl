@@ -39,6 +39,7 @@ module fdDGAsolver
     include("nonlocal/channel.jl")
     include("nonlocal/vertex.jl")
     include("nonlocal/ParquetSolver.jl")
+    include("nonlocal/SDE.jl")
     include("nonlocal/BSE.jl")
     include("nonlocal/build_K3_cache.jl")
 
@@ -79,6 +80,7 @@ module fdDGAsolver
         ParquetSolver,
         NL_ParquetSolver,
         parquet_solver_siam_parquet_approximation,
-        parquet_solver_hubbard_parquet_approximation
+        parquet_solver_hubbard_parquet_approximation,
+        compute_occupation
 
 end
