@@ -4,6 +4,7 @@ authors = ["Jae-Mo Lihm <jaemolim96@gmail.com> and contributors"]
 version = "1.0.0-DEV"
 
 [deps]
+FFTW = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
 HDF5 = "f67ccb44-e63f-5c2f-98bd-6dc0ccc4ba2f"
 MPI = "da04e1cc-30fd-572f-bb4f-1f8673147195"
 MatsubaraFunctions = "3b93aed6-d40a-4520-b131-eee49889bcc0"

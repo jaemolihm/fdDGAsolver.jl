@@ -11,6 +11,7 @@ module fdDGAsolver
         using HDF5
         using NLsolve
         using StaticArrays
+        using FFTW
     end
 
     include("matsubarafunctions_piracy.jl")

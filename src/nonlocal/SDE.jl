@@ -130,7 +130,8 @@ function SDE!(
     SGΣ(Σ, InitFunction{2, Q}(diagram); mode)
 
     if include_U²
-        Σ_U² = SDE_U2(Σ, G, Πpp, Πph, SGΣ, bare_vertex(F); mode)
+        Σ_U² = SDE_U2_using_G(Σ, G, SGΣ, bare_vertex(F); mode)
+        # Σ_U² = SDE_U2_using_Π(Σ, G, Πpp, Πph, SGΣ, bare_vertex(F); mode)
         add!(Σ, Σ_U²)
     end
 
@@ -144,7 +145,7 @@ function SDE!(
 end
 
 
-function SDE_U2(
+function SDE_U2_using_Π(
     Σ   :: NL_MF_G{Q},
     G   :: NL_MF_G{Q},
     Πpp :: NL_MF_Π{Q},
@@ -210,6 +211,53 @@ function SDE_U2(
     return Σ_U²
 end
 
+
+function SDE_U2_using_G(
+    Σ   :: NL_MF_G{Q},
+    G   :: NL_MF_G{Q},
+    SGΣ :: SymmetryGroup,
+    U   :: Number,
+    ;
+    mode  :: Symbol,
+    )   :: NL_MF_G{Q} where {Q}
+
+    T = temperature(meshes(Σ, 1))
+    Σ_U² = copy(Σ)
+    set!(Σ_U², 0)
+
+    L = bz(meshes(G, 2)).L
+    G_pR = fft(reshape(G.data, :, L, L), (2, 3)) / L^2
+    G_mR = bfft(reshape(G.data, :, L, L), (2, 3)) / L^2
+
+    Σ_U²_R = zeros(eltype(Σ.data), length(meshes(Σ, 1)), L, L)
+
+    Threads.@threads for (iR1, iR2) in collect(Iterators.product(axes(G_pR, 2), axes(G_pR, 3)))
+        Gp = MeshFunction((meshes(G, 1),), view(G_pR, :, iR1, iR2))
+        Gm = MeshFunction((meshes(G, 1),), view(G_mR, :, iR1, iR2))
+
+        for i2 in eachindex(meshes(G, 1)), i1 in eachindex(meshes(G, 1))
+            ω1 = value(meshes(G, 1)[i1])
+            ω2 = value(meshes(G, 1)[i2])
+            gg = Gm[ω1] * Gp[ω2]
+
+            for iν in eachindex(meshes(Σ, 1))
+                ν = value(meshes(Σ, 1)[iν])
+
+                if is_inbounds(ω1 - ω2 + ν, meshes(G, 1))
+                    Σ_U²_R[iν, iR1, iR2] += gg * Gp[ω1 - ω2 + ν]
+                end
+            end
+        end
+    end
+
+    Σ_U²_R .*= U^2 * T^2
+
+    Σ_U².data .= reshape(bfft(Σ_U²_R, (2, 3)), :, L^2)
+
+    SGΣ(Σ_U²)
+
+    Σ_U²
+end;
 
 # function SDE_using_K12!(
 #     Σ :: MF_G{Q},

@@ -13,7 +13,15 @@ function SDE!(S :: AbstractSolver; include_U² = true, include_Hartree = true)
 end
 
 function SDE_U2(S :: AbstractSolver)
-    SDE_U2(S.Σ, S.G, S.Πpp, S.Πph, S.SGΣ, bare_vertex(S.F); S.mode)
+    SDE_U2_using_G(S)
+end
+
+function SDE_U2_using_Π(S :: AbstractSolver)
+    SDE_U2_using_Π(S.Σ, S.G, S.Πpp, S.Πph, S.SGΣ, bare_vertex(S.F); S.mode)
+end
+
+function SDE_U2_using_G(S :: AbstractSolver)
+    SDE_U2_using_G(S.Σ, S.G, S.SGΣ, bare_vertex(S.F); S.mode)
 end
 
 function SDE_using_K12!(S :: AbstractSolver; include_Hartree = true)
@@ -132,7 +140,7 @@ function SDE!(
     SGΣ(Σ, InitFunction{1, Q}(diagram); mode)
 
     if include_U²
-        Σ_U² = SDE_U2(Σ, G, Πpp, Πph, SGΣ, bare_vertex(F); mode)
+        Σ_U² = SDE_U2_using_G(Σ, G, SGΣ, bare_vertex(F); mode)
         add!(Σ, Σ_U²)
     end
 
@@ -146,7 +154,7 @@ function SDE!(
 end
 
 
-function SDE_U2(
+function SDE_U2_using_Π(
     Σ   :: MF_G{Q},
     G   :: MF_G{Q},
     Πpp :: MF_Π{Q},
@@ -179,6 +187,45 @@ function SDE_U2(
         end
 
         return val * U^2 * T^2 / 2
+    end
+
+    # compute Σ
+    SGΣ(Σ_U², InitFunction{1, Q}(diagram); mode)
+
+    return Σ_U²
+end
+
+
+function SDE_U2_using_G(
+    Σ   :: MF_G{Q},
+    G   :: MF_G{Q},
+    SGΣ :: SymmetryGroup,
+    U   :: Number,
+    ;
+    mode  :: Symbol,
+    )   :: MF_G{Q} where {Q}
+    # 2nd-order perturbative contribution to the self-energy
+
+    T = temperature(meshes(Σ, 1))
+    Σ_U² = copy(Σ)
+    set!(Σ_U², 0)
+
+    # model the diagram
+    @inline function diagram(wtpl)
+
+        ν   = wtpl[1]
+        val = zero(Q)
+
+        for i2 in eachindex(meshes(G, 1)), i1 in eachindex(meshes(G, 1))
+            ω1 = value(meshes(G, 1)[i1])
+            ω2 = value(meshes(G, 1)[i2])
+
+            if is_inbounds(ω1 - ω2 + ν, meshes(G, 1))
+                val += G[ω1] * G[ω2] * G[ω1 - ω2 + ν]
+            end
+        end
+
+        return val * U^2 * T^2
     end
 
     # compute Σ

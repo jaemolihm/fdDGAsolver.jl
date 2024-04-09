@@ -125,7 +125,8 @@ function SDE!(
     SGΣ(Σ, InitFunction{2, Q}(diagram); mode)
 
     if include_U²
-        Σ_U² = SDE_U2(Σ, G, Πpp, Πph, SGΣ, bare_vertex(F); mode)
+        Σ_U² = SDE_U2_using_G(Σ, G, SGΣ, bare_vertex(F); mode)
+        # Σ_U² = SDE_U2_using_Π(Σ, G, Πpp, Πph, SGΣ, bare_vertex(F); mode)
         add!(Σ, Σ_U²)
     end
 
