@@ -51,6 +51,12 @@ mutable struct NL_ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
     # symmetry groups for the particle-hole channels of F0. Used only for fdPA
     SG0ph2::Union{SymmetryGroup, Nothing}
 
+    # symmetry groups for the particle-particle bubble
+    SGΠpp::Union{SymmetryGroup, Nothing}
+
+    # symmetry groups for the particle-hole bubble
+    SGΠph::Union{SymmetryGroup, Nothing}
+
     # Parallelization mode
     mode::Symbol
 
@@ -78,7 +84,7 @@ mutable struct NL_ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
         Π0pp = MeshFunction(mΠΩ, mΠν, mK_Γ, mK_Γ; data_t=Q)
         Π0ph = copy(Π0pp)
 
-        bubbles!(Π0pp, Π0ph, G0)
+        bubbles_real_space!(Π0pp, Π0ph, G0)
 
         # single-particle Green's function and self-energy
         # The self-energy has the same momentum resolution as the vertex mk_Γ,
@@ -93,7 +99,7 @@ mutable struct NL_ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
         # bubbles
         Πpp = copy(Π0pp)
         Πph = copy(Π0pp)
-        bubbles!(Πpp, Πph, G)
+        bubbles_real_space!(Πpp, Πph, G)
 
         # channel-decomposed two-particle vertex
         F = NL_Vertex(F0, T, nK1, nK2, nK3, mK_Γ)
@@ -106,6 +112,9 @@ mutable struct NL_ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
         SGppL = SymmetryGroup[SymmetryGroup(F.γp.K1), SymmetryGroup(F.γp.K2), SymmetryGroup(F.γp.K3)]
         SGphL = SymmetryGroup[SymmetryGroup(F.γp.K1), SymmetryGroup(F.γp.K2), SymmetryGroup(F.γp.K3)]
 
+        SGΠpp = nothing #SymmetryGroup(Πpp)
+        SGΠph = nothing #SymmetryGroup(Πph)
+
         # Symmetry group of F0, needed for the BSE of the reference vertex in SDE for fdPA
         if F0 isa NL_Vertex || F0 isa Vertex
             SG0pp2 = SymmetryGroup(F0.γp.K2)
@@ -115,7 +124,7 @@ mutable struct NL_ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
             SG0ph2 = nothing
         end
 
-        return new{Q, RefVT}(Gbare, G0, Π0pp, Π0ph, Σ0, F0, G, Πpp, Πph, Σ, F, Fbuff, copy(Fbuff), SGΣ, SGpp, SGph, SGppL, SGphL, SG0pp2, SG0ph2, mode)::NL_ParquetSolver{Q}
+        return new{Q, RefVT}(Gbare, G0, Π0pp, Π0ph, Σ0, F0, G, Πpp, Πph, Σ, F, Fbuff, copy(Fbuff), SGΣ, SGpp, SGph, SGppL, SGphL, SG0pp2, SG0ph2, SGΠpp, SGΠph, mode)::NL_ParquetSolver{Q}
     end
 end
 
@@ -238,6 +247,20 @@ function init_sym_grp!(
         Symmetry{4}(w -> sK3_rot(w, mK_Γ)),
     ], S.F.γt.K3)
 
+    # S.SGΠpp = SymmetryGroup([
+    #     Symmetry{4}(w -> sK2_NL2_pp1( w, mK_Γ)),
+    #     Symmetry{4}(w -> sK2_NL2_pp2( w, mK_Γ)),
+    #     Symmetry{4}(w -> sΠ_ref(w, mK_Γ)),
+    #     Symmetry{4}(w -> sΠ_rot(w, mK_Γ)),
+    # ], S.Πpp)
+
+    # S.SGΠph = SymmetryGroup([
+    #     Symmetry{4}(w -> sΠ_ph1(w, mK_Γ)),
+    #     Symmetry{4}(w -> sΠ_ph2(w, mK_Γ)),
+    #     Symmetry{4}(w -> sΠ_ref(w, mK_Γ)),
+    #     Symmetry{4}(w -> sΠ_rot(w, mK_Γ)),
+    # ], S.Πph)
+
     # For F0
     # if S.SG0pp2 !== nothing
     #     S.SG0pp2 = SymmetryGroup([Symmetry{2}(sK2pp1), Symmetry{2}(sK2pp2)], S.F0.γp.K2)
@@ -262,3 +285,9 @@ end
 # getter methods (some of them is defined for AbstractSolver)
 numP_G(S::NL_ParquetSolver)::Int64 = length(meshes(S.G, 2))
 numP_Γ(S::NL_ParquetSolver)::Int64 = numP(S.F)
+
+
+function bubbles!(S :: NL_ParquetSolver)
+    bubbles_real_space!(S)
+    # bubbles_momentum_space!(S)
+end

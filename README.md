@@ -13,5 +13,5 @@
 
 Real-space evaluation
 * [x] U^2 self-energy
-* [ ] Bubble
+* [x] Bubble
 * [ ] SDE

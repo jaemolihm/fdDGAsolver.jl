@@ -78,7 +78,7 @@ mutable struct NL2_ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
         Π0pp = MeshFunction(mΠΩ, mΠν, mK_Γ, mK_Γ; data_t=Q)
         Π0ph = copy(Π0pp)
 
-        bubbles!(Π0pp, Π0ph, G0)
+        bubbles_real_space!(Π0pp, Π0ph, G0)
 
         # single-particle Green's function and self-energy
         # The self-energy has the same momentum resolution as the vertex mk_Γ,
@@ -93,7 +93,7 @@ mutable struct NL2_ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
         # bubbles
         Πpp = copy(Π0pp)
         Πph = copy(Π0pp)
-        bubbles!(Πpp, Πph, G)
+        bubbles_real_space!(Πpp, Πph, G)
 
         # channel-decomposed two-particle vertex
         F = NL2_Vertex(F0, T, nK1, nK2, nK3, mK_Γ)
@@ -262,3 +262,8 @@ end
 # getter methods (some of them is defined for AbstractSolver)
 numP_G(S::NL2_ParquetSolver)::Int64 = length(meshes(S.G, 2))
 numP_Γ(S::NL2_ParquetSolver)::Int64 = numP(S.F)
+
+function bubbles!(S :: NL2_ParquetSolver)
+    bubbles_real_space!(S)
+    # bubbles_momentum_space!(S)
+end

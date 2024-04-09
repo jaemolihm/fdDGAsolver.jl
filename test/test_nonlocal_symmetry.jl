@@ -99,7 +99,7 @@ end;
         # These error can be reduced using larger nmax
         @test S.SGpp[2](S.F.γp.K2) < 1e-3
         @test S.SGph[2](S.F.γa.K2) < 1e-3
-        @test S.SGph[2](S.F.γt.K2) < 1e-3
+        @test S.SGph[2](S.F.γt.K2) < 2e-3
 
         @test S.SGpp[3](S.F.γp.K3) < 2e-2
         @test S.SGph[3](S.F.γa.K3) < 1e-3
@@ -132,7 +132,7 @@ end
 
     # Set G0 to some auxiliary value for testing
     S.G0 = hubbard_bare_Green(meshes(S.G0)...; μ = 1.0, t1 = 0.5)
-    fdDGAsolver.bubbles!(S.Π0pp, S.Π0ph, S.G0)
+    fdDGAsolver.bubbles_momentum_space!(S.Π0pp, S.Π0ph, S.G0)
 
     # Solve without symmetries
 

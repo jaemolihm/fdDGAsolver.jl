@@ -30,8 +30,8 @@ using Test
     Πpp2 = copy(Πpp1)
     Πph2 = copy(Πpp1)
 
-    fdDGAsolver.bubbles!(Πpp1, Πph1, G1)
-    fdDGAsolver.bubbles!(Πpp2, Πph2, G2)
+    fdDGAsolver.bubbles_momentum_space!(Πpp1, Πph1, G1)
+    fdDGAsolver.bubbles_momentum_space!(Πpp2, Πph2, G2)
 
     @test Πpp1.data ≈ Πpp2.data
     @test Πph1.data ≈ Πph2.data

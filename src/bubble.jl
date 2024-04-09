@@ -1,5 +1,9 @@
 function bubbles!(S :: AbstractSolver)
     bubbles!(S.Πpp, S.Πph, S.G)
+
+    # Symmetrize
+    # S.SGΠpp(S.Πpp)
+    # S.SGΠph(S.Πph)
 end
 
 function bubbles!(
@@ -13,44 +17,6 @@ function bubbles!(
         ν = value(meshes(Πpp, 2)[iν])
         Πpp[iΩ, iν] = G(ν) * G(Ω - ν)
         Πph[iΩ, iν] = G(Ω + ν) * G(ν)
-    end
-
-    return nothing
-end
-
-function bubbles!(
-    Πpp :: NL_MF_Π{Q},
-    Πph :: NL_MF_Π{Q},
-    G   :: NL_MF_G{Q},
-    ) :: Nothing where {Q}
-
-    set!(Πpp, 0)
-    set!(Πph, 0)
-    meshK_G = meshes(G, 2)
-
-    for iP in eachindex(meshes(Πpp, 3)), ik in eachindex(meshes(Πpp, 4))
-        P = euclidean(meshes(Πpp, 3)[iP], meshes(Πpp, 3))
-        k = euclidean(meshes(Πpp, 4)[ik], meshes(Πpp, 4))
-
-        k_G   = meshK_G[MatsubaraFunctions.mesh_index(    k, meshK_G)]
-        Pmk_G = meshK_G[MatsubaraFunctions.mesh_index(P - k, meshK_G)]
-        Ppk_G = meshK_G[MatsubaraFunctions.mesh_index(P + k, meshK_G)]
-
-        for iΩ in eachindex(meshes(Πpp, 1)), iν in eachindex(meshes(Πpp, 2))
-            Ω = value(meshes(Πpp, 1)[iΩ])
-            ν = value(meshes(Πpp, 2)[iν])
-
-            if is_inbounds(ν, meshes(G, 1))
-                if is_inbounds(Ω - ν, meshes(G, 1))
-                    Πpp[iΩ, iν, iP, ik] = G[ν, k_G] * G[Ω - ν, Pmk_G]
-                end
-
-                if is_inbounds(Ω + ν, meshes(G, 1))
-                    Πph[iΩ, iν, iP, ik] = G[ν, k_G] * G[Ω + ν, Ppk_G]
-                end
-            end
-        end
-
     end
 
     return nothing

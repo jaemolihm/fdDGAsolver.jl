@@ -40,6 +40,7 @@ module fdDGAsolver
     include("nonlocal/symmetries.jl")
     include("nonlocal/channel.jl")
     include("nonlocal/vertex.jl")
+    include("nonlocal/bubble.jl")
     include("nonlocal/ParquetSolver.jl")
 
     include("nonlocal_2/symmetries.jl")
@@ -77,6 +78,7 @@ module fdDGAsolver
 
         S = parquet_solver_hubbard_parquet_approximation(nG, nΣ, nK1, nK2, nK3, mK_G, mK_Γ; T, U, μ, t1, mode = :hybrid)
         iterate_solver!(S; strategy = :scPA)
+        bubbles_real_space!(S)
 
         S = parquet_solver_hubbard_parquet_approximation_NL2(nG, nΣ, nK1, nK2, nK3, mK_G, mK_Γ; T, U, μ, t1, mode = :hybrid)
         iterate_solver!(S; strategy = :scPA)

@@ -40,7 +40,8 @@ using Test
     Πpp = MeshFunction(mΠΩ, mΠν, mK, mK)
     Πph = MeshFunction(mΠΩ, mΠν, mK, mK)
 
-    fdDGAsolver.bubbles!(Πpp, Πph, Gbare)
+    fdDGAsolver.bubbles_momentum_space!(Πpp, Πph, Gbare)
+    fdDGAsolver.bubbles_real_space!(Πpp, Πph, Gbare)
 
     # Test Dyson
 
@@ -67,7 +68,7 @@ using Test
 
     Πpp = MeshFunction(mΠΩ, mΠν, mK, mK)
     Πph = MeshFunction(mΠΩ, mΠν, mK, mK)
-    fdDGAsolver.bubbles!(Πpp, Πph, Gbare)
+    fdDGAsolver.bubbles_momentum_space!(Πpp, Πph, Gbare)
 
     Ω = MatsubaraFrequency(T, 3, Boson)
     ν = MatsubaraFrequency(T, -2, Fermion)
