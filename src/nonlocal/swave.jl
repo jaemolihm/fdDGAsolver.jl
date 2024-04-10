@@ -9,7 +9,7 @@ function Base.getindex(
     f  :: NL_MF_K1{Q},
     w1 :: Union{MeshPoint, <: AbstractValue, Int, UnitRange, Colon},
        :: SWaveBrillouinPoint,
-    )  :: Q where{Q}
+    )  :: Q where {Q}
 
     i1 = MatsubaraFunctions.mesh_index(w1, meshes(f, 1))
 
@@ -22,7 +22,7 @@ function Base.getindex(
     w1 :: Union{MeshPoint, <: AbstractValue, Int},
     w2 :: Union{MeshPoint, <: AbstractValue, Int},
        :: SWaveBrillouinPoint,
-    )  :: Q where{Q}
+    )  :: Q where {Q}
 
     i1 = MatsubaraFunctions.mesh_index(w1, meshes(f, 1))
     i2 = MatsubaraFunctions.mesh_index(w2, meshes(f, 2))
@@ -37,7 +37,7 @@ function Base.getindex(
     w2 :: Union{MeshPoint, <: AbstractValue, Int},
     w3 :: Union{MeshPoint, <: AbstractValue, Int},
        :: SWaveBrillouinPoint,
-    )  :: Q where{Q}
+    )  :: Q where {Q}
 
     i1 = MatsubaraFunctions.mesh_index(w1, meshes(f, 1))
     i2 = MatsubaraFunctions.mesh_index(w2, meshes(f, 2))
@@ -53,7 +53,7 @@ function Base.getindex(
     w2 :: Union{MeshPoint, <: AbstractValue, Int},
     P  :: BrillouinPoint,
        :: SWaveBrillouinPoint,
-    )  :: Q where{Q}
+    )  :: Q where {Q}
 
     i1 = MatsubaraFunctions.mesh_index(w1, meshes(f, 1))
     i2 = MatsubaraFunctions.mesh_index(w2, meshes(f, 2))
@@ -71,7 +71,7 @@ end
 #     w2 :: Union{MeshPoint, <: AbstractValue, Int},
 #     k1 :: BrillouinPoint,
 #        :: SWaveBrillouinPoint,
-#     )  :: Q where{Q}
+#     )  :: Q where {Q}
 
 #     i1 = MatsubaraFunctions.mesh_index(w1, meshes(f, 1))
 #     i2 = MatsubaraFunctions.mesh_index(w2, meshes(f, 2))
@@ -87,7 +87,7 @@ function Base.getindex(
     w2 :: Union{MeshPoint, <: AbstractValue, Int},
        :: SWaveBrillouinPoint,
     k2 :: BrillouinPoint,
-    )  :: Q where{Q}
+    )  :: Q where {Q}
 
     i1 = MatsubaraFunctions.mesh_index(w1, meshes(f, 1))
     i2 = MatsubaraFunctions.mesh_index(w2, meshes(f, 2))
@@ -103,7 +103,7 @@ function Base.getindex(
     w2 :: Union{MeshPoint, <: AbstractValue, Int},
        :: SWaveBrillouinPoint,
        :: SWaveBrillouinPoint,
-    )  :: Q where{Q}
+    )  :: Q where {Q}
 
     i1 = MatsubaraFunctions.mesh_index(w1, meshes(f, 1))
     i2 = MatsubaraFunctions.mesh_index(w2, meshes(f, 2))

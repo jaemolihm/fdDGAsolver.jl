@@ -4,7 +4,7 @@ function MatsubaraFunctions.add!(f1 :: MeshFunction, f2 :: MeshFunction, α :: N
     return nothing
 end
 
-
+#==
 # For a MeshFunction with bosonic frequency, fermionic frequency, and momentum dependence,
 # `meshes` returns union of three types.
 # Then, it seems that this makes mesh_index type unstable, and getindex becomes type unstable.
@@ -128,7 +128,6 @@ function Base.:setindex!(f :: MeshFunction{5, Q}, val :: Qp, x :: Vararg{Union{I
     return nothing
 end
 
-
 # Same for view
 
 function Base.:view(f :: MeshFunction{4, Q}, x :: Vararg{Union{MeshPoint, <: AbstractValue, Int, UnitRange, Colon}, 4}
@@ -175,3 +174,4 @@ function MatsubaraFunctions.euclidean(
     b = basis(bz(mesh)) :: SMatrix{2, 2, Float64, 4}
     return b * (value(k) ./ bz(mesh).L)
 end
+==#

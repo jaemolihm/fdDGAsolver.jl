@@ -64,7 +64,7 @@ using Test
     for iΩ in [-100, -1, 0, 1, 100], iω in [-100, -1, 0, 1, 100]
         Ω = MatsubaraFrequency(T, iΩ, Boson);
         ω = MatsubaraFrequency(T, iω, Fermion);
-        @test fdDGAsolver.box_eval(γ.K2, Ω, ω) ≈ γ(Ω, ω, νInf; K1 = false)
+        @test γ.K2(Ω, ω) ≈ γ(Ω, ω, νInf; K1 = false)
     end
 
     # Test IO

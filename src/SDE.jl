@@ -254,7 +254,7 @@ function SDE_using_K12!(
         for iω in eachindex(meshes(G, 1))
             ω = value(meshes(G, 1)[iω])
             # SDE using only K1 + K2 in p channel
-            val += G[ω] * (box_eval(F.γp.K1, ν + ω) + box_eval(F.γp.K2, ν + ω, ν))
+            val += G[ω] * (F.γp.K1(ν + ω) + F.γp.K2(ν + ω, ν))
         end
 
         return temperature(F) * val

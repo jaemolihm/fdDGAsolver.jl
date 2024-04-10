@@ -13,7 +13,7 @@ struct dSp <: SpinTag end  # density
 # Mesh aliases
 const FMesh = Mesh{MeshPoint{MatsubaraFrequency{Fermion}}, MatsubaraDomain}
 const BMesh = Mesh{MeshPoint{MatsubaraFrequency{Boson}}, MatsubaraDomain}
-const KMesh = Mesh{MeshPoint{BrillouinPoint{2}}, BrillouinDomain{2}}
+const KMesh = Mesh{MeshPoint{BrillouinPoint{2}}, BrillouinDomain{2, 4}}
 
 # MeshFunction aliases : Local
 const MF_G{Q}  = MeshFunction{1, Q, Tuple{FMesh}, Array{Q, 1}}

@@ -225,7 +225,7 @@ end
 
             if ν1_inbounds && ν2_inbounds
                 K2 && (val += γ.K2[Ω, ν] + γ.K2[Ω, νp])
-                K3 && (val += box_eval(γ.K3, Ω, ν, νp))
+                K3 && (val += γ.K3(Ω, ν, νp))
 
             elseif ν1_inbounds
                 K2 && (val += γ.K2[Ω, ν])
