@@ -20,7 +20,6 @@ module fdDGAsolver
     include("types.jl")
     include("convention.jl")
     include("symmetries.jl")
-    # include("sum_me.jl")
     include("channel.jl")
     include("refvertex.jl")
     include("vertex.jl")
