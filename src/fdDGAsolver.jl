@@ -77,11 +77,11 @@ module fdDGAsolver
         mK_Γ = BrillouinZoneMesh(BrillouinZone(2, k1, k2))
 
         S = parquet_solver_hubbard_parquet_approximation(nG, nΣ, nK1, nK2, nK3, mK_G, mK_Γ; T, U, μ, t1, mode = :hybrid)
-        iterate_solver!(S; strategy = :scPA)
+        iterate_solver!(S; strategy = :fdPA)
         bubbles_real_space!(S)
 
         S = parquet_solver_hubbard_parquet_approximation_NL2(nG, nΣ, nK1, nK2, nK3, mK_G, mK_Γ; T, U, μ, t1, mode = :hybrid)
-        iterate_solver!(S; strategy = :scPA)
+        iterate_solver!(S; strategy = :fdPA)
     end
 
     export
@@ -97,6 +97,7 @@ module fdDGAsolver
         init_sym_grp!,
         ParquetSolver,
         NL_ParquetSolver,
+        NL2_ParquetSolver,
         parquet_solver_siam_parquet_approximation,
         parquet_solver_hubbard_parquet_approximation,
         parquet_solver_hubbard_parquet_approximation_NL2
