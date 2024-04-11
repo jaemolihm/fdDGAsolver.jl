@@ -59,4 +59,17 @@ using Test
 
     @test F_load isa NL_Vertex
     @test F_load == S.F
+
+
+    # Test scPA and fdPA gives identical results for the trivial case (G0 = Σ0 = Π0 = 0)
+    S0 = parquet_solver_hubbard_parquet_approximation(nG, nΣ, nK1, nK2, nK3, mK_G, mK_Γ; T, U, μ, t1, t2, mode = :threads)
+    init_sym_grp!(S0)
+    res = fdDGAsolver.solve!(S0; strategy = :scPA, verbose = false);
+
+    S = parquet_solver_hubbard_parquet_approximation(nG, nΣ, nK1, nK2, nK3, mK_G, mK_Γ; T, U, μ, t1, t2, mode = :threads)
+    init_sym_grp!(S)
+    res = fdDGAsolver.solve!(S; strategy = :fdPA, verbose = false);
+
+    @test absmax(S.Σ - S0.Σ) < 1e-10
+    @test absmax(abs.(flatten(S.F) .- flatten(S0.F))) < 1e-10
 end

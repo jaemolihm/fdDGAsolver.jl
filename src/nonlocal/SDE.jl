@@ -66,6 +66,72 @@ function SDE_channel_L_ph(
     return Lph
 end
 
+# U * Π * (F - U) for F <: RefVertex
+
+function SDE_channel_L_pp(
+    Πpp   :: NL_MF_Π{Q},
+    F     :: RefVertex{Q},
+    SGpp2 :: SymmetryGroup
+    ;
+    mode  :: Symbol,
+    )     :: NL_MF_K2{Q} where {Q}
+
+    # model the diagram
+    @inline function diagram(wtpl)
+
+        Ω, ν, P = wtpl
+        val     = zero(Q)
+
+        for iω in eachindex(meshes(Πpp, Val(2)))
+            ω = value(meshes(Πpp, Val(2))[iω])
+
+            # RefVertex has no momentum dependence
+            val += bare_vertex(F) * Πpp[Ω, ω, P, kSW] * (F(Ω, Ω - ω, ν, pCh, pSp) - bare_vertex(F, pCh, pSp))
+        end
+
+        return temperature(F) * val
+    end
+
+    # compute Lpp
+    Lpp = MeshFunction(meshes(F.Fp_p, Val(1)), meshes(F.Fp_p, Val(2)), meshes(Πpp, Val(3)); data_t = Q)
+
+    SGpp2(Lpp, InitFunction{3, Q}(diagram); mode)
+
+    return Lpp
+end
+
+function SDE_channel_L_ph(
+    Πph   :: NL_MF_Π{Q},
+    F     :: RefVertex{Q},
+    SGph2 :: SymmetryGroup
+    ;
+    mode  :: Symbol,
+    )     :: NL_MF_K2{Q} where {Q}
+
+    # model the diagram
+    @inline function diagram(wtpl)
+
+        Ω, ν, P = wtpl
+        val     = zero(Q)
+
+        for iω in eachindex(meshes(Πph, Val(2)))
+            ω = value(meshes(Πph, Val(2))[iω])
+
+            # RefVertex has no momentum dependence
+            val += bare_vertex(F) * Πph[Ω, ω, P, kSW] * (F(Ω, ν, ω, aCh, pSp) + F(Ω, ν, ω, tCh, pSp) - bare_vertex(F, aCh, pSp) - bare_vertex(F, tCh, pSp))
+        end
+
+        return temperature(F) * val
+    end
+
+    # compute Lph
+    Lph = MeshFunction(meshes(F.Fp_p, Val(1)), meshes(F.Fp_p, Val(2)), meshes(Πph, Val(3)); data_t = Q)
+
+    SGph2(Lph, InitFunction{3, Q}(diagram); mode)
+
+    return Lph
+end
+
 
 function SDE!(
     Σ     :: NL_MF_G{Q},
