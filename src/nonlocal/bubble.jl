@@ -77,7 +77,8 @@ function bubbles_real_space!(
     Rs_Π_1d = (-div(L, 2)) : div(L, 2)
     Rs = collect(Iterators.product(Rs_Π_1d, Rs_Π_1d))
 
-    Threads.@threads for (Rp1, Rp2) in Rs
+    # Threads.@threads
+    for (Rp1, Rp2) in Rs
         Rp_vec = (Rp1, Rp2)
 
         # Index of Rp in Π(R, Rp)

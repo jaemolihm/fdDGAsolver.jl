@@ -311,7 +311,8 @@ function SDE_U2_using_G(
 
     Σ_U²_R = zeros(eltype(Σ.data), length(meshes(Σ, Val(1))), L, L)
 
-    Threads.@threads for (iR1, iR2) in collect(Iterators.product(axes(G_pR, 2), axes(G_pR, 3)))
+    # Threads.@threads
+    for (iR1, iR2) in collect(Iterators.product(axes(G_pR, 2), axes(G_pR, 3)))
         Gp = MeshFunction((meshes(G, Val(1)),), view(G_pR, :, iR1, iR2))
         Gm = MeshFunction((meshes(G, Val(1)),), view(G_mR, :, iR1, iR2))
 
