@@ -264,8 +264,8 @@ function init_sym_grp!(
     #     Symmetry{4}(w -> sΠ_rot(w, mK_Γ)),
     # ], S.Πph)
 
-    if S.F0 isa AbstractVertex
-        F0_K2 = S.F0.γp
+    if S.F0 isa NL_Vertex || S.F0 isa Vertex
+        F0_K2 = MeshFunction(meshes(S.F0.γp.K3, Val(1)), meshes(S.F0.γp.K3, Val(2)), mK_Γ; data_t = eltype(S))
     elseif S.F0 isa RefVertex
         F0_K2 = MeshFunction(meshes(S.F0.Fp_p, Val(1)), meshes(S.F0.Fp_p, Val(2)), mK_Γ; data_t = eltype(S))
     end
