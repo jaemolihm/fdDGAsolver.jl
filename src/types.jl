@@ -31,7 +31,7 @@ struct aCh <: ChannelTag end
 
 # spin components
 #----------------------------------------------------------------------------------------------#
-    
+
 """
     abstract type SpinTag end
 
@@ -62,7 +62,7 @@ struct dSp <: SpinTag end
 
 # Mesh aliases
 #----------------------------------------------------------------------------------------------#
-    
+
 const FMesh = Mesh{MeshPoint{MatsubaraFrequency{Fermion}}, MatsubaraDomain}
 const BMesh = Mesh{MeshPoint{MatsubaraFrequency{Boson}}, MatsubaraDomain}
 const KMesh = Mesh{MeshPoint{BrillouinPoint{2}}, BrillouinDomain{2, 4}}
@@ -84,7 +84,7 @@ const NL_MF_Π{Q} = MeshFunction{4, Q, Tuple{BMesh, FMesh, KMesh, KMesh}, Array{
 
 # MeshFunction aliases : nonlocal vertex with only bosonic frequency dependence
 #----------------------------------------------------------------------------------------------#
-    
+
 const NL_MF_K1{Q} = MeshFunction{2, Q, Tuple{BMesh, KMesh}, Array{Q, 2}}
 const NL_MF_K2{Q} = MeshFunction{3, Q, Tuple{BMesh, FMesh, KMesh}, Array{Q, 3}}
 const NL_MF_K3{Q} = MeshFunction{4, Q, Tuple{BMesh, FMesh, FMesh, KMesh}, Array{Q, 4}}
@@ -93,6 +93,7 @@ const NL_MF_K3{Q} = MeshFunction{4, Q, Tuple{BMesh, FMesh, FMesh, KMesh}, Array{
 #----------------------------------------------------------------------------------------------#
 
 const NL2_MF_K2{Q} = MeshFunction{4, Q, Tuple{BMesh, FMesh, KMesh, KMesh}, Array{Q, 4}}
+const NL2_MF_K3{Q} = MeshFunction{5, Q, Tuple{BMesh, FMesh, FMesh, KMesh, KMesh}, Array{Q, 5}}
 
 # struct to describe high-frequency limit
 #----------------------------------------------------------------------------------------------#

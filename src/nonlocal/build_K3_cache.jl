@@ -1,13 +1,15 @@
 # Build cache MeshFunction for K3 BSE
+# One of the fermionic frequencies is multiplied to the bubble, so we use the
+# mesh of the bubble as the mesh of the cached vertex.
 function build_K3_cache(
-    S :: Union{NL_ParquetSolver{Q}, NL2_ParquetSolver{Q}}
+    S :: NL_ParquetSolver{Q}
     ) where {Q}
+
+    mΠν = meshes(S.Πph, Val(2))
 
     # Vertices multiplied by bubbles from the left
 
-    # build vertices
-    g = MatsubaraMesh(temperature(S), 2 * numK1(S), Fermion)
-    Γpx = MeshFunction(meshes(S.F.γp.K3, Val(1)), g, meshes(S.F.γp.K3, Val(3)), meshes(S.F.γp.K3, Val(4)); data_t=Q)
+    Γpx = MeshFunction(meshes(S.F.γp.K3, Val(1)), mΠν, meshes(S.F.γp.K3, Val(3)), meshes(S.F.γp.K3, Val(4)); data_t=Q)
     F0p = copy(Γpx)
     F0a = copy(Γpx)
     F0t = copy(Γpx)
@@ -25,7 +27,7 @@ function build_K3_cache(
 
     # Vertices multiplied by bubbles from the right
 
-    Γpp = MeshFunction(meshes(S.F.γp.K3, Val(1)), meshes(S.F.γp.K3, Val(2)), g, meshes(S.F.γp.K3, Val(4)); data_t=Q)
+    Γpp = MeshFunction(meshes(S.F.γp.K3, Val(1)), meshes(S.F.γp.K3, Val(2)), mΠν, meshes(S.F.γp.K3, Val(4)); data_t=Q)
     Γa = deepcopy(Γpp)
     Γt = deepcopy(Γpp)
     Fp = deepcopy(Γpp)
