@@ -89,7 +89,7 @@ end;
 
     # Now initialize symmetries and test symmetry of the vertices
 
-    fdDGAsolver.init_sym_grp!(S)
+    init_sym_grp!(S)
 
     @testset "symmetry error" begin
         @test S.SGpp[1](S.F.γp.K1) < 1e-10
@@ -151,7 +151,7 @@ end
 
     # Now initialize symmetries and test symmetry of the vertices
 
-    fdDGAsolver.init_sym_grp!(S)
+    init_sym_grp!(S)
 
     @testset "symmetry error" begin
         # These symmetry are exact only when the fdPA is converged (?)

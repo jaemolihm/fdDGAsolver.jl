@@ -22,12 +22,13 @@ using Test
 
     # scPA for the reference point
     S0 = parquet_solver_siam_parquet_approximation(nG, nΣ, nK1, nK2, nK3; e, T, U, Δ, D)
-    fdDGAsolver.init_sym_grp!(S0)
+    init_sym_grp!(S0)
     res = fdDGAsolver.solve!(S0; strategy = :scPA, parallel_mode = :threads, verbose = false);
+
 
     # fdPA should run and converge to the same point (trivial case of G0 = Σ0 = Π0 = 0)
     S0_fd = parquet_solver_siam_parquet_approximation(nG, nΣ, nK1, nK2, nK3; e, T, U, Δ, D)
-    fdDGAsolver.init_sym_grp!(S0_fd)
+    init_sym_grp!(S0_fd)
     res = fdDGAsolver.solve!(S0_fd; strategy = :fdPA, parallel_mode = :threads, verbose = false);
     @test absmax(S0.Σ - S0_fd.Σ) < 1e-10
     @test maximum(abs.(flatten(S0.F) .- flatten(S0_fd.F))) < 1e-10
@@ -38,7 +39,7 @@ using Test
     e_fd = 0.5
     D_fd = 20.0
     S_fd = parquet_solver_siam_parquet_approximation(nG, nΣ, nK1, nK2, nK3; e = e_fd, T, U, Δ = Δ_fd, D = D_fd)
-    fdDGAsolver.init_sym_grp!(S_fd)
+    init_sym_grp!(S_fd)
     res = fdDGAsolver.solve!(S_fd; strategy = :scPA, parallel_mode = :threads, verbose = false);
 
 
@@ -46,7 +47,7 @@ using Test
     Gbare = fdDGAsolver.siam_bare_Green(meshes(S0.G, Val(1)); e = e_fd, Δ = Δ_fd, D = D_fd)
 
     S = ParquetSolver(nG, nΣ, nK1, nK2, nK3, Gbare, S0.G, S0.Σ, S0.F)
-    fdDGAsolver.init_sym_grp!(S)
+    init_sym_grp!(S)
     res = fdDGAsolver.solve!(S; strategy = :fdPA, parallel_mode = :threads, verbose = false);
 
     @test absmax(S.Σ - S_fd.Σ) < 3e-5
@@ -67,7 +68,7 @@ using Test
     Gbare = fdDGAsolver.siam_bare_Green(meshes(S0.G, Val(1)); e = e_fd, Δ = Δ_fd, D = D_fd)
 
     S2 = ParquetSolver(nG, nΣ, nK1, nK2, nK3, Gbare, S0.G, S0.Σ, S0.F)
-    fdDGAsolver.init_sym_grp!(S2)
+    init_sym_grp!(S2)
     res = fdDGAsolver.solve!(S2; strategy = :fdPA, parallel_mode = :threads, verbose = false);
 
     @test absmax(S2.Σ - S_fd.Σ) < 3e-3

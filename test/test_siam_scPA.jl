@@ -22,7 +22,7 @@ using Test
 
     for Q in [Float64, ComplexF64], mode in [:serial, :threads, :polyester, :hybrid]
         S = parquet_solver_siam_parquet_approximation(nG, nΣ, nK1, nK2, nK3, Q; e, T, D, Δ, U)
-        fdDGAsolver.init_sym_grp!(S)
+        init_sym_grp!(S)
 
         res = fdDGAsolver.solve!(S; strategy = :scPA, verbose = false, parallel_mode = mode);
 
@@ -55,7 +55,7 @@ end
     nK3 = (2nmax, nmax)
 
     S = parquet_solver_siam_parquet_approximation(nG, nΣ, nK1, nK2, nK3; e, T, D, Δ, U)
-    fdDGAsolver.init_sym_grp!(S)
+    init_sym_grp!(S)
 
     res = fdDGAsolver.solve!(S; strategy = :scPA, verbose = false, parallel_mode = :threads);
 

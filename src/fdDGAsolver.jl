@@ -94,6 +94,7 @@ module fdDGAsolver
         NL_Channel, NL_Vertex,
         NL2_Channel, NL2_Vertex,
         compute_occupation,
+        init_sym_grp!,
         ParquetSolver,
         NL_ParquetSolver,
         parquet_solver_siam_parquet_approximation,
