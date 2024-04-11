@@ -77,7 +77,6 @@ function bubbles_real_space!(
     Rs_Π_1d = (-div(L, 2)) : div(L, 2)
     Rs = collect(Iterators.product(Rs_Π_1d, Rs_Π_1d))
 
-    # Threads.@threads
     for (Rp1, Rp2) in Rs
         Rp_vec = (Rp1, Rp2)
 
@@ -114,13 +113,13 @@ function bubbles_real_space!(
                 Ω = value(meshes(Πpp, Val(1))[iΩ])
                 ν = value(meshes(Πpp, Val(2))[iν])
 
-                Πpp_RR[iΩ, iν, iR_Π...] = G_R(Ω - ν) * G_RpR(ν) * weight
-                Πph_RR[iΩ, iν, iR_Π...] = G_R(Ω + ν) * G_RmR(ν) * weight
+                Πpp_RR[iΩ, iν, iR_Π...] += G_R(Ω - ν) * G_RpR(ν) * weight
+                Πph_RR[iΩ, iν, iR_Π...] += G_R(Ω + ν) * G_RmR(ν) * weight
             end
         end
 
-        Πpp_PR[:, :, :, iRp_Π...] .= reshape(bfft(Πpp_RR, (3, 4)), n1, n2, L^2)
-        Πph_PR[:, :, :, iRp_Π...] .= reshape(bfft(Πph_RR, (3, 4)), n1, n2, L^2)
+        Πpp_PR[:, :, :, iRp_Π...] .+= reshape(bfft(Πpp_RR, (3, 4)), n1, n2, L^2)
+        Πph_PR[:, :, :, iRp_Π...] .+= reshape(bfft(Πph_RR, (3, 4)), n1, n2, L^2)
     end
 
     Πpp.data .= reshape(bfft(Πpp_PR, (4, 5)), n1, n2, L^2, L^2)
