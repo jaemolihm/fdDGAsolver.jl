@@ -73,11 +73,11 @@ end
 #        :: SWaveBrillouinPoint,
 #     )  :: Q where {Q}
 
-#     i1 = MatsubaraFunctions.mesh_index(w1, meshes(f, 1))
-#     i2 = MatsubaraFunctions.mesh_index(w2, meshes(f, 2))
-#     i3 = MatsubaraFunctions.mesh_index(k1, meshes(f, 3))
+#     i1 = MatsubaraFunctions.mesh_index(w1, meshes(f, Val(1)))
+#     i2 = MatsubaraFunctions.mesh_index(w2, meshes(f, Val(2)))
+#     i3 = MatsubaraFunctions.mesh_index(k1, meshes(f, Val(3)))
 
-#     return sum(view(f, i1, i2, i3, :)) / length(meshes(f, 4))
+#     return sum(view(f, i1, i2, i3, :)) / length(meshes(f, Val(4)))
 
 # end
 

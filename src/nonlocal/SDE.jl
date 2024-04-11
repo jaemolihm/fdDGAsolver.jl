@@ -94,15 +94,15 @@ function SDE!(
         # Σ( R) += G(-R) * Lpp(R)
         # Σ(-R) += G(-R) * Lph(R)
 
-        LG = bz(meshes(G, 2)).L
-        LΣ = bz(meshes(Σ, 2)).L
-        L  = bz(meshes(Lpp, 3)).L
+        LG = bz(meshes(G, Val(2))).L
+        LΣ = bz(meshes(Σ, Val(2))).L
+        L  = bz(meshes(Lpp, Val(3))).L
 
-        n1 = length(meshes(Lpp, 1))
-        n2 = length(meshes(Lpp, 2))
+        n1 = length(meshes(Lpp, Val(1)))
+        n2 = length(meshes(Lpp, Val(2)))
 
         G_data_R = fft(reshape(G.data, :, LG, LG), (2, 3)) / LG^2
-        Σ_data_R = zeros(eltype(Σ.data), length(meshes(Σ, 1)), LΣ, LΣ)
+        Σ_data_R = zeros(eltype(Σ.data), length(meshes(Σ, Val(1))), LΣ, LΣ)
 
         Lpp_data_R = fft(reshape(Lpp.data, n1, n2, L, L), (3, 4)) / L^2
         Lph_data_R = fft(reshape(Lph.data, n1, n2, L, L), (3, 4)) / L^2
@@ -129,22 +129,22 @@ function SDE!(
             ipR_Σ = mod.(  R_vec, (LΣ, LΣ)) .+ 1
             imR_Σ = mod.(.-R_vec, (LΣ, LΣ)) .+ 1
 
-            Lpp_R = MeshFunction((meshes(Lpp, 1), meshes(Lpp, 2)), view(Lpp_data_R, :, :, iR_L...))
-            Lph_R = MeshFunction((meshes(Lph, 1), meshes(Lph, 2)), view(Lph_data_R, :, :, iR_L...))
+            Lpp_R = MeshFunction((meshes(Lpp, Val(1)), meshes(Lpp, Val(2))), view(Lpp_data_R, :, :, iR_L...))
+            Lph_R = MeshFunction((meshes(Lph, Val(1)), meshes(Lph, Val(2))), view(Lph_data_R, :, :, iR_L...))
 
-            G_R = MeshFunction((meshes(G, 1),), view(G_data_R, :, imR_G...))
-            Σ_R_pp = MeshFunction((meshes(Σ, 1),), view(Σ_data_R, :, ipR_Σ...))
-            Σ_R_ph = MeshFunction((meshes(Σ, 1),), view(Σ_data_R, :, imR_Σ...))
+            G_R = MeshFunction((meshes(G, Val(1)),), view(G_data_R, :, imR_G...))
+            Σ_R_pp = MeshFunction((meshes(Σ, Val(1)),), view(Σ_data_R, :, ipR_Σ...))
+            Σ_R_ph = MeshFunction((meshes(Σ, Val(1)),), view(Σ_data_R, :, imR_Σ...))
 
-            for iν in eachindex(meshes(Lpp, 2))
-                ν = value(meshes(Lpp, 2)[iν])
+            for iν in eachindex(meshes(Lpp, Val(2)))
+                ν = value(meshes(Lpp, Val(2))[iν])
 
-                if is_inbounds(ν, meshes(Σ, 1))
+                if is_inbounds(ν, meshes(Σ, Val(1)))
 
-                    for iΩ in eachindex(meshes(Lpp, 1))
-                        Ω = value(meshes(Lpp, 1)[iΩ])
+                    for iΩ in eachindex(meshes(Lpp, Val(1)))
+                        Ω = value(meshes(Lpp, Val(1))[iΩ])
 
-                        if is_inbounds(Ω - ν, meshes(G, 1))
+                        if is_inbounds(Ω - ν, meshes(G, Val(1)))
                             Σ_R_pp[ν] += G_R[Ω - ν] * Lpp_R[iΩ, iν] * weight
                             Σ_R_ph[ν] += G_R[Ω + ν] * Lph_R[iΩ, iν] * weight
                         end
@@ -201,7 +201,7 @@ function SDE!(
 
             end
 
-            return temperature(F) * val / length(meshes(Πpp, 3))
+            return temperature(F) * val / length(meshes(Πpp, Val(3)))
         end
 
         # compute Σ
