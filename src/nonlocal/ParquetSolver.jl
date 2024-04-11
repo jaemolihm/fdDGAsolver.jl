@@ -46,10 +46,10 @@ mutable struct NL_ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
     SGphL::Vector{SymmetryGroup}
 
     # symmetry groups for the particle-particle channel of F0. Used only for fdPA
-    SG0pp2::Union{SymmetryGroup, Nothing}
+    SG0pp2::SymmetryGroup
 
     # symmetry groups for the particle-hole channels of F0. Used only for fdPA
-    SG0ph2::Union{SymmetryGroup, Nothing}
+    SG0ph2::SymmetryGroup
 
     # symmetry groups for the particle-particle bubble
     SGΠpp::Union{SymmetryGroup, Nothing}
