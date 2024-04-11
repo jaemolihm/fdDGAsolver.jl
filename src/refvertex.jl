@@ -20,7 +20,7 @@ struct RefVertex{Q}
         T :: Float64,
         U :: Float64,
           :: Type{Q} = ComplexF64,
-        )where {Q}
+        ) where {Q}
 
         # Null vertices
         gΩ = MatsubaraMesh(T, 1, Boson)

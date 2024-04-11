@@ -95,13 +95,81 @@ function SDE_channel_L_ph(
     return Lph
 end
 
+# U * Π * (F - U) for F <: RefVertex
+
+function SDE_channel_L_pp(
+    Πpp   :: MF_Π{Q},
+    F     :: RefVertex{Q},
+    SGpp2 :: SymmetryGroup
+    ;
+    mode  :: Symbol,
+    )     :: MF_K2{Q} where {Q}
+
+    # model the diagram
+    @inline function diagram(wtpl)
+
+        Ω, ν    = wtpl
+        val     = zero(Q)
+        Πslice  = view(Πpp, Ω, :)
+
+        for i in eachindex(Πslice)
+            ω = value(meshes(Πpp, Val(2))[i])
+
+            val += bare_vertex(F) * Πslice[i] * (F(Ω, Ω - ω, ν, pCh, pSp) - bare_vertex(F, pCh, pSp))
+        end
+
+        return temperature(F) * val
+    end
+
+    # compute Lpp
+    Lpp = MeshFunction(meshes(F.Fp_p, Val(1)), meshes(F.Fp_p, Val(2)); data_t = Q)
+
+    # SGpp2(Lpp, InitFunction{2, Q}(diagram); mode = mode)
+    SymmetryGroup(Lpp)(Lpp, InitFunction{2, Q}(diagram); mode = mode)
+
+    return Lpp
+end
+
+
+function SDE_channel_L_ph(
+    Πph   :: MF_Π{Q},
+    F     :: RefVertex{Q},
+    SGph2 :: SymmetryGroup
+    ;
+    mode  :: Symbol,
+    )     :: MF_K2{Q} where {Q}
+
+    # model the diagram
+    @inline function diagram(wtpl)
+
+        Ω, ν    = wtpl
+        val     = zero(Q)
+        Πslice  = view(Πph, Ω, :)
+
+        for i in eachindex(Πslice)
+            ω = value(meshes(Πph, Val(2))[i])
+
+            val += bare_vertex(F) * Πslice[i] * (F(Ω, ν, ω, aCh, pSp) + F(Ω, ν, ω, tCh, pSp) - bare_vertex(F, aCh, pSp) - bare_vertex(F, tCh, pSp))
+        end
+
+        return temperature(F) * val
+    end
+
+    # compute Lph
+    Lph = MeshFunction(meshes(F.Fp_p, Val(1)), meshes(F.Fp_p, Val(2)); data_t = Q)
+
+    # SGph2(Lph, InitFunction{2, Q}(diagram); mode)
+    SymmetryGroup(Lph)(Lph, InitFunction{2, Q}(diagram); mode = mode)
+
+    return Lph
+end
 
 function SDE!(
     Σ     :: MF_G{Q},
     G     :: MF_G{Q},
     Πpp   :: MF_Π{Q},
     Πph   :: MF_Π{Q},
-    F     :: Vertex{Q},
+    F     :: Union{Vertex{Q}, RefVertex{Q}},
     SGΣ   :: SymmetryGroup,
     SGpp2 :: SymmetryGroup,
     SGph2 :: SymmetryGroup,
@@ -138,6 +206,12 @@ function SDE!(
 
     # compute Σ
     SGΣ(Σ, InitFunction{1, Q}(diagram); mode)
+
+    if F isa RefVertex
+        # If F is a RefVertex, a, p, and t channel contributions are all equivalent and
+        # counted three times. We divide by 3 to get the correct result.
+        Σ.data .*= 1/3
+    end
 
     if include_U²
         Σ_U² = SDE_U2_using_G(Σ, G, SGΣ, bare_vertex(F); mode)

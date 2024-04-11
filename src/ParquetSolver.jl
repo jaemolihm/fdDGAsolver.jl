@@ -110,9 +110,12 @@ mutable struct ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
         if F0 isa Vertex
             SG0pp2 = SymmetryGroup(F0.γp.K2)
             SG0ph2 = SymmetryGroup(F0.γp.K2)
+        elseif F0 isa RefVertex
+            F0_K2 = MeshFunction(meshes(F0.Fp_p, Val(1)), meshes(F0.Fp_p, Val(2)); data_t = Q)
+            SG0pp2 = SymmetryGroup(F0_K2)
+            SG0ph2 = SymmetryGroup(F0_K2)
         else
-            SG0pp2 = nothing
-            SG0ph2 = nothing
+            throw(ArgumentError("F0 must be a Vertex or RefVertex, not $(typeof(F0))"))
         end
 
         return new{Q, RefVT}(Gbare, G0, Π0pp, Π0ph, Σ0, F0, G, Πpp, Πph, Σ, F, Fbuff, copy(Fbuff), SGΣ, SGpp, SGph, SGppL, SGphL, SG0pp2, SG0ph2, mode)::ParquetSolver{Q}
@@ -290,10 +293,13 @@ function init_sym_grp!(
     S.SGphL[3] = SymmetryGroup([Symmetry{3}(sK3ph1), Symmetry{3}(sK3ph3)], S.F.γt.K3)
 
     # For F0
-    if S.SG0pp2 !== nothing
-        S.SG0pp2 = SymmetryGroup([Symmetry{2}(sK2pp1), Symmetry{2}(sK2pp2)], S.F0.γp.K2)
-        S.SG0ph2 = SymmetryGroup([Symmetry{2}(sK2ph1), Symmetry{2}(sK2ph2)], S.F0.γt.K2)
+    if S.F0 isa Vertex
+        F0_K2 = S.F0.γp.K2
+    elseif S.F0 isa RefVertex
+        F0_K2 = MeshFunction(meshes(S.F0.Fp_p, Val(1)), meshes(S.F0.Fp_p, Val(2)); data_t = eltype(S.F0))
     end
+    S.SG0pp2 = SymmetryGroup([Symmetry{2}(sK2pp1), Symmetry{2}(sK2pp2)], F0_K2)
+    S.SG0ph2 = SymmetryGroup([Symmetry{2}(sK2ph1), Symmetry{2}(sK2ph2)], F0_K2)
 
     return nothing
 end
