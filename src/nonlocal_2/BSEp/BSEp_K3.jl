@@ -15,8 +15,8 @@ function BSE_K3!(
         Fslice  = view(F,  Ω, ν,  :, P)
         F0slice = view(F0, Ω, :, νp, P)
 
-        for i in eachindex(meshes(Γ, 2))
-            ω  = value(meshes(Γ, 2)[i])
+        for i in eachindex(meshes(Γ, Val(2)))
+            ω  = value(meshes(Γ, Val(2))[i])
             Π0 = S.Π0pp[Ω, ω, P, kSW]
             Π  = S.Πpp[ Ω, ω, P, kSW]
 
@@ -24,10 +24,10 @@ function BSE_K3!(
             val -= Fslice[i] * ((Π - Π0) * F0slice[i] + Π * Γslice[i])
 
             # central part
-            if is_inbounds(Ω - ω, meshes(S.FL.γp.K3, 2)) && is_inbounds(νp, meshes(S.FL.γp.K3, 3))
+            if is_inbounds(Ω - ω, meshes(S.FL.γp.K3, Val(2))) && is_inbounds(νp, meshes(S.FL.γp.K3, Val(3)))
                 val += Fslice[i] * Π * S.FL.γp.K3[Ω, Ω - ω, νp, P]
             else
-                val += Fslice[i] * Π * S.FL.γp.K2(Ω, Ω - ω, P, kSW)
+                val += Fslice[i] * Π * box_eval(S.FL.γp.K2, Ω, Ω - ω, P, kSW)
             end
         end
 

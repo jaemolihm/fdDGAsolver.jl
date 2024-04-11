@@ -44,7 +44,7 @@ function numK3(
     Λ :: RefVertex
     ) :: NTuple{2, Int64}
 
-    return N(meshes(Λ.Fp_p, 1)), N(meshes(Λ.Fp_p, 2))
+    return N(meshes(Λ.Fp_p, Val(1))), N(meshes(Λ.Fp_p, Val(2)))
 end
 
 # getter methods
@@ -52,7 +52,7 @@ function MatsubaraFunctions.temperature(
     F :: RefVertex
     ) :: Float64
 
-    return MatsubaraFunctions.temperature(meshes(F.Fp_p, 1))
+    return MatsubaraFunctions.temperature(meshes(F.Fp_p, Val(1)))
 end
 
 # copy

@@ -11,7 +11,7 @@ function BSE_L_K2!(
         Π0slice = view(S.Π0ph, Ω, :)
 
         for i in eachindex(Π0slice)
-            ω = value(meshes(S.Π0ph, 2)[i])
+            ω = value(meshes(S.Π0ph, Val(2))[i])
 
             # vertices
             Γp  = S.F(Ω, ν, ω, aCh, pSp; F0 = false, γa = false)
@@ -44,7 +44,7 @@ function BSE_K2!(
         Πslice  = view(S.Πph, Ω, :)
 
         for i in eachindex(Π0slice)
-            ω = value(meshes(S.Π0ph, 2)[i])
+            ω = value(meshes(S.Π0ph, Val(2))[i])
 
             # vertices
             Fl  = S.F(Ω, ν, ω, aCh, pSp)

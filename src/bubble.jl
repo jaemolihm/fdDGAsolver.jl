@@ -12,9 +12,9 @@ function bubbles!(
     G   :: MF_G{Q},
     ) :: Nothing where {Q}
 
-    for iΩ in eachindex(meshes(Πpp, 1)), iν in eachindex(meshes(Πpp, 2))
-        Ω = value(meshes(Πpp, 1)[iΩ])
-        ν = value(meshes(Πpp, 2)[iν])
+    for iΩ in eachindex(meshes(Πpp, Val(1))), iν in eachindex(meshes(Πpp, Val(2)))
+        Ω = value(meshes(Πpp, Val(1))[iΩ])
+        ν = value(meshes(Πpp, Val(2))[iν])
         Πpp[iΩ, iν] = G(ν) * G(Ω - ν)
         Πph[iΩ, iν] = G(Ω + ν) * G(ν)
     end

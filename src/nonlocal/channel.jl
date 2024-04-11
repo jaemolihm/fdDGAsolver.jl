@@ -49,14 +49,14 @@ function get_P_mesh(
     γ :: NL_Channel
     ) :: KMesh
 
-    return meshes(γ.K1, 2)
+    return meshes(γ.K1, Val(2))
 end
 
 function numP(
     γ :: NL_Channel
     ) :: Int64
 
-    return length(meshes(γ.K1, 2))
+    return length(meshes(γ.K1, Val(2)))
 end
 
 # copy
@@ -102,19 +102,19 @@ end
 
     P = fold_back(P_, get_P_mesh(γ))
 
-    if is_inbounds(Ω, meshes(γ.K1, 1))
+    if is_inbounds(Ω, meshes(γ.K1, Val(1)))
         K1 && (val += γ.K1[Ω, P])
 
-        if is_inbounds(Ω, meshes(γ.K2, 1))
-            ν1_inbounds = is_inbounds(ν, meshes(γ.K2, 2))
-            ν2_inbounds = is_inbounds(νp, meshes(γ.K2, 2))
+        if is_inbounds(Ω, meshes(γ.K2, Val(1)))
+            ν1_inbounds = is_inbounds(ν, meshes(γ.K2, Val(2)))
+            ν2_inbounds = is_inbounds(νp, meshes(γ.K2, Val(2)))
 
             if ν1_inbounds && ν2_inbounds
                 K2 && (val += γ.K2[Ω, ν, P] + γ.K2[Ω, νp, P])
 
-                if (K3 && is_inbounds( Ω, meshes(γ.K3, 1)) &&
-                          is_inbounds( ν, meshes(γ.K3, 2)) &&
-                          is_inbounds(νp, meshes(γ.K3, 3)))
+                if (K3 && is_inbounds( Ω, meshes(γ.K3, Val(1))) &&
+                          is_inbounds( ν, meshes(γ.K3, Val(2))) &&
+                          is_inbounds(νp, meshes(γ.K3, Val(3))))
                     val += γ.K3[Ω, ν, νp, P]
                 end
 
@@ -149,16 +149,16 @@ end
     P = fold_back(P_, get_P_mesh(γ))
 
     if K1
-        if is_inbounds(Ω, meshes(γ.K1, 1))
+        if is_inbounds(Ω, meshes(γ.K1, Val(1)))
             val += γ.K1[Ω, P]
 
-            if K2 && is_inbounds(Ω, meshes(γ.K2, 1)) && is_inbounds(νp, meshes(γ.K2, 2))
+            if K2 && is_inbounds(Ω, meshes(γ.K2, Val(1))) && is_inbounds(νp, meshes(γ.K2, Val(2)))
                 val += γ.K2[Ω, νp, P]
             end
         end
     else
         # K1 not included
-        if K2 && is_inbounds(Ω, meshes(γ.K2, 1)) && is_inbounds(νp, meshes(γ.K2, 2))
+        if K2 && is_inbounds(Ω, meshes(γ.K2, Val(1))) && is_inbounds(νp, meshes(γ.K2, Val(2)))
             val += γ.K2[Ω, νp, P]
         end
     end
@@ -184,16 +184,16 @@ end
     P = fold_back(P_, get_P_mesh(γ))
 
     if K1
-        if is_inbounds(Ω, meshes(γ.K1, 1))
+        if is_inbounds(Ω, meshes(γ.K1, Val(1)))
             K1 && (val += γ.K1[Ω, P])
 
-            if K2 && is_inbounds(Ω, meshes(γ.K2, 1)) && is_inbounds(ν, meshes(γ.K2, 2))
+            if K2 && is_inbounds(Ω, meshes(γ.K2, Val(1))) && is_inbounds(ν, meshes(γ.K2, Val(2)))
                 val += γ.K2[Ω, ν, P]
             end
         end
     else
         # K1 not included
-        if K2 && is_inbounds(Ω, meshes(γ.K2, 1)) && is_inbounds(ν, meshes(γ.K2, 2))
+        if K2 && is_inbounds(Ω, meshes(γ.K2, Val(1))) && is_inbounds(ν, meshes(γ.K2, Val(2)))
             val += γ.K2[Ω, ν, P]
         end
     end
@@ -218,7 +218,7 @@ end
 
     P = fold_back(P_, get_P_mesh(γ))
 
-    if K1 && is_inbounds(Ω, meshes(γ.K1, 1))
+    if K1 && is_inbounds(Ω, meshes(γ.K1, Val(1)))
         val += γ.K1[Ω, P]
     end
 
@@ -259,28 +259,28 @@ function reduce!(
         P = value(get_P_mesh(γ)[iP])
 
         if max_class >= 2
-            for iΩ in eachindex(meshes(γ.K2, 1))
-                Ω = value(meshes(γ.K2, 1)[iΩ])
+            for iΩ in eachindex(meshes(γ.K2, Val(1)))
+                Ω = value(meshes(γ.K2, Val(1))[iΩ])
                 K1val = γ.K1[Ω, P]
 
-                for iν in eachindex(meshes(γ.K2, 2))
-                    ν = value(meshes(γ.K2, 2)[iν])
+                for iν in eachindex(meshes(γ.K2, Val(2)))
+                    ν = value(meshes(γ.K2, Val(2))[iν])
                     γ.K2[Ω, ν, P] -= K1val
                 end
             end
         end
 
         if max_class >= 3
-            for iΩ in eachindex(meshes(γ.K3, 1))
-                Ω = value(meshes(γ.K3, 1)[iΩ])
+            for iΩ in eachindex(meshes(γ.K3, Val(1)))
+                Ω = value(meshes(γ.K3, Val(1))[iΩ])
                 K1val = γ.K1[Ω, P]
 
-                for iν in eachindex(meshes(γ.K3, 2))
-                    ν = value(meshes(γ.K3, 2)[iν])
+                for iν in eachindex(meshes(γ.K3, Val(2)))
+                    ν = value(meshes(γ.K3, Val(2))[iν])
                     K2val = γ.K2[Ω, ν, P]
 
-                    for iνp in eachindex(meshes(γ.K3, 3))
-                        νp = value(meshes(γ.K3, 3)[iνp])
+                    for iνp in eachindex(meshes(γ.K3, Val(3)))
+                        νp = value(meshes(γ.K3, Val(3))[iνp])
                         γ.K3[Ω, ν, νp, P] -= K1val + K2val + γ.K2[Ω, νp, P]
                     end
                 end

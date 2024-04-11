@@ -34,7 +34,7 @@ using Test
     res = fdDGAsolver.solve!(S_fd; strategy = :scPA, parallel_mode = :threads, verbose = false);
 
     # fdPA from the reference to the target
-    Gbare = fdDGAsolver.siam_bare_Green(meshes(S0.G, 1); e = e_fd, Δ = Δ_fd, D = D_fd)
+    Gbare = fdDGAsolver.siam_bare_Green(meshes(S0.G, Val(1)); e = e_fd, Δ = Δ_fd, D = D_fd)
 
     S = ParquetSolver(nG, nΣ, nK1, nK2, nK3, Gbare, S0.G, S0.Σ, S0.F)
     fdDGAsolver.init_sym_grp!(S)
@@ -54,7 +54,7 @@ using Test
     nK2 = (2nmax, nmax)
     nK3 = (2nmax, nmax)
 
-    Gbare = fdDGAsolver.siam_bare_Green(meshes(S0.G, 1); e = e_fd, Δ = Δ_fd, D = D_fd)
+    Gbare = fdDGAsolver.siam_bare_Green(meshes(S0.G, Val(1)); e = e_fd, Δ = Δ_fd, D = D_fd)
 
     S2 = ParquetSolver(nG, nΣ, nK1, nK2, nK3, Gbare, S0.G, S0.Σ, S0.F)
     fdDGAsolver.init_sym_grp!(S2)

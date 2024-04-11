@@ -76,7 +76,7 @@ mutable struct NL_ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
         mode::Symbol = :serial,
     ) where {Q, RefVT}
 
-        T = MatsubaraFunctions.temperature(meshes(G0, 1))
+        T = MatsubaraFunctions.temperature(meshes(G0, Val(1)))
 
         # precompute bubbles for reference system
         mΠΩ = MatsubaraMesh(temperature(F0), nK1, Boson)
@@ -90,7 +90,7 @@ mutable struct NL_ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
         # The self-energy has the same momentum resolution as the vertex mk_Γ,
         # which is coarser than that of the bare and full Green functions mk_G.
         # Initialization: G = Gbare, Σ = 0
-        mK_G = meshes(Gbare, 2)
+        mK_G = meshes(Gbare, Val(2))
         G = MeshFunction(MatsubaraMesh(T, nG, Fermion), mK_G; data_t = Q)
         Σ = MeshFunction(MatsubaraMesh(T, nΣ, Fermion), mK_G; data_t = Q)
         set!(G, Gbare)
@@ -177,8 +177,8 @@ function init_sym_grp!(
     S::NL_ParquetSolver
 )::Nothing
 
-    mK_Σ = meshes(S.Σ, 2)
-    mK_Γ = meshes(S.F.γp.K1, 2)
+    mK_Σ = meshes(S.Σ, Val(2))
+    mK_Γ = meshes(S.F.γp.K1, Val(2))
 
     # self-energy
     S.SGΣ = SymmetryGroup(Symmetry{2}[
@@ -283,7 +283,7 @@ function reset_sym_grp!(S :: NL_ParquetSolver)
 end
 
 # getter methods (some of them is defined for AbstractSolver)
-numP_G(S::NL_ParquetSolver)::Int64 = length(meshes(S.G, 2))
+numP_G(S::NL_ParquetSolver)::Int64 = length(meshes(S.G, Val(2)))
 numP_Γ(S::NL_ParquetSolver)::Int64 = numP(S.F)
 
 

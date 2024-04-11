@@ -50,9 +50,9 @@ using Test
 
     # Test evaluation
     for νInf in [MatsubaraFrequency(T, 10^10, Fermion), fdDGAsolver.νInf]
-        Ω  = value(meshes(γ.K3, 1)[5])
-        ν1 = value(meshes(γ.K3, 2)[3])
-        ν2 = value(meshes(γ.K3, 3)[4])
+        Ω  = value(meshes(γ.K3, Val(1))[5])
+        ν1 = value(meshes(γ.K3, Val(2))[3])
+        ν2 = value(meshes(γ.K3, Val(3))[4])
         @test γ(Ω, ν1,   ν2)   ≈ γ.K1[Ω] + γ.K2[Ω, ν1] + γ.K2[Ω, ν2] + γ.K3[Ω, ν1, ν2]
         @test γ(Ω, νInf, νInf) ≈ γ.K1[Ω]
         @test γ(Ω, ν1,   νInf) ≈ γ.K1[Ω] + γ.K2[Ω, ν1]

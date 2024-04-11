@@ -1,7 +1,7 @@
 # Build cache MeshFunction for K3 BSE
 function build_K3_cache(S :: ParquetSolver{Q}) where {Q}
 
-    mΠν = meshes(S.Πph, 2)
+    mΠν = meshes(S.Πph, Val(2))
 
     # Vertices multiplied by bubbles to the left
 
@@ -9,15 +9,15 @@ function build_K3_cache(S :: ParquetSolver{Q}) where {Q}
     # F0p : Reference, p-channel full       , spin cross
     # F0a : Reference, a-channel full       , spin parallel
     # F0t : Reference, t-channel full       , spin density
-    Γpx = MeshFunction(meshes(S.F.γp.K3, 1), mΠν, meshes(S.F.γp.K3, 2); data_t = Q)
+    Γpx = MeshFunction(meshes(S.F.γp.K3, Val(1)), mΠν, meshes(S.F.γp.K3, Val(2)); data_t = Q)
     F0p = copy(Γpx)
     F0a = copy(Γpx)
     F0t = copy(Γpx)
 
     Threads.@threads for i in CartesianIndices(Γpx.data)
-        Ω  = value(meshes(Γpx, 1)[i.I[1]])
-        ν  = value(meshes(Γpx, 2)[i.I[2]])
-        νp = value(meshes(Γpx, 3)[i.I[3]])
+        Ω  = value(meshes(Γpx, Val(1))[i.I[1]])
+        ν  = value(meshes(Γpx, Val(2))[i.I[2]])
+        νp = value(meshes(Γpx, Val(3))[i.I[3]])
         Γpx[i] = S.F(Ω, ν, νp, pCh, xSp; F0=false, γp=false)
         F0p[i] = S.F0(Ω, ν, νp, pCh, xSp)
         F0a[i] = S.F0(Ω, ν, νp, aCh, pSp)
@@ -32,7 +32,7 @@ function build_K3_cache(S :: ParquetSolver{Q}) where {Q}
     # Fp  : Target, a-channel full,        spin parallel
     # Fa  : Target, a-channel full,        spin parallel
     # Ft  : Target, a-channel full,        spin density
-    Γpp = MeshFunction(meshes(S.F.γp.K3, 1), meshes(S.F.γp.K3, 2), mΠν; data_t = Q)
+    Γpp = MeshFunction(meshes(S.F.γp.K3, Val(1)), meshes(S.F.γp.K3, Val(2)), mΠν; data_t = Q)
     Γa = deepcopy(Γpp)
     Γt = deepcopy(Γpp)
     Fp = deepcopy(Γpp)
@@ -40,9 +40,9 @@ function build_K3_cache(S :: ParquetSolver{Q}) where {Q}
     Ft = deepcopy(Γpp)
 
     Threads.@threads for i in CartesianIndices(Γpp.data)
-        Ω  = value(meshes(Γpp, 1)[i.I[1]])
-        ν  = value(meshes(Γpp, 2)[i.I[2]])
-        νp = value(meshes(Γpp, 3)[i.I[3]])
+        Ω  = value(meshes(Γpp, Val(1))[i.I[1]])
+        ν  = value(meshes(Γpp, Val(2))[i.I[2]])
+        νp = value(meshes(Γpp, Val(3))[i.I[3]])
         Γpp[i] = S.F(Ω, ν, νp, pCh, pSp; F0=false, γp=false)
         Γa[i] = S.F(Ω, ν, νp, aCh, pSp; F0=false, γa=false)
         Γt[i] = S.F(Ω, ν, νp, tCh, pSp; F0=false, γt=false) * 2 - Γa[i]

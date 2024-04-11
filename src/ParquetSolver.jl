@@ -73,7 +73,7 @@ mutable struct ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
         mode::Symbol = :serial,
     ) where {Q, RefVT}
 
-        T = MatsubaraFunctions.temperature(meshes(G0, 1))
+        T = MatsubaraFunctions.temperature(meshes(G0, Val(1)))
 
         # precompute bubbles for reference system
         mΠΩ = MatsubaraMesh(temperature(F0), nK1, Boson)
@@ -306,8 +306,8 @@ function MatsubaraFunctions.temperature(
     return MatsubaraFunctions.temperature(S.F)
 end
 
-numG(S::AbstractSolver)::Int64 = N(meshes(S.G, 1))
-numΣ(S::AbstractSolver)::Int64 = N(meshes(S.Σ, 1))
+numG(S::AbstractSolver)::Int64 = N(meshes(S.G, Val(1)))
+numΣ(S::AbstractSolver)::Int64 = N(meshes(S.Σ, Val(1)))
 numK1(S::AbstractSolver)::Int64 = numK1(S.F)
 numK2(S::AbstractSolver)::NTuple{2,Int64} = numK2(S.F)
 numK3(S::AbstractSolver)::NTuple{2,Int64} = numK3(S.F)

@@ -11,8 +11,8 @@ function BSE_L_K2!(
         Π0slice = view(S.Π0pp, Ω, :, P, :)
 
         for i in eachindex(Π0slice)
-            ω = value(meshes(S.Π0pp, 2)[i.I[1]])
-            q = value(meshes(S.Π0pp, 4)[i.I[2]])
+            ω = value(meshes(S.Π0pp, Val(2))[i.I[1]])
+            q = value(meshes(S.Π0pp, Val(4))[i.I[2]])
 
             # Vertices
             Γp  = S.F( Ω,     ν,    ω, P,   kSW,  q, pCh, pSp; F0 = false, γp = false)
@@ -45,8 +45,8 @@ function BSE_K2!(
         Πslice  = view(S.Πpp , Ω, :, P, :)
 
         for i in eachindex(Π0slice)
-            ω = value(meshes(S.Π0pp, 2)[i.I[1]])
-            q = value(meshes(S.Π0pp, 4)[i.I[2]])
+            ω = value(meshes(S.Π0pp, Val(2))[i.I[1]])
+            q = value(meshes(S.Π0pp, Val(4))[i.I[2]])
 
             # vertices
             Fl  = S.F( Ω,     ν,    ω, P,   kSW,  q, pCh, pSp)

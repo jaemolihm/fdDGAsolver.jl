@@ -11,9 +11,9 @@ function Base.getindex(
        :: SWaveBrillouinPoint,
     )  :: Q where {Q}
 
-    i1 = MatsubaraFunctions.mesh_index(w1, meshes(f, 1))
+    i1 = MatsubaraFunctions.mesh_index(w1, meshes(f, Val(1)))
 
-    return sum(view(f, i1, :)) / length(meshes(f, 2))
+    return sum(view(f, i1, :)) / length(meshes(f, Val(2)))
 
 end
 
@@ -24,10 +24,10 @@ function Base.getindex(
        :: SWaveBrillouinPoint,
     )  :: Q where {Q}
 
-    i1 = MatsubaraFunctions.mesh_index(w1, meshes(f, 1))
-    i2 = MatsubaraFunctions.mesh_index(w2, meshes(f, 2))
+    i1 = MatsubaraFunctions.mesh_index(w1, meshes(f, Val(1)))
+    i2 = MatsubaraFunctions.mesh_index(w2, meshes(f, Val(2)))
 
-    return sum(view(f, i1, i2, :)) / length(meshes(f, 3))
+    return sum(view(f, i1, i2, :)) / length(meshes(f, Val(3)))
 
 end
 
@@ -39,11 +39,11 @@ function Base.getindex(
        :: SWaveBrillouinPoint,
     )  :: Q where {Q}
 
-    i1 = MatsubaraFunctions.mesh_index(w1, meshes(f, 1))
-    i2 = MatsubaraFunctions.mesh_index(w2, meshes(f, 2))
-    i3 = MatsubaraFunctions.mesh_index(w3, meshes(f, 3))
+    i1 = MatsubaraFunctions.mesh_index(w1, meshes(f, Val(1)))
+    i2 = MatsubaraFunctions.mesh_index(w2, meshes(f, Val(2)))
+    i3 = MatsubaraFunctions.mesh_index(w3, meshes(f, Val(3)))
 
-    return sum(view(f, i1, i2, i3, :)) / length(meshes(f, 4))
+    return sum(view(f, i1, i2, i3, :)) / length(meshes(f, Val(4)))
 
 end
 
@@ -55,11 +55,11 @@ function Base.getindex(
        :: SWaveBrillouinPoint,
     )  :: Q where {Q}
 
-    i1 = MatsubaraFunctions.mesh_index(w1, meshes(f, 1))
-    i2 = MatsubaraFunctions.mesh_index(w2, meshes(f, 2))
-    i3 = MatsubaraFunctions.mesh_index(P,  meshes(f, 3))
+    i1 = MatsubaraFunctions.mesh_index(w1, meshes(f, Val(1)))
+    i2 = MatsubaraFunctions.mesh_index(w2, meshes(f, Val(2)))
+    i3 = MatsubaraFunctions.mesh_index(P,  meshes(f, Val(3)))
 
-    return sum(view(f, i1, i2, i3, :)) / length(meshes(f, 4))
+    return sum(view(f, i1, i2, i3, :)) / length(meshes(f, Val(4)))
 
 end
 
@@ -89,11 +89,11 @@ function Base.getindex(
     k2 :: BrillouinPoint,
     )  :: Q where {Q}
 
-    i1 = MatsubaraFunctions.mesh_index(w1, meshes(f, 1))
-    i2 = MatsubaraFunctions.mesh_index(w2, meshes(f, 2))
-    i4 = MatsubaraFunctions.mesh_index(k2, meshes(f, 4))
+    i1 = MatsubaraFunctions.mesh_index(w1, meshes(f, Val(1)))
+    i2 = MatsubaraFunctions.mesh_index(w2, meshes(f, Val(2)))
+    i4 = MatsubaraFunctions.mesh_index(k2, meshes(f, Val(4)))
 
-    return sum(view(f, i1, i2, :, i4)) / length(meshes(f, 3))
+    return sum(view(f, i1, i2, :, i4)) / length(meshes(f, Val(3)))
 
 end
 
@@ -105,9 +105,9 @@ function Base.getindex(
        :: SWaveBrillouinPoint,
     )  :: Q where {Q}
 
-    i1 = MatsubaraFunctions.mesh_index(w1, meshes(f, 1))
-    i2 = MatsubaraFunctions.mesh_index(w2, meshes(f, 2))
+    i1 = MatsubaraFunctions.mesh_index(w1, meshes(f, Val(1)))
+    i2 = MatsubaraFunctions.mesh_index(w2, meshes(f, Val(2)))
 
-    return sum(view(f, i1, i2, :, :)) / length(meshes(f, 3)) / length(meshes(f, 4))
+    return sum(view(f, i1, i2, :, :)) / length(meshes(f, Val(3))) / length(meshes(f, Val(4)))
 
 end

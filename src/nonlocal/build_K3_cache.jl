@@ -7,16 +7,16 @@ function build_K3_cache(
 
     # build vertices
     g = MatsubaraMesh(temperature(S), 2 * numK1(S), Fermion)
-    Γpx = MeshFunction(meshes(S.F.γp.K3, 1), g, meshes(S.F.γp.K3, 3), meshes(S.F.γp.K3, 4); data_t=Q)
+    Γpx = MeshFunction(meshes(S.F.γp.K3, Val(1)), g, meshes(S.F.γp.K3, Val(3)), meshes(S.F.γp.K3, Val(4)); data_t=Q)
     F0p = copy(Γpx)
     F0a = copy(Γpx)
     F0t = copy(Γpx)
 
     Threads.@threads for i in CartesianIndices(Γpx.data)
-        Ω  = value(meshes(Γpx, 1)[i.I[1]])
-        ν  = value(meshes(Γpx, 2)[i.I[2]])
-        νp = value(meshes(Γpx, 3)[i.I[3]])
-        P  = value(meshes(Γpx, 4)[i.I[4]])
+        Ω  = value(meshes(Γpx, Val(1))[i.I[1]])
+        ν  = value(meshes(Γpx, Val(2))[i.I[2]])
+        νp = value(meshes(Γpx, Val(3))[i.I[3]])
+        P  = value(meshes(Γpx, Val(4))[i.I[4]])
         Γpx[i] = S.F( Ω, ν, νp, P, kSW, kSW, pCh, xSp; F0=false, γp=false)
         F0p[i] = S.F0(Ω, ν, νp, P, kSW, kSW, pCh, xSp)
         F0a[i] = S.F0(Ω, ν, νp, P, kSW, kSW, aCh, pSp)
@@ -25,7 +25,7 @@ function build_K3_cache(
 
     # Vertices multiplied by bubbles from the right
 
-    Γpp = MeshFunction(meshes(S.F.γp.K3, 1), meshes(S.F.γp.K3, 2), g, meshes(S.F.γp.K3, 4); data_t=Q)
+    Γpp = MeshFunction(meshes(S.F.γp.K3, Val(1)), meshes(S.F.γp.K3, Val(2)), g, meshes(S.F.γp.K3, Val(4)); data_t=Q)
     Γa = deepcopy(Γpp)
     Γt = deepcopy(Γpp)
     Fp = deepcopy(Γpp)
@@ -33,10 +33,10 @@ function build_K3_cache(
     Ft = deepcopy(Γpp)
 
     Threads.@threads for i in CartesianIndices(Γpp.data)
-        Ω  = value(meshes(Γpp, 1)[i.I[1]])
-        ν  = value(meshes(Γpp, 2)[i.I[2]])
-        νp = value(meshes(Γpp, 3)[i.I[3]])
-        P  = value(meshes(Γpx, 4)[i.I[4]])
+        Ω  = value(meshes(Γpp, Val(1))[i.I[1]])
+        ν  = value(meshes(Γpp, Val(2))[i.I[2]])
+        νp = value(meshes(Γpp, Val(3))[i.I[3]])
+        P  = value(meshes(Γpx, Val(4))[i.I[4]])
         Γpp[i] = S.F(Ω, ν, νp, P, kSW, kSW, pCh, pSp; F0=false, γp=false)
         Γa[i]  = S.F(Ω, ν, νp, P, kSW, kSW, aCh, pSp; F0=false, γa=false)
         Γt[i]  = S.F(Ω, ν, νp, P, kSW, kSW, tCh, pSp; F0=false, γt=false) * 2 - Γa[i]

@@ -13,7 +13,7 @@ function BSE_K1!(
         Πslice  = view(S.Πph, Ω, :)
 
         for i in eachindex(Π0slice)
-            ω = value(meshes(S.Π0ph, 2)[i])
+            ω = value(meshes(S.Π0ph, Val(2))[i])
 
             # vertices
             Fl  = S.F( Ω, νInf, ω, aCh, pSp)

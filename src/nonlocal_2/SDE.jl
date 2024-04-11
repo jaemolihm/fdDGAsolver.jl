@@ -16,13 +16,13 @@ function SDE_channel_L_pp(
         Πslice  = view(Πpp, Ω, :, P, :)
 
         for i in eachindex(Πslice)
-            ω = value(meshes(Πpp, 2)[i.I[1]])
-            q = value(meshes(Πpp, 4)[i.I[2]])
+            ω = value(meshes(Πpp, Val(2))[i.I[1]])
+            q = value(meshes(Πpp, Val(4))[i.I[2]])
 
             val += bare_vertex(F) * Πslice[i] * F.γp(Ω, Ω - ω, ν, P, P - q, k)
         end
 
-        return temperature(F) * val / length(meshes(Πpp, 4))
+        return temperature(F) * val / length(meshes(Πpp, Val(4)))
     end
 
     # compute Lpp
@@ -49,13 +49,13 @@ function SDE_channel_L_ph(
         Πslice  = view(Πph, Ω, :, P, :)
 
         for i in eachindex(Πslice)
-            ω = value(meshes(Πph, 2)[i.I[1]])
-            q = value(meshes(Πph, 4)[i.I[2]])
+            ω = value(meshes(Πph, Val(2))[i.I[1]])
+            q = value(meshes(Πph, Val(4))[i.I[2]])
 
             val += bare_vertex(F) * Πslice[i] * (F.γt(Ω, ν, ω, P, k, q) + F.γa(Ω, ν, ω, P, k, q))
         end
 
-        return temperature(F) * val / length(meshes(Πph, 4))
+        return temperature(F) * val / length(meshes(Πph, Val(4)))
     end
 
     # compute Lph
@@ -86,8 +86,8 @@ function SDE!(
     Lpp = SDE_channel_L_pp(Πpp, F, SGpp2; mode)
     Lph = SDE_channel_L_ph(Πph, F, SGph2; mode)
 
-    mG = meshes(G, 2)
-    @assert mG == meshes(Lpp, 4) == meshes(Lph, 4)
+    mG = meshes(G, Val(2))
+    @assert mG == meshes(Lpp, Val(4)) == meshes(Lph, Val(4))
 
     # model the diagram
     @inline function diagram(wtpl)
@@ -95,22 +95,22 @@ function SDE!(
         ν, k = wtpl
         val = zero(Q)
 
-        for iP in eachindex(meshes(Lpp, 3))
+        for iP in eachindex(meshes(Lpp, Val(3)))
 
-            P = value(meshes(Lpp, 3)[iP])
+            P = value(meshes(Lpp, Val(3))[iP])
 
-            if is_inbounds(ν, meshes(Lpp, 2))
+            if is_inbounds(ν, meshes(Lpp, Val(2)))
                 Lppslice = view(Lpp, :, ν, P, k)
                 Lphslice = view(Lph, :, ν, P, k)
 
                 for i in eachindex(Lppslice)
-                    Ω = value(meshes(Lpp, 1)[i])
+                    Ω = value(meshes(Lpp, Val(1))[i])
 
-                    if is_inbounds(Ω - ν, meshes(G, 1))
+                    if is_inbounds(Ω - ν, meshes(G, Val(1)))
                         val += G[Ω - ν, fold_back(P - k, mG)] * Lppslice[i]
                     end
 
-                    if is_inbounds(Ω + ν, meshes(G, 1))
+                    if is_inbounds(Ω + ν, meshes(G, Val(1)))
                         val += G[Ω + ν, fold_back(P - k, mG)] * Lphslice[i]
                     end
                 end
@@ -118,7 +118,7 @@ function SDE!(
 
         end
 
-        return temperature(F) * val / length(meshes(Πpp, 3))
+        return temperature(F) * val / length(meshes(Πpp, Val(3)))
     end
 
     # compute Σ

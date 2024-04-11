@@ -16,13 +16,13 @@ function SDE_channel_L_pp(
         Πslice  = view(Πpp, Ω, :, P, :)
 
         for i in eachindex(Πslice)
-            ω = value(meshes(Πpp, 2)[i.I[1]])
-            q = value(meshes(Πpp, 4)[i.I[2]])
+            ω = value(meshes(Πpp, Val(2))[i.I[1]])
+            q = value(meshes(Πpp, Val(4))[i.I[2]])
 
             val += bare_vertex(F) * Πslice[i] * F.γp(Ω, Ω - ω, ν, P, P - q, k0)
         end
 
-        return temperature(F) * val / length(meshes(Πpp, 4))
+        return temperature(F) * val / length(meshes(Πpp, Val(4)))
     end
 
     # compute Lpp
@@ -49,13 +49,13 @@ function SDE_channel_L_ph(
         Πslice  = view(Πph, Ω, :, P, :)
 
         for i in eachindex(Πslice)
-            ω = value(meshes(Πph, 2)[i.I[1]])
-            q = value(meshes(Πph, 4)[i.I[2]])
+            ω = value(meshes(Πph, Val(2))[i.I[1]])
+            q = value(meshes(Πph, Val(4))[i.I[2]])
 
             val += bare_vertex(F) * Πslice[i] * (F.γt(Ω, ν, ω, P, k0, q) + F.γa(Ω, ν, ω, P, k0, q))
         end
 
-        return temperature(F) * val / length(meshes(Πph, 4))
+        return temperature(F) * val / length(meshes(Πph, Val(4)))
     end
 
     # compute Lph
@@ -86,7 +86,7 @@ function SDE!(
     Lpp = SDE_channel_L_pp(Πpp, F, SGpp2; mode)
     Lph = SDE_channel_L_ph(Πph, F, SGph2; mode)
 
-    meshK_G = meshes(G, 2)
+    meshK_G = meshes(G, Val(2))
 
     # model the diagram
     @inline function diagram(wtpl)
@@ -96,26 +96,26 @@ function SDE!(
 
         k_vec = euclidean(k, meshK_G)
 
-        for iP in eachindex(meshes(Lpp, 3))
+        for iP in eachindex(meshes(Lpp, Val(3)))
 
-            P = value(meshes(Lpp, 3)[iP])
-            P_vec = euclidean(P, meshes(Lpp, 3))
+            P = value(meshes(Lpp, Val(3))[iP])
+            P_vec = euclidean(P, meshes(Lpp, Val(3)))
 
             Pmk_G = meshK_G[MatsubaraFunctions.mesh_index(P_vec - k_vec, meshK_G)]
             Ppk_G = meshK_G[MatsubaraFunctions.mesh_index(P_vec + k_vec, meshK_G)]
 
-            if is_inbounds(ν, meshes(Lpp, 2))
+            if is_inbounds(ν, meshes(Lpp, Val(2)))
                 Lppslice = view(Lpp, :, ν, P)
                 Lphslice = view(Lph, :, ν, P)
 
                 for i in eachindex(Lppslice)
-                    Ω = value(meshes(Lpp, 1)[i])
+                    Ω = value(meshes(Lpp, Val(1))[i])
 
-                    if is_inbounds(Ω - ν, meshes(G, 1))
+                    if is_inbounds(Ω - ν, meshes(G, Val(1)))
                         val += G[Ω - ν, Pmk_G] * Lppslice[i]
                     end
 
-                    if is_inbounds(Ω + ν, meshes(G, 1))
+                    if is_inbounds(Ω + ν, meshes(G, Val(1)))
                         val += G[Ω + ν, Ppk_G] * Lphslice[i]
                     end
                 end
@@ -123,7 +123,7 @@ function SDE!(
 
         end
 
-        return temperature(F) * val / length(meshes(Πpp, 3))
+        return temperature(F) * val / length(meshes(Πpp, Val(3)))
     end
 
     # compute Σ
@@ -157,18 +157,18 @@ function SDE_U2_using_Π(
     )   :: NL_MF_G{Q} where {Q}
     # 2nd-order perturbative contribution to the self-energy
 
-    T = temperature(meshes(Σ, 1))
+    T = temperature(meshes(Σ, Val(1)))
     Σ_U² = copy(Σ)
     set!(Σ_U², 0)
 
     # Integrate fermionic frequency and momentum for the bubble
 
-    Πppsum = MeshFunction((meshes(Πpp, 1), meshes(Πpp, 3),),
-        dropdims(sum(Πpp.data, dims=(2,4)), dims=(2,4)) .* (T / length(meshes(Πpp, 4))))
-    Πphsum = MeshFunction((meshes(Πph, 1), meshes(Πph, 3),),
-        dropdims(sum(Πph.data, dims=(2,4)), dims=(2,4)) .* (T / length(meshes(Πph, 4))))
+    Πppsum = MeshFunction((meshes(Πpp, Val(1)), meshes(Πpp, Val(3)),),
+        dropdims(sum(Πpp.data, dims=(2,4)), dims=(2,4)) .* (T / length(meshes(Πpp, Val(4)))))
+    Πphsum = MeshFunction((meshes(Πph, Val(1)), meshes(Πph, Val(3)),),
+        dropdims(sum(Πph.data, dims=(2,4)), dims=(2,4)) .* (T / length(meshes(Πph, Val(4)))))
 
-    meshK_G = meshes(G, 2)
+    meshK_G = meshes(G, Val(2))
 
     # model the diagram
     @inline function diagram(wtpl)
@@ -178,23 +178,23 @@ function SDE_U2_using_Π(
 
         k_vec = euclidean(k, meshK_G)
 
-        for iP in eachindex(meshes(Πppsum, 2))
+        for iP in eachindex(meshes(Πppsum, Val(2)))
 
-            P = value(meshes(Πppsum, 2)[iP])
-            P_vec = euclidean(P, meshes(Πppsum, 2))
+            P = value(meshes(Πppsum, Val(2))[iP])
+            P_vec = euclidean(P, meshes(Πppsum, Val(2)))
 
             Pmk_G = meshK_G[MatsubaraFunctions.mesh_index(P_vec - k_vec, meshK_G)]
             Ppk_G = meshK_G[MatsubaraFunctions.mesh_index(P_vec + k_vec, meshK_G)]
 
-            for iΩ in eachindex(meshes(Πppsum, 1))
+            for iΩ in eachindex(meshes(Πppsum, Val(1)))
 
-                Ω = value(meshes(Πppsum, 1)[iΩ])
+                Ω = value(meshes(Πppsum, Val(1))[iΩ])
 
-                if is_inbounds(Ω - ν, meshes(G, 1))
+                if is_inbounds(Ω - ν, meshes(G, Val(1)))
                     val += G[Ω - ν, Pmk_G] * Πppsum[iΩ, iP]
                 end
 
-                if is_inbounds(Ω + ν, meshes(G, 1))
+                if is_inbounds(Ω + ν, meshes(G, Val(1)))
                     val += G[Ω + ν, Ppk_G] * Πphsum[iΩ, iP]
                 end
 
@@ -202,7 +202,7 @@ function SDE_U2_using_Π(
 
         end
 
-        return val * U^2 * T / 2 / length(meshes(Πph, 3))
+        return val * U^2 * T / 2 / length(meshes(Πph, Val(3)))
     end
 
     # compute Σ
@@ -221,29 +221,29 @@ function SDE_U2_using_G(
     mode  :: Symbol,
     )   :: NL_MF_G{Q} where {Q}
 
-    T = temperature(meshes(Σ, 1))
+    T = temperature(meshes(Σ, Val(1)))
     Σ_U² = copy(Σ)
     set!(Σ_U², 0)
 
-    L = bz(meshes(G, 2)).L
+    L = bz(meshes(G, Val(2))).L
     G_pR = fft(reshape(G.data, :, L, L), (2, 3)) / L^2
     G_mR = bfft(reshape(G.data, :, L, L), (2, 3)) / L^2
 
-    Σ_U²_R = zeros(eltype(Σ.data), length(meshes(Σ, 1)), L, L)
+    Σ_U²_R = zeros(eltype(Σ.data), length(meshes(Σ, Val(1))), L, L)
 
     Threads.@threads for (iR1, iR2) in collect(Iterators.product(axes(G_pR, 2), axes(G_pR, 3)))
-        Gp = MeshFunction((meshes(G, 1),), view(G_pR, :, iR1, iR2))
-        Gm = MeshFunction((meshes(G, 1),), view(G_mR, :, iR1, iR2))
+        Gp = MeshFunction((meshes(G, Val(1)),), view(G_pR, :, iR1, iR2))
+        Gm = MeshFunction((meshes(G, Val(1)),), view(G_mR, :, iR1, iR2))
 
-        for i2 in eachindex(meshes(G, 1)), i1 in eachindex(meshes(G, 1))
-            ω1 = value(meshes(G, 1)[i1])
-            ω2 = value(meshes(G, 1)[i2])
+        for i2 in eachindex(meshes(G, Val(1))), i1 in eachindex(meshes(G, Val(1)))
+            ω1 = value(meshes(G, Val(1))[i1])
+            ω2 = value(meshes(G, Val(1))[i2])
             gg = Gm[ω1] * Gp[ω2]
 
-            for iν in eachindex(meshes(Σ, 1))
-                ν = value(meshes(Σ, 1)[iν])
+            for iν in eachindex(meshes(Σ, Val(1)))
+                ν = value(meshes(Σ, Val(1))[iν])
 
-                if is_inbounds(ω1 - ω2 + ν, meshes(G, 1))
+                if is_inbounds(ω1 - ω2 + ν, meshes(G, Val(1)))
                     Σ_U²_R[iν, iR1, iR2] += gg * Gp[ω1 - ω2 + ν]
                 end
             end
@@ -299,7 +299,7 @@ end;
 function self_energy_sanity_check(Σ :: NL_MF_G)
     passed = true
     # sanity check
-    for k in meshes(Σ, 2), ν in meshes(Σ, 1)
+    for k in meshes(Σ, Val(2)), ν in meshes(Σ, Val(1))
         if plain_value(ν) > 0 && real(Σ[ν, k]) < 0
             passed = false
             @warn "Σ violates causality at (n, k) = $(index(ν)), $(index(k))"
@@ -312,5 +312,5 @@ function self_energy_sanity_check(Σ :: NL_MF_G)
 end
 
 function compute_occupation(G :: NL_MF_G)
-    return 0.5 + imag(sum(G.data)) * temperature(meshes(G, 1)) / length(meshes(G, 2))
+    return 0.5 + imag(sum(G.data)) * temperature(meshes(G, Val(1))) / length(meshes(G, Val(2)))
 end

@@ -15,26 +15,26 @@ function bubbles_momentum_space!(
 
     set!(Πpp, 0)
     set!(Πph, 0)
-    meshK_G = meshes(G, 2)
+    meshK_G = meshes(G, Val(2))
 
-    for iP in eachindex(meshes(Πpp, 3)), ik in eachindex(meshes(Πpp, 4))
-        P = euclidean(meshes(Πpp, 3)[iP], meshes(Πpp, 3))
-        k = euclidean(meshes(Πpp, 4)[ik], meshes(Πpp, 4))
+    for iP in eachindex(meshes(Πpp, Val(3))), ik in eachindex(meshes(Πpp, Val(4)))
+        P = euclidean(meshes(Πpp, Val(3))[iP], meshes(Πpp, Val(3)))
+        k = euclidean(meshes(Πpp, Val(4))[ik], meshes(Πpp, Val(4)))
 
         k_G   = meshK_G[MatsubaraFunctions.mesh_index(    k, meshK_G)]
         Pmk_G = meshK_G[MatsubaraFunctions.mesh_index(P - k, meshK_G)]
         Ppk_G = meshK_G[MatsubaraFunctions.mesh_index(P + k, meshK_G)]
 
-        for iΩ in eachindex(meshes(Πpp, 1)), iν in eachindex(meshes(Πpp, 2))
-            Ω = value(meshes(Πpp, 1)[iΩ])
-            ν = value(meshes(Πpp, 2)[iν])
+        for iΩ in eachindex(meshes(Πpp, Val(1))), iν in eachindex(meshes(Πpp, Val(2)))
+            Ω = value(meshes(Πpp, Val(1))[iΩ])
+            ν = value(meshes(Πpp, Val(2))[iν])
 
-            if is_inbounds(ν, meshes(G, 1))
-                if is_inbounds(Ω - ν, meshes(G, 1))
+            if is_inbounds(ν, meshes(G, Val(1)))
+                if is_inbounds(Ω - ν, meshes(G, Val(1)))
                     Πpp[iΩ, iν, iP, ik] = G[ν, k_G] * G[Ω - ν, Pmk_G]
                 end
 
-                if is_inbounds(Ω + ν, meshes(G, 1))
+                if is_inbounds(Ω + ν, meshes(G, Val(1)))
                     Πph[iΩ, iν, iP, ik] = G[ν, k_G] * G[Ω + ν, Ppk_G]
                 end
             end
@@ -62,11 +62,11 @@ function bubbles_real_space!(
     set!(Πpp, 0)
     set!(Πph, 0)
 
-    LG = bz(meshes(G, 2)).L
-    L  = bz(meshes(Πpp, 3)).L
+    LG = bz(meshes(G, Val(2))).L
+    L  = bz(meshes(Πpp, Val(3))).L
 
-    n1 = length(meshes(Πpp, 1))
-    n2 = length(meshes(Πpp, 2))
+    n1 = length(meshes(Πpp, Val(1)))
+    n2 = length(meshes(Πpp, Val(2)))
 
     G_real_space = fft(reshape(G.data, :, LG, LG), (2, 3)) / LG^2
 
@@ -105,13 +105,13 @@ function bubbles_real_space!(
             iRpR_G = mod.(Rp_vec .+ R_vec, (LG, LG)) .+ 1
             iRmR_G = mod.(Rp_vec .- R_vec, (LG, LG)) .+ 1
 
-            G_R   = MeshFunction((meshes(G, 1),), view(G_real_space, :, iR_G...))
-            G_RpR = MeshFunction((meshes(G, 1),), view(G_real_space, :, iRpR_G...))
-            G_RmR = MeshFunction((meshes(G, 1),), view(G_real_space, :, iRmR_G...))
+            G_R   = MeshFunction((meshes(G, Val(1)),), view(G_real_space, :, iR_G...))
+            G_RpR = MeshFunction((meshes(G, Val(1)),), view(G_real_space, :, iRpR_G...))
+            G_RmR = MeshFunction((meshes(G, Val(1)),), view(G_real_space, :, iRmR_G...))
 
-            for iΩ in eachindex(meshes(Πpp, 1)), iν in eachindex(meshes(Πpp, 2))
-                Ω = value(meshes(Πpp, 1)[iΩ])
-                ν = value(meshes(Πpp, 2)[iν])
+            for iΩ in eachindex(meshes(Πpp, Val(1))), iν in eachindex(meshes(Πpp, Val(2)))
+                Ω = value(meshes(Πpp, Val(1))[iΩ])
+                ν = value(meshes(Πpp, Val(2))[iν])
 
                 Πpp_RR[iΩ, iν, iR_Π...] = G_R(Ω - ν) * G_RpR(ν) * weight
                 Πph_RR[iΩ, iν, iR_Π...] = G_R(Ω + ν) * G_RmR(ν) * weight

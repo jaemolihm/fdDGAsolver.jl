@@ -15,7 +15,7 @@ function BSE_L_K3!(
         F0tslice = view(F0t, Ω, :, νp)
 
         # additional minus sign for xSp terms because we use crossing symmetry here
-        for i in 1 : length(meshes(Γt, 3))
+        for i in 1 : length(meshes(Γt, Val(3)))
             val -= Π0slice[i] * Γtslice[i] * F0tslice[i]
         end
 
@@ -53,18 +53,18 @@ function BSE_K3!(
         F0tslice = view(F0t, Ω, :, νp)
 
         # vectorize 1ℓ and right part, additional minus sign for xSp terms because we use crossing symmetry here
-        for i in 1 : length(meshes(Γt, 3))
+        for i in 1 : length(meshes(Γt, Val(3)))
             val -= (Πslice[i] - Π0slice[i]) * Ftslice[i] * F0tslice[i] + Πslice[i] * Ftslice[i] * Γtslice[i]
         end
 
-        for i in eachindex(meshes(Γt, 3))
-            ω = value(meshes(Γt, 3)[i])
+        for i in eachindex(meshes(Γt, Val(3)))
+            ω = value(meshes(Γt, Val(3))[i])
 
             # vertices, additional minus sign for xSp terms because we use crossing symmetry here
             Fpl = Ftslice[i]
 
             # central part
-            if is_inbounds(ω, meshes(S.FL.γt.K3, 2)) && is_inbounds(νp, meshes(S.FL.γt.K3, 3))
+            if is_inbounds(ω, meshes(S.FL.γt.K3, Val(2))) && is_inbounds(νp, meshes(S.FL.γt.K3, Val(3)))
                 val -= Πslice[i] * Fpl * (2 * S.FL.γt.K3[Ω, ω, νp] - S.FL.γa.K3[Ω, ω, νp])
             else
                 val -= Πslice[i] * Fpl * (2 * S.FL.γt.K2(Ω, ω) - S.FL.γa.K2(Ω, ω))

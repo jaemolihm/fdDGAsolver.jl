@@ -47,7 +47,7 @@ function SDE_channel_L_pp(
         Πslice  = view(Πpp, Ω, :)
 
         for i in eachindex(Πslice)
-            ω = value(meshes(Πpp, 2)[i])
+            ω = value(meshes(Πpp, Val(2))[i])
 
             val += bare_vertex(F) * Πslice[i] * F.γp(Ω, Ω - ω, ν)
         end
@@ -79,7 +79,7 @@ function SDE_channel_L_ph(
         Πslice  = view(Πph, Ω, :)
 
         for i in eachindex(Πslice)
-            ω = value(meshes(Πph, 2)[i])
+            ω = value(meshes(Πph, Val(2))[i])
 
             val += bare_vertex(F) * Πslice[i] * (F.γt(Ω, ν, ω) + F.γa(Ω, ν, ω))
         end
@@ -121,12 +121,12 @@ function SDE!(
         ν   = wtpl[1]
         val = zero(Q)
 
-        if is_inbounds(ν, meshes(Lpp, 2))
+        if is_inbounds(ν, meshes(Lpp, Val(2)))
             Lppslice = view(Lpp, :, ν)
             Lphslice = view(Lph, :, ν)
 
             for i in eachindex(Lppslice)
-                Ω = value(meshes(Lpp, 1)[i])
+                Ω = value(meshes(Lpp, Val(1))[i])
 
                 val += G(Ω - ν) * Lppslice[i]
                 val += G(Ω + ν) * Lphslice[i]
@@ -166,12 +166,12 @@ function SDE_U2_using_Π(
     )   :: MF_G{Q} where {Q}
     # 2nd-order perturbative contribution to the self-energy
 
-    T = temperature(meshes(Σ, 1))
+    T = temperature(meshes(Σ, Val(1)))
     Σ_U² = copy(Σ)
     set!(Σ_U², 0)
 
-    Πppsum = MeshFunction((meshes(Πpp, 1),), dropdims(sum(Πpp.data, dims=2), dims=2))
-    Πphsum = MeshFunction((meshes(Πph, 1),), dropdims(sum(Πph.data, dims=2), dims=2))
+    Πppsum = MeshFunction((meshes(Πpp, Val(1)),), dropdims(sum(Πpp.data, dims=2), dims=2))
+    Πphsum = MeshFunction((meshes(Πph, Val(1)),), dropdims(sum(Πph.data, dims=2), dims=2))
 
     # model the diagram
     @inline function diagram(wtpl)
@@ -179,9 +179,9 @@ function SDE_U2_using_Π(
         ν   = wtpl[1]
         val = zero(Q)
 
-        for i in eachindex(meshes(Πppsum, 1))
+        for i in eachindex(meshes(Πppsum, Val(1)))
 
-            Ω = value(meshes(Πppsum, 1)[i])
+            Ω = value(meshes(Πppsum, Val(1))[i])
             val += G(Ω - ν) * Πppsum[Ω] + G(Ω + ν) * Πphsum[Ω]
 
         end
@@ -206,7 +206,7 @@ function SDE_U2_using_G(
     )   :: MF_G{Q} where {Q}
     # 2nd-order perturbative contribution to the self-energy
 
-    T = temperature(meshes(Σ, 1))
+    T = temperature(meshes(Σ, Val(1)))
     Σ_U² = copy(Σ)
     set!(Σ_U², 0)
 
@@ -216,11 +216,11 @@ function SDE_U2_using_G(
         ν   = wtpl[1]
         val = zero(Q)
 
-        for i2 in eachindex(meshes(G, 1)), i1 in eachindex(meshes(G, 1))
-            ω1 = value(meshes(G, 1)[i1])
-            ω2 = value(meshes(G, 1)[i2])
+        for i2 in eachindex(meshes(G, Val(1))), i1 in eachindex(meshes(G, Val(1)))
+            ω1 = value(meshes(G, Val(1))[i1])
+            ω2 = value(meshes(G, Val(1))[i2])
 
-            if is_inbounds(ω1 - ω2 + ν, meshes(G, 1))
+            if is_inbounds(ω1 - ω2 + ν, meshes(G, Val(1)))
                 val += G[ω1] * G[ω2] * G[ω1 - ω2 + ν]
             end
         end
@@ -251,8 +251,8 @@ function SDE_using_K12!(
         ν   = wtpl[1]
         val = zero(Q)
 
-        for iω in eachindex(meshes(G, 1))
-            ω = value(meshes(G, 1)[iω])
+        for iω in eachindex(meshes(G, Val(1)))
+            ω = value(meshes(G, Val(1))[iω])
             # SDE using only K1 + K2 in p channel
             val += G[ω] * (F.γp.K1(ν + ω) + F.γp.K2(ν + ω, ν))
         end
@@ -275,7 +275,7 @@ end
 function self_energy_sanity_check(Σ)
     passed = true
     # sanity check
-    for ν in meshes(Σ, 1)
+    for ν in meshes(Σ, Val(1))
         if plain_value(ν) > 0 && real(Σ[ν]) < 0
             passed = false
             @warn "Σ violates causality at n = $(index(ν))"
@@ -290,5 +290,5 @@ end
 function compute_occupation(
     G :: MF_G
 ) :: Float64
-    return 0.5 + imag(sum(G.data)) * temperature(meshes(G, 1))
+    return 0.5 + imag(sum(G.data)) * temperature(meshes(G, Val(1)))
 end
