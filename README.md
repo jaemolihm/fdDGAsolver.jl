@@ -9,9 +9,5 @@
 * Make mesh_index(SVector, BrillouinMesh) non allocating?
 * `euclidean(k, mK)` allocates because `basis(mK)` is type untstable (should be `SMatrix{2,2,F,4}` not `SMatrix{2,2,F}`.) I defined `euclidean` in `matsubarafunctions_piracy.jl` as a workaround.
 
-* Enable different G and Gamma grids for NL2 (SDE needs fix)
-
-Real-space evaluation
-* [x] U^2 self-energy
-* [x] Bubble
-* [ ] SDE
+* In SDE, separate K1-like term in L (U * Pi * K1+K2) and the K2-like term. The former can be summed over wider \nu.
+* Store \nu-integrated bubble and use it for K1-Pi-K1 contraction?

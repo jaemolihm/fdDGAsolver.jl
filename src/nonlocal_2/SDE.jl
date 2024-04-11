@@ -78,6 +78,7 @@ function SDE!(
     SGph2 :: SymmetryGroup,
     ;
     mode  :: Symbol,
+    use_real_space :: Bool = true,
     include_U² = true,
     include_Hartree = true,
     )     :: NL_MF_G{Q} where {Q}
@@ -86,43 +87,133 @@ function SDE!(
     Lpp = SDE_channel_L_pp(Πpp, F, SGpp2; mode)
     Lph = SDE_channel_L_ph(Πph, F, SGph2; mode)
 
-    mG = meshes(G, Val(2))
-    @assert mG == meshes(Lpp, Val(4)) == meshes(Lph, Val(4))
+    if use_real_space
+        # Real-space evaluation
+        # Σ( R + R') += G(-R) * Lpp(R, R')
+        # Σ(-R + R') += G(-R) * Lph(R, R')
 
-    # model the diagram
-    @inline function diagram(wtpl)
+        LG = bz(meshes(G, Val(2))).L
+        LΣ = bz(meshes(Σ, Val(2))).L
+        L  = bz(meshes(Lpp, Val(3))).L
 
-        ν, k = wtpl
-        val = zero(Q)
+        n1 = length(meshes(Lpp, Val(1)))
+        n2 = length(meshes(Lpp, Val(2)))
 
-        for iP in eachindex(meshes(Lpp, Val(3)))
+        G_data_R = fft(reshape(G.data, :, LG, LG), (2, 3)) / LG^2
+        Σ_data_R = zeros(eltype(Σ.data), length(meshes(Σ, Val(1))), LΣ, LΣ)
 
-            P = value(meshes(Lpp, Val(3))[iP])
+        Lpp_data_R = fft(reshape(Lpp.data, n1, n2, L, L, L, L), (3, 4, 5, 6)) / L^4
+        Lph_data_R = fft(reshape(Lph.data, n1, n2, L, L, L, L), (3, 4, 5, 6)) / L^4
 
-            if is_inbounds(ν, meshes(Lpp, Val(2)))
-                Lppslice = view(Lpp, :, ν, P, k)
-                Lphslice = view(Lph, :, ν, P, k)
+        Rs_L_1d = (-div(L, 2)) : div(L, 2)
+        Rs = collect(Iterators.product(Rs_L_1d, Rs_L_1d))
 
-                for i in eachindex(Lppslice)
-                    Ω = value(meshes(Lpp, Val(1))[i])
+        for (Rp1, Rp2) in Rs
+            Rp_vec = (Rp1, Rp2)
 
-                    if is_inbounds(Ω - ν, meshes(G, Val(1)))
-                        val += G[Ω - ν, fold_back(P - k, mG)] * Lppslice[i]
-                    end
+            # Index of Rp in L(R, Rp)
+            iRp_L = mod.(Rp_vec, (L, L)) .+ 1
 
-                    if is_inbounds(Ω + ν, meshes(G, Val(1)))
-                        val += G[Ω + ν, fold_back(P - k, mG)] * Lphslice[i]
+            for (R1, R2) in Rs
+                R_vec = (R1, R2)
+
+                weight = 1.0
+                if mod(L, 2) == 0
+                    abs(Rp1) == div(L, 2) && (weight /= 2)
+                    abs(Rp2) == div(L, 2) && (weight /= 2)
+                    abs(R1) == div(L, 2) && (weight /= 2)
+                    abs(R2) == div(L, 2) && (weight /= 2)
+                end
+
+                # Index of R in L(R, Rp)
+                iR_L  = mod.(R_vec, (L, L)) .+ 1
+
+                # Index of -R in G
+                imR_G = mod.(.-R_vec, (LG, LG)) .+ 1
+
+                # Index of R + Rp and -R + Rp in Σ
+                iRpR_Σ = mod.(   R_vec .+ Rp_vec, (LΣ, LΣ)) .+ 1
+                iRmR_Σ = mod.(.- R_vec .+ Rp_vec, (LΣ, LΣ)) .+ 1
+
+                Lpp_R = MeshFunction((meshes(Lpp, Val(1)), meshes(Lpp, Val(2))), view(Lpp_data_R, :, :, iR_L..., iRp_L...))
+                Lph_R = MeshFunction((meshes(Lph, Val(1)), meshes(Lph, Val(2))), view(Lph_data_R, :, :, iR_L..., iRp_L...))
+
+                G_R = MeshFunction((meshes(G, Val(1)),), view(G_data_R, :, imR_G...))
+                Σ_R_pp = MeshFunction((meshes(Σ, Val(1)),), view(Σ_data_R, :, iRpR_Σ...))
+                Σ_R_ph = MeshFunction((meshes(Σ, Val(1)),), view(Σ_data_R, :, iRmR_Σ...))
+
+                for iν in eachindex(meshes(Lpp, Val(2)))
+                    ν = value(meshes(Lpp, Val(2))[iν])
+
+                    if is_inbounds(ν, meshes(Σ, Val(1)))
+
+                        for iΩ in eachindex(meshes(Lpp, Val(1)))
+                            Ω = value(meshes(Lpp, Val(1))[iΩ])
+
+                            if is_inbounds(Ω - ν, meshes(G, Val(1)))
+                                Σ_R_pp[ν] += G_R[Ω - ν] * Lpp_R[iΩ, iν] * weight
+                                Σ_R_ph[ν] += G_R[Ω + ν] * Lph_R[iΩ, iν] * weight
+                            end
+                        end
+
                     end
                 end
-            end
 
+            end
         end
 
-        return temperature(F) * val / length(meshes(Πpp, Val(3)))
-    end
+        Σ_data_R .*= temperature(F)
 
-    # compute Σ
-    SGΣ(Σ, InitFunction{2, Q}(diagram); mode)
+        Σ.data .= reshape(bfft(Σ_data_R, (2, 3)), :, LΣ^2)
+
+        SGΣ(Σ)
+
+    else
+        # Momentum space evaluation
+        # Σ(k) += G(P - k) * Lpp(P, k)
+        # Σ(k) += G(P + k) * Lph(P, k)
+
+        # It is required that Σ and L has the same mesh.
+        # (One may use linear interpolation, but that is not implemented here.)
+        mG = meshes(G, Val(2))
+        @assert mG == meshes(Lpp, Val(4)) == meshes(Lph, Val(4))
+
+        # model the diagram
+        @inline function diagram(wtpl)
+
+            ν, k = wtpl
+            val = zero(Q)
+
+            for iP in eachindex(meshes(Lpp, Val(3)))
+
+                P = value(meshes(Lpp, Val(3))[iP])
+
+                if is_inbounds(ν, meshes(Lpp, Val(2)))
+                    Lppslice = view(Lpp, :, ν, P, k)
+                    Lphslice = view(Lph, :, ν, P, k)
+
+                    for i in eachindex(Lppslice)
+                        Ω = value(meshes(Lpp, Val(1))[i])
+
+                        if is_inbounds(Ω - ν, meshes(G, Val(1)))
+                            val += G[Ω - ν, fold_back(P - k, mG)] * Lppslice[i]
+                        end
+
+                        if is_inbounds(Ω + ν, meshes(G, Val(1)))
+                            val += G[Ω + ν, fold_back(P + k, mG)] * Lphslice[i]
+                        end
+                    end
+                end
+
+            end
+
+            return temperature(F) * val / length(meshes(Lpp, 3))
+        end
+
+        # compute Σ
+        SGΣ(Σ, InitFunction{2, Q}(diagram); mode)
+
+    end
 
     if include_U²
         Σ_U² = SDE_U2_using_G(Σ, G, SGΣ, bare_vertex(F); mode)

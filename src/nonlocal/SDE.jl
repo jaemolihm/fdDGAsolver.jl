@@ -144,6 +144,7 @@ function SDE!(
     SGph2 :: SymmetryGroup,
     ;
     mode  :: Symbol,
+    use_real_space :: Bool = true,
     include_U² = true,
     include_Hartree = true,
     )     :: NL_MF_G{Q} where {Q}
@@ -154,46 +155,125 @@ function SDE!(
 
     meshK_G = meshes(G, Val(2))
 
-    # model the diagram
-    @inline function diagram(wtpl)
+    if use_real_space
+        # Real-space evaluation
+        # Σ( R) += G(-R) * Lpp(R)
+        # Σ(-R) += G(-R) * Lph(R)
 
-        ν, k = wtpl
-        val = zero(Q)
+        LG = bz(meshes(G, Val(2))).L
+        LΣ = bz(meshes(Σ, Val(2))).L
+        L  = bz(meshes(Lpp, Val(3))).L
 
-        k_vec = euclidean(k, meshK_G)
+        n1 = length(meshes(Lpp, Val(1)))
+        n2 = length(meshes(Lpp, Val(2)))
 
-        for iP in eachindex(meshes(Lpp, Val(3)))
+        G_data_R = fft(reshape(G.data, :, LG, LG), (2, 3)) / LG^2
+        Σ_data_R = zeros(eltype(Σ.data), length(meshes(Σ, Val(1))), LΣ, LΣ)
 
-            P = value(meshes(Lpp, Val(3))[iP])
-            P_vec = euclidean(P, meshes(Lpp, Val(3)))
+        Lpp_data_R = fft(reshape(Lpp.data, n1, n2, L, L), (3, 4)) / L^2
+        Lph_data_R = fft(reshape(Lph.data, n1, n2, L, L), (3, 4)) / L^2
 
-            Pmk_G = meshK_G[MatsubaraFunctions.mesh_index(P_vec - k_vec, meshK_G)]
-            Ppk_G = meshK_G[MatsubaraFunctions.mesh_index(P_vec + k_vec, meshK_G)]
+        Rs_L_1d = (-div(L, 2)) : div(L, 2)
+        Rs = collect(Iterators.product(Rs_L_1d, Rs_L_1d))
 
-            if is_inbounds(ν, meshes(Lpp, Val(2)))
-                Lppslice = view(Lpp, :, ν, P)
-                Lphslice = view(Lph, :, ν, P)
+        for (R1, R2) in Rs
+            R_vec = (R1, R2)
 
-                for i in eachindex(Lppslice)
-                    Ω = value(meshes(Lpp, Val(1))[i])
+            weight = 1.0
+            if mod(L, 2) == 0
+                abs(R1) == div(L, 2) && (weight /= 2)
+                abs(R2) == div(L, 2) && (weight /= 2)
+            end
 
-                    if is_inbounds(Ω - ν, meshes(G, Val(1)))
-                        val += G[Ω - ν, Pmk_G] * Lppslice[i]
+            # Index of R in L(R, Rp)
+            iR_L  = mod.(R_vec, (L, L)) .+ 1
+
+            # Index of -R in G
+            imR_G = mod.(.-R_vec, (LG, LG)) .+ 1
+
+            # Index of R and -R in Σ
+            ipR_Σ = mod.(  R_vec, (LΣ, LΣ)) .+ 1
+            imR_Σ = mod.(.-R_vec, (LΣ, LΣ)) .+ 1
+
+            Lpp_R = MeshFunction((meshes(Lpp, Val(1)), meshes(Lpp, Val(2))), view(Lpp_data_R, :, :, iR_L...))
+            Lph_R = MeshFunction((meshes(Lph, Val(1)), meshes(Lph, Val(2))), view(Lph_data_R, :, :, iR_L...))
+
+            G_R = MeshFunction((meshes(G, Val(1)),), view(G_data_R, :, imR_G...))
+            Σ_R_pp = MeshFunction((meshes(Σ, Val(1)),), view(Σ_data_R, :, ipR_Σ...))
+            Σ_R_ph = MeshFunction((meshes(Σ, Val(1)),), view(Σ_data_R, :, imR_Σ...))
+
+            for iν in eachindex(meshes(Lpp, Val(2)))
+                ν = value(meshes(Lpp, Val(2))[iν])
+
+                if is_inbounds(ν, meshes(Σ, Val(1)))
+
+                    for iΩ in eachindex(meshes(Lpp, Val(1)))
+                        Ω = value(meshes(Lpp, Val(1))[iΩ])
+
+                        if is_inbounds(Ω - ν, meshes(G, Val(1)))
+                            Σ_R_pp[ν] += G_R[Ω - ν] * Lpp_R[iΩ, iν] * weight
+                            Σ_R_ph[ν] += G_R[Ω + ν] * Lph_R[iΩ, iν] * weight
+                        end
                     end
 
-                    if is_inbounds(Ω + ν, meshes(G, Val(1)))
-                        val += G[Ω + ν, Ppk_G] * Lphslice[i]
-                    end
                 end
             end
 
         end
 
-        return temperature(F) * val / length(meshes(Πpp, Val(3)))
+        Σ_data_R .*= temperature(F)
+
+        Σ.data .= reshape(bfft(Σ_data_R, (2, 3)), :, LΣ^2)
+
+        SGΣ(Σ)
+
+    else
+        # Momentum space evaluation
+        # Σ(k) += G(P - k) * Lpp(P)
+        # Σ(k) += G(P + k) * Lph(P)
+
+        # model the diagram
+        @inline function diagram(wtpl)
+
+            ν, k = wtpl
+            val = zero(Q)
+
+            k_vec = euclidean(k, meshK_G)
+
+            for iP in eachindex(meshes(Lpp, Val(3)))
+
+                P = value(meshes(Lpp, Val(3))[iP])
+                P_vec = euclidean(P, meshes(Lpp, Val(3)))
+
+                Pmk_G = meshK_G[MatsubaraFunctions.mesh_index(P_vec - k_vec, meshK_G)]
+                Ppk_G = meshK_G[MatsubaraFunctions.mesh_index(P_vec + k_vec, meshK_G)]
+
+                if is_inbounds(ν, meshes(Lpp, Val(2)))
+                    Lppslice = view(Lpp, :, ν, P)
+                    Lphslice = view(Lph, :, ν, P)
+
+                    for i in eachindex(Lppslice)
+                        Ω = value(meshes(Lpp, Val(1))[i])
+
+                        if is_inbounds(Ω - ν, meshes(G, Val(1)))
+                            val += G[Ω - ν, Pmk_G] * Lppslice[i]
+                        end
+
+                        if is_inbounds(Ω + ν, meshes(G, Val(1)))
+                            val += G[Ω + ν, Ppk_G] * Lphslice[i]
+                        end
+                    end
+                end
+
+            end
+
+            return temperature(F) * val / length(meshes(Πpp, Val(3)))
+        end
+
+        # compute Σ
+        SGΣ(Σ, InitFunction{2, Q}(diagram); mode)
     end
 
-    # compute Σ
-    SGΣ(Σ, InitFunction{2, Q}(diagram); mode)
 
     if include_U²
         Σ_U² = SDE_U2_using_G(Σ, G, SGΣ, bare_vertex(F); mode)
@@ -297,7 +377,8 @@ function SDE_U2_using_G(
 
     Σ_U²_R = zeros(eltype(Σ.data), length(meshes(Σ, Val(1))), L, L)
 
-    Threads.@threads for (iR1, iR2) in collect(Iterators.product(axes(G_pR, 2), axes(G_pR, 3)))
+    # Threads.@threads
+    for (iR1, iR2) in collect(Iterators.product(axes(G_pR, 2), axes(G_pR, 3)))
         Gp = MeshFunction((meshes(G, Val(1)),), view(G_pR, :, iR1, iR2))
         Gm = MeshFunction((meshes(G, Val(1)),), view(G_mR, :, iR1, iR2))
 

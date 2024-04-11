@@ -34,7 +34,7 @@ channel_type(::Type{NL2_Vertex}) = NL2_Channel
 
 
 function Base.show(io::IO, Γ::NL2_Vertex{Q}) where {Q}
-    print(io, "$(nameof(typeof(Γ))){$Q}, U = $(Γ.F0.U), T = $(temperature(Γ))\n")
+    print(io, "$(nameof(typeof(Γ))){$Q}, U = $(bare_vertex(Γ.F0)), T = $(temperature(Γ))\n")
     print(io, "F0 : $(Γ.F0)\n")
     print(io, "K1 : $(numK1(Γ))\n")
     print(io, "K2 : $(numK2(Γ))\n")
