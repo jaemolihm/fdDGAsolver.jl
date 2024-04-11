@@ -107,13 +107,18 @@ mutable struct NL2_ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
         SGphL = SymmetryGroup[SymmetryGroup(F.γp.K1), SymmetryGroup(F.γp.K2), SymmetryGroup(F.γp.K3)]
 
         # Symmetry group of F0, needed for the BSE of the reference vertex in SDE for fdPA
-        if F0 isa AbstractVertex
-            SG0pp2 = SymmetryGroup(F0.γp.K2)
-            SG0ph2 = SymmetryGroup(F0.γp.K2)
+        if F0 isa NL2_Vertex
+            F0_K2 = F0.γp.K2
+        elseif F0 isa NL_Vertex || F0 isa Vertex
+            F0_K2 = MeshFunction(meshes(F0.γp.K3, Val(1)), meshes(F0.γp.K3, Val(2)), mK_Γ; data_t = Q)
+        elseif F0 isa RefVertex
+            F0_K2 = MeshFunction(meshes(F0.Fp_p, Val(1)), meshes(F0.Fp_p, Val(2)), mK_Γ; data_t = Q)
         else
-            SG0pp2 = nothing
-            SG0ph2 = nothing
+            throw(ArgumentError("F0 must be a AbstractVertex or RefVertex, not $(typeof(F0))"))
         end
+        SG0pp2 = SymmetryGroup(F0_K2)
+        SG0ph2 = SymmetryGroup(F0_K2)
+
 
         return new{Q, RefVT}(Gbare, G0, Π0pp, Π0ph, Σ0, F0, G, Πpp, Πph, Σ, F, Fbuff, copy(Fbuff), SGΣ, SGpp, SGph, SGppL, SGphL, SG0pp2, SG0ph2, mode)::NL2_ParquetSolver{Q}
     end
@@ -187,8 +192,8 @@ function init_sym_grp!(
     ], S.F.γp.K1);
 
     S.SGpp[2] = SymmetryGroup([
-        Symmetry{4}(w -> sK2_NL2_pp1( w, mK_Γ)),
-        Symmetry{4}(w -> sK2_NL2_pp2( w, mK_Γ)),
+        Symmetry{4}(w -> sK2_NL2_pp1(w, mK_Γ)),
+        Symmetry{4}(w -> sK2_NL2_pp2(w, mK_Γ)),
         Symmetry{4}(w -> sK2_NL2_ref(w, mK_Γ)),
         Symmetry{4}(w -> sK2_NL2_rot(w, mK_Γ)),
     ], S.F.γp.K2)
@@ -215,8 +220,8 @@ function init_sym_grp!(
     S.SGph[1] = S.SGpp[1]
 
     S.SGph[2] = SymmetryGroup([
-        Symmetry{4}(w -> sK2_NL2_ph1( w, mK_Γ)),
-        Symmetry{4}(w -> sK2_NL2_ph2( w, mK_Γ)),
+        Symmetry{4}(w -> sK2_NL2_ph1(w, mK_Γ)),
+        Symmetry{4}(w -> sK2_NL2_ph2(w, mK_Γ)),
         Symmetry{4}(w -> sK2_NL2_ref(w, mK_Γ)),
         Symmetry{4}(w -> sK2_NL2_rot(w, mK_Γ)),
     ], S.F.γt.K2)
@@ -238,11 +243,47 @@ function init_sym_grp!(
         Symmetry{4}(w -> sK3_rot(w, mK_Γ)),
     ], S.F.γt.K3)
 
-    # For F0
-    # if S.SG0pp2 !== nothing
-    #     S.SG0pp2 = SymmetryGroup([Symmetry{2}(sK2pp1), Symmetry{2}(sK2pp2)], S.F0.γp.K2)
-    #     S.SG0ph2 = SymmetryGroup([Symmetry{2}(sK2ph1), Symmetry{2}(sK2ph2)], S.F0.γt.K2)
-    # end
+
+    # Symmetry group of F0, needed for the BSE of the reference vertex in SDE for fdPA
+    if S.F0 isa NL2_Vertex
+        # U * Π * F0 has bosonic and fermionic momentum dependence
+        F0_K2 = S.F0.γp.K2
+
+        S.SG0pp2 = SymmetryGroup([
+            Symmetry{4}(w -> sK2_NL2_pp1(w, mK_Γ)),
+            Symmetry{4}(w -> sK2_NL2_pp2(w, mK_Γ)),
+            Symmetry{4}(w -> sK2_NL2_ref(w, mK_Γ)),
+            Symmetry{4}(w -> sK2_NL2_rot(w, mK_Γ)),
+        ], F0_K2)
+        S.SG0ph2 = SymmetryGroup([
+            Symmetry{4}(w -> sK2_NL2_ph1(w, mK_Γ)),
+            Symmetry{4}(w -> sK2_NL2_ph2(w, mK_Γ)),
+            Symmetry{4}(w -> sK2_NL2_ref(w, mK_Γ)),
+            Symmetry{4}(w -> sK2_NL2_rot(w, mK_Γ)),
+        ], F0_K2)
+
+    else
+        # U * Π * F0 has only bosonic momentum dependence
+        if S.F0 isa NL_Vertex || S.F0 isa Vertex
+            F0_K2 = MeshFunction(meshes(S.F0.γp.K3, Val(1)), meshes(S.F0.γp.K3, Val(2)), mK_Γ; data_t = eltype(S))
+        elseif S.F0 isa RefVertex
+            F0_K2 = MeshFunction(meshes(S.F0.Fp_p, Val(1)), meshes(S.F0.Fp_p, Val(2)), mK_Γ; data_t = eltype(S))
+        end
+
+        S.SG0pp2 = SymmetryGroup([
+            Symmetry{3}(w -> sK2pp1( w, mK_Γ)),
+            Symmetry{3}(w -> sK2pp2( w, mK_Γ)),
+            Symmetry{3}(w -> sK2_ref(w, mK_Γ)),
+            Symmetry{3}(w -> sK2_rot(w, mK_Γ)),
+        ], F0_K2)
+        S.SG0ph2 = SymmetryGroup([
+            Symmetry{3}(w -> sK2ph1( w, mK_Γ)),
+            Symmetry{3}(w -> sK2ph2( w, mK_Γ)),
+            Symmetry{3}(w -> sK2_ref(w, mK_Γ)),
+            Symmetry{3}(w -> sK2_rot(w, mK_Γ)),
+        ], F0_K2)
+    end
+
 
     return nothing
 end

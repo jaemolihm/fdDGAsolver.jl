@@ -71,5 +71,43 @@ using Test
     res = fdDGAsolver.solve!(S; strategy = :fdPA, verbose = false);
 
     @test absmax(S.Σ - S0.Σ) < 1e-10
-    @test absmax(abs.(flatten(S.F) .- flatten(S0.F))) < 1e-10
+    @test maximum(abs.(flatten(S.F) .- flatten(S0.F))) < 1e-10
+end
+
+
+
+# @testset "NL2_ParquetSolver"
+begin
+    using MPI
+    MPI.Init()
+
+    T = 0.5
+    U = 1.0
+    μ = 0.
+    t1 = 1.0
+
+    nmax = 2
+    nG  = 8nmax
+    nΣ  = 8nmax
+    nK1 = 4nmax
+    nK2 = (2nmax, nmax)
+    nK3 = (2nmax, nmax)
+
+    k1 = 2pi * SVector(1., 0.)
+    k2 = 2pi * SVector(0., 1.)
+    mK_G = BrillouinZoneMesh(BrillouinZone(3, k1, k2))
+    mK_Γ = BrillouinZoneMesh(BrillouinZone(3, k1, k2))
+
+
+    # Test scPA and fdPA gives identical results for the trivial case (G0 = Σ0 = Π0 = 0)
+    S0 = parquet_solver_hubbard_parquet_approximation_NL2(nG, nΣ, nK1, nK2, nK3, mK_G, mK_Γ; T, U, μ, t1, t2, mode = :threads)
+    init_sym_grp!(S0)
+    res = fdDGAsolver.solve!(S0; strategy = :scPA, verbose = true);
+
+    S = parquet_solver_hubbard_parquet_approximation_NL2(nG, nΣ, nK1, nK2, nK3, mK_G, mK_Γ; T, U, μ, t1, t2, mode = :threads)
+    init_sym_grp!(S)
+    res = fdDGAsolver.solve!(S; strategy = :fdPA, verbose = true);
+
+    @test absmax(S.Σ - S0.Σ) < 1e-10
+    @test maximum(abs.(flatten(S.F) .- flatten(S0.F))) < 1e-10
 end
