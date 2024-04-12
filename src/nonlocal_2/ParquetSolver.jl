@@ -178,7 +178,7 @@ function init_sym_grp!(
 
     # self-energy
     S.SGΣ = SymmetryGroup(Symmetry{2}[
-        Symmetry{2}(w -> sΣ_conj(w,)),
+        Symmetry{2}(w -> sΣ_conj(w, mK_Σ)),
         Symmetry{2}(w -> sΣ_ref(w, mK_Σ)),
         Symmetry{2}(w -> sΣ_rot(w, mK_Σ))
     ], S.Σ);
@@ -186,7 +186,7 @@ function init_sym_grp!(
     # Vertices in the particle-particle channel
 
     S.SGpp[1] = SymmetryGroup(Symmetry{2}[
-        Symmetry{2}(w -> sK1_conj(w,)),
+        Symmetry{2}(w -> sK1_conj(w, mK_Γ)),
         Symmetry{2}(w -> sK1_ref(w, mK_Γ)),
         Symmetry{2}(w -> sK1_rot(w, mK_Γ)),
     ], S.F.γp.K1);

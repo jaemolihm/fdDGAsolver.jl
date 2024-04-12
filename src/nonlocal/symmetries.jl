@@ -14,9 +14,9 @@ end
 # self-energy symmetries
 #----------------------------------------------------------------------------------------------#
 
-function sΣ_conj(w :: Tuple{MatsubaraFrequency, BrillouinPoint{2}})
+function sΣ_conj(w :: Tuple{MatsubaraFrequency, BrillouinPoint{2}}, m :: KMesh)
     # we store iΣ, so the symmetry Σ -> Σ* becomes iΣ -> -(iΣ)*
-    return (-w[1], -w[2]), Operation(sgn = true, con = true)
+    return (-w[1], fold_back(-w[2], m)), Operation(sgn = true, con = true)
 end
 
 function sΣ_ref(w :: Tuple{MatsubaraFrequency, BrillouinPoint{2}}, m :: KMesh)
@@ -30,8 +30,8 @@ end
 # K1 symmetries
 #----------------------------------------------------------------------------------------------#
 
-function sK1_conj(w :: Tuple{MatsubaraFrequency, BrillouinPoint{2}})
-    return (-w[1], -w[2]), Operation(sgn = false, con = true)
+function sK1_conj(w :: Tuple{MatsubaraFrequency, BrillouinPoint{2}}, m :: KMesh)
+    return (-w[1], fold_back(-w[2], m)), Operation(sgn = false, con = true)
 end
 
 function sK1_ref(w :: Tuple{MatsubaraFrequency, BrillouinPoint{2}}, m :: KMesh)

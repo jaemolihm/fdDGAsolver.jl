@@ -22,7 +22,7 @@ using Test
 
     # compute the symmetry group
     SG = SymmetryGroup(Symmetry{2}[
-        Symmetry{2}(w -> sΣ_conj(w,)),
+        Symmetry{2}(w -> sΣ_conj(w, mK)),
         Symmetry{2}(w -> sΣ_ref(w, mK)),
         Symmetry{2}(w -> sΣ_rot(w, mK))
     ], G);
