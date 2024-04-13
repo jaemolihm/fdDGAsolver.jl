@@ -68,8 +68,8 @@ function BSE_K2!(
     # compute K2
     S.SGph[2](S.Fbuff.γt.K2, InitFunction{3, Q}(diagram); mode = S.mode)
 
-    add!(S.Fbuff.γt.K2, S.FL.γt.K2, 2)
-    add!(S.Fbuff.γt.K2, S.FL.γa.K2, -1)
+    mult_add!(S.Fbuff.γt.K2, S.FL.γt.K2, 2)
+    mult_add!(S.Fbuff.γt.K2, S.FL.γa.K2, -1)
 
     # Currently S.Fbuff.γt.K2 has γtd = 2 γtp + γtx = 2 γtp - γax
     # We want to store γtp = (γtd + γax) / 2

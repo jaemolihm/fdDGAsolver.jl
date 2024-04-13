@@ -14,7 +14,6 @@ module fdDGAsolver
         using FFTW
     end
 
-    include("matsubarafunctions_piracy.jl")
     include("box_eval.jl")
 
     include("types.jl")
