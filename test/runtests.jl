@@ -21,4 +21,5 @@ println("nthreads = $(Threads.nthreads())")
 
     include("test_nonlocal_2_vertex.jl")
     include("test_nonlocal_2_solver.jl")
+    include("test_nonlocal_2_fdPA.jl")
 end
