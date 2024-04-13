@@ -1,7 +1,7 @@
 function BSE_L_K3!(
     S  :: NL2_ParquetSolver{Q},
-    Γ  :: NL2_MF_K3{Q},
-    F0 :: NL2_MF_K3{Q},
+    Γ  :: NL_MF_K3{Q},
+    F0 :: NL_MF_K3{Q},
        :: Type{pCh}
     )  :: Nothing where {Q}
 
@@ -10,19 +10,18 @@ function BSE_L_K3!(
 
         Ω, ν, νp, P = wtpl
         val     = zero(Q)
-        Γslice  = view(Γ,  Ω, ν,  :, P, :)
-        F0slice = view(F0, Ω, :, νp, P, :)
+        Γslice  = view(Γ,  Ω, ν,  :, P)
+        F0slice = view(F0, Ω, :, νp, P)
 
         # additional minus sign because we use crossing symmetry here
         for i in eachindex(Γslice)
-            ω = value(meshes(Γ, Val(3))[i.I[1]])
-            q = value(meshes(Γ, Val(5))[i.I[2]])
-            Π0 = S.Π0pp[Ω, ω, P, q]
+            ω = value(meshes(Γ, Val(3))[i])
+            Π0 = S.Π0pp[Ω, ω, P, kSW]
 
             val -= Γslice[i] * Π0 * F0slice[i]
         end
 
-        return temperature(S) * val / numP_Γ(S)
+        return temperature(S) * val
     end
 
     # compute K3
@@ -34,9 +33,9 @@ end
 
 function BSE_K3!(
     S  :: NL2_ParquetSolver{Q},
-    Γ  :: NL2_MF_K3{Q},
-    F  :: NL2_MF_K3{Q},
-    F0 :: NL2_MF_K3{Q},
+    Γ  :: NL_MF_K3{Q},
+    F  :: NL_MF_K3{Q},
+    F0 :: NL_MF_K3{Q},
        :: Type{pCh}
     )  :: Nothing where {Q}
 
@@ -45,15 +44,14 @@ function BSE_K3!(
 
         Ω, ν, νp, P = wtpl
         val     = zero(Q)
-        Γslice  = view(Γ,  Ω, :, νp, P, :)
-        Fslice  = view(F,  Ω, ν,  :, P, :)
-        F0slice = view(F0, Ω, :, νp, P, :)
+        Γslice  = view(Γ,  Ω, :, νp, P)
+        Fslice  = view(F,  Ω, ν,  :, P)
+        F0slice = view(F0, Ω, :, νp, P)
 
         for i in eachindex(Fslice)
-            ω = value(meshes(F, Val(3))[i.I[1]])
-            q = value(meshes(F, Val(5))[i.I[2]])
-            Π0 = S.Π0pp[Ω, ω, P, q]
-            Π  = S.Πpp[ Ω, ω, P, q]
+            ω = value(meshes(F, Val(3))[i])
+            Π0 = S.Π0pp[Ω, ω, P, kSW]
+            Π  = S.Πpp[ Ω, ω, P, kSW]
 
             # 1ℓ and right part, additional minus sign because we use crossing symmetry here
             val -= Fslice[i] * ((Π - Π0) * F0slice[i] + Π * Γslice[i])
@@ -62,11 +60,11 @@ function BSE_K3!(
             if is_inbounds(Ω - ω, meshes(S.FL.γp.K3, Val(2)))
                 val += Fslice[i] * Π * S.FL.γp.K3[Ω, Ω - ω, νp, P]
             elseif is_inbounds(Ω - ω, meshes(S.FL.γp.K2, Val(2)))
-                val += Fslice[i] * Π * S.FL.γp.K2[Ω, Ω - ω, P, fold_back(P - q)]
+                val += Fslice[i] * Π * S.FL.γp.K2(Ω, Ω - ω, P, kSW)
             end
         end
 
-        return S.FL.γp.K3[Ω, ν, νp, P] + temperature(S) * val / numP_Γ(S)
+        return S.FL.γp.K3[Ω, ν, νp, P] + temperature(S) * val
     end
 
     # compute K3

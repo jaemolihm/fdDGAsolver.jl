@@ -6,23 +6,22 @@ function build_K3_cache(
     ) where {Q}
 
     mΠν = meshes(S.Πph, Val(2))
-    mΠk = meshes(S.Πph, Val(4))
 
     # Vertices multiplied by bubbles from the left
 
-    Γpx = MeshFunction(meshes(S.F.γp.K3, Val(1)), mΠν, meshes(S.F.γp.K3, Val(3)), meshes(S.F.γp.K3, Val(4)), mΠk; data_t=Q)
+    Γpx = MeshFunction(meshes(S.F.γp.K3, Val(1)), mΠν, meshes(S.F.γp.K3, Val(3)), meshes(S.F.γp.K3, Val(4)); data_t=Q)
     set!(Γpx, 0)
     F0p = copy(Γpx)
     F0a = copy(Γpx)
     F0t = copy(Γpx)
 
     Threads.@threads for i in mpi_split(1 : length(Γpx.data))
-        Ω, ν, νp, P, k = value.(MatsubaraFunctions.to_meshes(Γpx, i))
+        Ω, ν, νp, P = value.(MatsubaraFunctions.to_meshes(Γpx, i))
 
-        Γpx[i] = S.F( Ω, ν, νp, P, k, kSW, pCh, xSp; F0=false, γp=false)
-        F0p[i] = S.F0(Ω, ν, νp, P, k, kSW, pCh, xSp)
-        F0a[i] = S.F0(Ω, ν, νp, P, k, kSW, aCh, pSp)
-        F0t[i] = S.F0(Ω, ν, νp, P, k, kSW, tCh, pSp)
+        Γpx[i] = S.F( Ω, ν, νp, P, kSW, kSW, pCh, xSp; F0=false, γp=false)
+        F0p[i] = S.F0(Ω, ν, νp, P, kSW, kSW, pCh, xSp)
+        F0a[i] = S.F0(Ω, ν, νp, P, kSW, kSW, aCh, pSp)
+        F0t[i] = S.F0(Ω, ν, νp, P, kSW, kSW, tCh, pSp)
 
         # Convert from pSp (parallel spin component) to dSp (density component)
         # using the relation dSp = 2 * pSp + xSp = 2 * pSp - pSp(a) (crossing symmetry)
@@ -36,7 +35,7 @@ function build_K3_cache(
 
     # Vertices multiplied by bubbles from the right
 
-    Γpp = MeshFunction(meshes(S.F.γp.K3, Val(1)), meshes(S.F.γp.K3, Val(2)), mΠν, meshes(S.F.γp.K3, Val(4)), mΠk; data_t=Q)
+    Γpp = MeshFunction(meshes(S.F.γp.K3, Val(1)), meshes(S.F.γp.K3, Val(2)), mΠν, meshes(S.F.γp.K3, Val(4)); data_t=Q)
     set!(Γpp, 0)
     Γa = copy(Γpp)
     Γt = copy(Γpp)
@@ -45,18 +44,18 @@ function build_K3_cache(
     Ft = copy(Γpp)
 
     Threads.@threads for i in mpi_split(1 : length(Γpp.data))
-        Ω, ν, νp, P, kp = value.(MatsubaraFunctions.to_meshes(Γpp, i))
+        Ω, ν, νp, P = value.(MatsubaraFunctions.to_meshes(Γpp, i))
 
         # r-irreducible vertex in each channel r = p, a, t
-        Γpp[i] = S.F(Ω, ν, νp, P, kSW, kp, pCh, pSp; F0=false, γp=false)
-        Γa[i]  = S.F(Ω, ν, νp, P, kSW, kp, aCh, pSp; F0=false, γa=false)
-        Γt[i]  = S.F(Ω, ν, νp, P, kSW, kp, tCh, pSp; F0=false, γt=false)
+        Γpp[i] = S.F(Ω, ν, νp, P, kSW, kSW, pCh, pSp; F0=false, γp=false)
+        Γa[i]  = S.F(Ω, ν, νp, P, kSW, kSW, aCh, pSp; F0=false, γa=false)
+        Γt[i]  = S.F(Ω, ν, νp, P, kSW, kSW, tCh, pSp; F0=false, γt=false)
 
         # Total vertex in each channel. We compute the reducible part and add the
         # irreducible part computed above
-        Fp[i]  = S.F(Ω, ν, νp, P, kSW, kp, pCh, pSp; γa=false, γt=false) + Γpp[i]
-        Fa[i]  = S.F(Ω, ν, νp, P, kSW, kp, aCh, pSp; γp=false, γt=false) + Γa[i]
-        Ft[i]  = S.F(Ω, ν, νp, P, kSW, kp, tCh, pSp; γp=false, γa=false) + Γt[i]
+        Fp[i]  = S.F(Ω, ν, νp, P, kSW, kSW, pCh, pSp; γa=false, γt=false) + Γpp[i]
+        Fa[i]  = S.F(Ω, ν, νp, P, kSW, kSW, aCh, pSp; γp=false, γt=false) + Γa[i]
+        Ft[i]  = S.F(Ω, ν, νp, P, kSW, kSW, tCh, pSp; γp=false, γa=false) + Γt[i]
 
         # Convert from pSp (parallel spin component) to dSp (density component)
         # using the relation dSp = 2 * pSp + xSp = 2 * pSp - pSp(a) (crossing symmetry)
