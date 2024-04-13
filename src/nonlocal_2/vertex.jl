@@ -71,7 +71,7 @@ end
     val = zero(Q)
 
     if F0
-        val += F.F0(Ω, ν, ω, P, k, q, Ch, pSp; F0, γp, γt, γa)
+        val += F.F0(Ω, ν, ω, P, k, q, Ch, pSp)
     end
 
     # k isa SWaveBrillouinPoint, sum over the k momentum.
@@ -146,7 +146,7 @@ end
     val = zero(Q)
 
     if F0
-        val += F.F0(Ω, ν, ω, P, k, q, Ch, pSp; F0, γp, γt, γa)
+        val += F.F0(Ω, ν, ω, P, k, q, Ch, pSp)
     end
 
     # q isa SWaveBrillouinPoint, sum over the q momentum.
@@ -221,7 +221,7 @@ end
     val = zero(Q)
 
     if F0
-        val += F.F0(Ω, ν, ω, P, k, q, Ch, pSp; F0, γp, γt, γa)
+        val += F.F0(Ω, ν, ω, P, k, q, Ch, pSp)
     end
 
     # k and q are SWaveBrillouinPoint, sum over the k and q momentum.

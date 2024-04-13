@@ -209,7 +209,7 @@ end
     val = zero(Q)
 
     if F0
-        val += F.F0(Ω, ν, νp, Ch, pSp; F0, γp, γt, γa)
+        val += F.F0(Ω, ν, νp, Ch, pSp)
     end
 
     if γp
@@ -246,7 +246,7 @@ end
     val = zero(Q)
 
     if F0
-        val += F.F0(Ω, ν, νp, Ch, pSp; F0, γp, γt, γa)
+        val += F.F0(Ω, ν, νp, Ch, pSp)
     end
 
     # This function is called only if either ν or νp is an InfiniteMatsubaraFrequency.

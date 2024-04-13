@@ -85,7 +85,7 @@ end
     val = zero(Q)
 
     if F0
-        val += F.F0(Ω, ν, νp, P, k, kp, Ch, pSp; F0, γp, γt, γa)
+        val += F.F0(Ω, ν, νp, P, k, kp, Ch, pSp)
     end
 
     if γp
@@ -128,7 +128,7 @@ end
     val = zero(Q)
 
     if F0
-        val += F.F0(Ω, ν, νp, P, k, kp, Ch, pSp; F0, γp, γt, γa)
+        val += F.F0(Ω, ν, νp, P, k, kp, Ch, pSp)
     end
 
     # This function is called only if either ν or νp is an InfiniteMatsubaraFrequency.
@@ -268,7 +268,7 @@ end
     val = zero(Q)
 
     if F0
-        val += F.F0(Ω, ν, νp, P, k, kp, Ch, pSp; F0, γp, γt, γa)
+        val += F.F0(Ω, ν, νp, P, k, kp, Ch, pSp)
     end
 
     # k isa SWaveBrillouinPoint, sum over the k momentum.
@@ -323,7 +323,7 @@ end
     val = zero(Q)
 
     if F0
-        val += F.F0(Ω, ν, νp, P, k, kp, Ch, pSp; F0, γp, γt, γa)
+        val += F.F0(Ω, ν, νp, P, k, kp, Ch, pSp)
     end
 
     # kp isa SWaveBrillouinPoint, sum over the kp momentum.
@@ -378,7 +378,7 @@ end
     val = zero(Q)
 
     if F0
-        val += F.F0(Ω, ν, νp, P, k, kp, Ch, pSp; F0, γp, γt, γa)
+        val += F.F0(Ω, ν, νp, P, k, kp, Ch, pSp)
     end
 
     # k and kp are SWaveBrillouinPoint, sum over the k and kp momentum.
