@@ -270,23 +270,23 @@ function init_sym_grp!(
 )::Nothing
 
     # self-energy
-    S.SGΣ = SymmetryGroup([Symmetry{1}(sΣ)], S.Σ)
+    S.SGΣ = my_SymmetryGroup([Symmetry{1}(sΣ)], S.Σ)
 
     # particle-particle channel
-    S.SGpp[1] = SymmetryGroup([Symmetry{1}(sK1pp)], S.F.γp.K1)
-    S.SGpp[2] = SymmetryGroup([Symmetry{2}(sK2pp1), Symmetry{2}(sK2pp2)], S.F.γp.K2)
-    S.SGpp[3] = SymmetryGroup([Symmetry{3}(sK3pp1), Symmetry{3}(sK3pp2), Symmetry{3}(sK3pp3)], S.F.γp.K3)
+    S.SGpp[1] = my_SymmetryGroup([Symmetry{1}(sK1pp)], S.F.γp.K1)
+    S.SGpp[2] = my_SymmetryGroup([Symmetry{2}(sK2pp1), Symmetry{2}(sK2pp2)], S.F.γp.K2)
+    S.SGpp[3] = my_SymmetryGroup([Symmetry{3}(sK3pp1), Symmetry{3}(sK3pp2), Symmetry{3}(sK3pp3)], S.F.γp.K3)
     S.SGppL[1] = S.SGpp[1]
     S.SGppL[2] = S.SGpp[2]
-    S.SGppL[3] = SymmetryGroup([Symmetry{3}(sK3pp1), Symmetry{3}(sK3pp3)], S.F.γp.K3)
+    S.SGppL[3] = my_SymmetryGroup([Symmetry{3}(sK3pp1), Symmetry{3}(sK3pp3)], S.F.γp.K3)
 
     # particle-hole channels
-    S.SGph[1] = SymmetryGroup([Symmetry{1}(sK1ph)], S.F.γt.K1)
-    S.SGph[2] = SymmetryGroup([Symmetry{2}(sK2ph1), Symmetry{2}(sK2ph2)], S.F.γt.K2)
-    S.SGph[3] = SymmetryGroup([Symmetry{3}(sK3ph1), Symmetry{3}(sK3ph2), Symmetry{3}(sK3ph3)], S.F.γt.K3)
+    S.SGph[1] = my_SymmetryGroup([Symmetry{1}(sK1ph)], S.F.γt.K1)
+    S.SGph[2] = my_SymmetryGroup([Symmetry{2}(sK2ph1), Symmetry{2}(sK2ph2)], S.F.γt.K2)
+    S.SGph[3] = my_SymmetryGroup([Symmetry{3}(sK3ph1), Symmetry{3}(sK3ph2), Symmetry{3}(sK3ph3)], S.F.γt.K3)
     S.SGphL[1] = S.SGph[1]
     S.SGphL[2] = S.SGph[2]
-    S.SGphL[3] = SymmetryGroup([Symmetry{3}(sK3ph1), Symmetry{3}(sK3ph3)], S.F.γt.K3)
+    S.SGphL[3] = my_SymmetryGroup([Symmetry{3}(sK3ph1), Symmetry{3}(sK3ph3)], S.F.γt.K3)
 
     # For F0
     if S.F0 isa Vertex
@@ -294,8 +294,8 @@ function init_sym_grp!(
     elseif S.F0 isa RefVertex
         F0_K2 = MeshFunction(meshes(S.F0.Fp_p, Val(1)), meshes(S.F0.Fp_p, Val(2)); data_t = eltype(S.F0))
     end
-    S.SG0pp2 = SymmetryGroup([Symmetry{2}(sK2pp1), Symmetry{2}(sK2pp2)], F0_K2)
-    S.SG0ph2 = SymmetryGroup([Symmetry{2}(sK2ph1), Symmetry{2}(sK2ph2)], F0_K2)
+    S.SG0pp2 = my_SymmetryGroup([Symmetry{2}(sK2pp1), Symmetry{2}(sK2pp2)], F0_K2)
+    S.SG0ph2 = my_SymmetryGroup([Symmetry{2}(sK2ph1), Symmetry{2}(sK2ph2)], F0_K2)
 
     return nothing
 end
@@ -362,4 +362,16 @@ function MatsubaraFunctions.save!(
     MatsubaraFunctions.save!(f, "F", S.F)
 
     return nothing
+end
+
+function my_symmetrize!(S :: AbstractSolver)
+    my_symmetrize!(S.F.γp.K1, S.SGpp[1])
+    my_symmetrize!(S.F.γp.K2, S.SGpp[2])
+    my_symmetrize!(S.F.γp.K3, S.SGpp[3])
+    my_symmetrize!(S.F.γt.K1, S.SGph[1])
+    my_symmetrize!(S.F.γt.K2, S.SGph[2])
+    my_symmetrize!(S.F.γt.K3, S.SGph[3])
+    my_symmetrize!(S.F.γa.K1, S.SGph[1])
+    my_symmetrize!(S.F.γa.K2, S.SGph[2])
+    my_symmetrize!(S.F.γa.K3, S.SGph[3])
 end

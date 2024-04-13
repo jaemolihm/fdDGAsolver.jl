@@ -179,7 +179,7 @@ function init_sym_grp!(
     mK_Γ = meshes(S.F.γp.K1, Val(2))
 
     # self-energy
-    S.SGΣ = SymmetryGroup(Symmetry{2}[
+    S.SGΣ = my_SymmetryGroup(Symmetry{2}[
         Symmetry{2}(w -> sΣ_conj(w, mK_Σ)),
         Symmetry{2}(w -> sΣ_ref(w, mK_Σ)),
         Symmetry{2}(w -> sΣ_rot(w, mK_Σ))
@@ -187,20 +187,20 @@ function init_sym_grp!(
 
     # Vertices in the particle-particle channel
 
-    S.SGpp[1] = SymmetryGroup(Symmetry{2}[
+    S.SGpp[1] = my_SymmetryGroup(Symmetry{2}[
         Symmetry{2}(w -> sK1_conj(w, mK_Γ)),
         Symmetry{2}(w -> sK1_ref(w, mK_Γ)),
         Symmetry{2}(w -> sK1_rot(w, mK_Γ)),
     ], S.F.γp.K1);
 
-    S.SGpp[2] = SymmetryGroup([
+    S.SGpp[2] = my_SymmetryGroup([
         Symmetry{3}(w -> sK2pp1( w, mK_Γ)),
         Symmetry{3}(w -> sK2pp2( w, mK_Γ)),
         Symmetry{3}(w -> sK2_ref(w, mK_Γ)),
         Symmetry{3}(w -> sK2_rot(w, mK_Γ)),
     ], S.F.γp.K2)
 
-    S.SGpp[3] = SymmetryGroup([
+    S.SGpp[3] = my_SymmetryGroup([
         Symmetry{4}(w -> sK3pp1( w, mK_Γ)),
         Symmetry{4}(w -> sK3pp2( w, mK_Γ)),
         Symmetry{4}(w -> sK3pp3( w, mK_Γ)),
@@ -210,7 +210,7 @@ function init_sym_grp!(
 
     S.SGppL[1] = S.SGpp[1]
     S.SGppL[2] = S.SGpp[2]
-    S.SGppL[3] = SymmetryGroup([
+    S.SGppL[3] = my_SymmetryGroup([
         Symmetry{4}(w -> sK3pp1( w, mK_Γ)),
         Symmetry{4}(w -> sK3pp3( w, mK_Γ)),
         Symmetry{4}(w -> sK3_ref(w, mK_Γ)),
@@ -221,14 +221,14 @@ function init_sym_grp!(
 
     S.SGph[1] = S.SGpp[1]
 
-    S.SGph[2] = SymmetryGroup([
+    S.SGph[2] = my_SymmetryGroup([
         Symmetry{3}(w -> sK2ph1( w, mK_Γ)),
         Symmetry{3}(w -> sK2ph2( w, mK_Γ)),
         Symmetry{3}(w -> sK2_ref(w, mK_Γ)),
         Symmetry{3}(w -> sK2_rot(w, mK_Γ)),
     ], S.F.γt.K2)
 
-    S.SGph[3] = SymmetryGroup([
+    S.SGph[3] = my_SymmetryGroup([
         Symmetry{4}(w -> sK3ph1( w, mK_Γ)),
         Symmetry{4}(w -> sK3ph2( w, mK_Γ)),
         Symmetry{4}(w -> sK3ph3( w, mK_Γ)),
@@ -238,21 +238,21 @@ function init_sym_grp!(
 
     S.SGphL[1] = S.SGph[1]
     S.SGphL[2] = S.SGph[2]
-    S.SGphL[3] = SymmetryGroup([
+    S.SGphL[3] = my_SymmetryGroup([
         Symmetry{4}(w -> sK3ph1( w, mK_Γ)),
         Symmetry{4}(w -> sK3ph3( w, mK_Γ)),
         Symmetry{4}(w -> sK3_ref(w, mK_Γ)),
         Symmetry{4}(w -> sK3_rot(w, mK_Γ)),
     ], S.F.γt.K3)
 
-    # S.SGΠpp = SymmetryGroup([
+    # S.SGΠpp = my_SymmetryGroup([
     #     Symmetry{4}(w -> sK2_NL2_pp1( w, mK_Γ)),
     #     Symmetry{4}(w -> sK2_NL2_pp2( w, mK_Γ)),
     #     Symmetry{4}(w -> sΠ_ref(w, mK_Γ)),
     #     Symmetry{4}(w -> sΠ_rot(w, mK_Γ)),
     # ], S.Πpp)
 
-    # S.SGΠph = SymmetryGroup([
+    # S.SGΠph = my_SymmetryGroup([
     #     Symmetry{4}(w -> sΠ_ph1(w, mK_Γ)),
     #     Symmetry{4}(w -> sΠ_ph2(w, mK_Γ)),
     #     Symmetry{4}(w -> sΠ_ref(w, mK_Γ)),
@@ -264,13 +264,13 @@ function init_sym_grp!(
     elseif S.F0 isa RefVertex
         F0_K2 = MeshFunction(meshes(S.F0.Fp_p, Val(1)), meshes(S.F0.Fp_p, Val(2)), mK_Γ; data_t = eltype(S))
     end
-    S.SG0pp2 = SymmetryGroup([
+    S.SG0pp2 = my_SymmetryGroup([
         Symmetry{3}(w -> sK2pp1( w, mK_Γ)),
         Symmetry{3}(w -> sK2pp2( w, mK_Γ)),
         Symmetry{3}(w -> sK2_ref(w, mK_Γ)),
         Symmetry{3}(w -> sK2_rot(w, mK_Γ)),
     ], F0_K2)
-    S.SG0ph2 = SymmetryGroup([
+    S.SG0ph2 = my_SymmetryGroup([
         Symmetry{3}(w -> sK2ph1( w, mK_Γ)),
         Symmetry{3}(w -> sK2ph2( w, mK_Γ)),
         Symmetry{3}(w -> sK2_ref(w, mK_Γ)),

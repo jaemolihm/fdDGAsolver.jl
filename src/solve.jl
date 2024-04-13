@@ -6,8 +6,6 @@ function iterate_solver!(S :: AbstractSolver;
 
     @assert strategy in (:fdPA, :scPA) "Calculation strategy unknown"
 
-    zero_out_points_outside_box!(S)
-
     if update_Σ
         # If Σ is not updated, G and bubbles are already set at the initialization step,
         # so they don't need to be updated here.
@@ -51,7 +49,8 @@ function iterate_solver!(S :: AbstractSolver;
     set!(S.F, S.Fbuff)
     reduce!(S.F)
 
-    zero_out_points_outside_box!(S)
+    # Symmetrize F (symmetry can be broken during reduction)
+    my_symmetrize!(S)
 
     # update Σ
     if update_Σ
