@@ -1,6 +1,41 @@
 # conversion between different frequency/momentum representations
 #----------------------------------------------------------------------------------------------#
 
+function _convert_channel(
+    A,
+    b,
+    bp,
+    :: Type{Ch_from},
+    :: Type{Ch_to}
+    ) where {Ch_from <: ChannelTag, Ch_to <: ChannelTag}
+
+    if Ch_from === Ch_to
+        return A, b, bp
+
+    elseif Ch_from === pCh && Ch_to === tCh
+        return A - b - bp, bp, b
+
+    elseif Ch_from === pCh && Ch_to === aCh
+        return b - bp, A - b, bp
+
+    elseif Ch_from === tCh && Ch_to === pCh
+        return A + b + bp, bp, b
+
+    elseif Ch_from === tCh && Ch_to === aCh
+        return bp - b, A + b, b
+
+    elseif Ch_from === aCh && Ch_to === pCh
+        return A + bp + b, A + bp, bp
+
+    elseif Ch_from === aCh && Ch_to === tCh
+        return b - bp, bp, A + bp
+
+    else
+        throw(ArgumentError("Cannot convert from $Ch_from to $Ch_to !"))
+    end
+
+end
+
 """
     function convert_frequency(
         Ω  :: MatsubaraFrequency{Boson},
@@ -20,30 +55,7 @@ Convert frequencies in the `Ch_from` channel representation to `Ch_to` channel r
        :: Type{Ch_to}
     ) where {Ch_from <: ChannelTag, Ch_to <: ChannelTag}
 
-    if Ch_from === Ch_to
-        return Ω, ν, νp
-
-    elseif Ch_from === pCh && Ch_to === tCh
-        return Ω - ν - νp, νp, ν
-
-    elseif Ch_from === pCh && Ch_to === aCh
-        return ν - νp, Ω - ν, νp
-
-    elseif Ch_from === tCh && Ch_to === pCh
-        return Ω + ν + νp, νp, ν
-
-    elseif Ch_from === tCh && Ch_to === aCh
-        return νp - ν, Ω + ν, ν
-
-    elseif Ch_from === aCh && Ch_to === pCh
-        return Ω + νp + ν, Ω + νp, νp
-
-    elseif Ch_from === aCh && Ch_to === tCh
-        return ν - νp, νp, Ω + νp
-
-    else
-        throw(ArgumentError("Cannot convert from $Ch_from to $Ch_to!"))
-    end
+    _convert_channel(Ω, ν, νp, Ch_from, Ch_to)
 end
 
 """
@@ -65,28 +77,5 @@ Convert momenta in the `Ch_from` channel representation to `Ch_to` channel repre
        :: Type{Ch_to}
     ) where {Ch_from <: ChannelTag, Ch_to <: ChannelTag}
 
-    if Ch_from === Ch_to
-        return Q, k, kp
-
-    elseif Ch_from === pCh && Ch_to === tCh
-        return Q - k - kp, kp, k
-
-    elseif Ch_from === pCh && Ch_to === aCh
-        return k - kp, Q - k, kp
-
-    elseif Ch_from === tCh && Ch_to === pCh
-        return Q + k + kp, kp, k
-
-    elseif Ch_from === tCh && Ch_to === aCh
-        return kp - k, Q + k, k
-
-    elseif Ch_from === aCh && Ch_to === pCh
-        return Q + kp + k, Q + kp, kp
-
-    elseif Ch_from === aCh && Ch_to === tCh
-        return k - kp, kp, Q + kp
-
-    else
-        throw(ArgumentError("Cannot convert from $Ch_from to $Ch_to!"))
-    end
+    _convert_channel(Q, k, kp, Ch_from, Ch_to)
 end
