@@ -2,7 +2,7 @@
 
 function SDE_channel_L_pp(
     Πpp   :: NL_MF_Π{Q},
-    F     :: NL_Vertex{Q},
+    F     :: Union{Vertex{Q}, NL_Vertex{Q}},
     SGpp2 :: SymmetryGroup
     ;
     mode  :: Symbol,
@@ -26,8 +26,13 @@ function SDE_channel_L_pp(
     end
 
     # compute Lpp
-    Lpp = copy(F.γp.K2)
+    if F isa Vertex
+        Lpp = MeshFunction(meshes(F.γt.K2, Val(1)), meshes(F.γt.K2, Val(2)), meshes(Πpp, Val(3)); data_t = Q)
+    else
+        Lpp = copy(F.γp.K2)
+    end
 
+    # SGpp2(Lpp, InitFunction{3, Q}(diagram); mode = mode)
     SGpp2(Lpp, InitFunction{3, Q}(diagram); mode = mode)
 
     return Lpp
@@ -35,7 +40,7 @@ end
 
 function SDE_channel_L_ph(
     Πph   :: NL_MF_Π{Q},
-    F     :: NL_Vertex{Q},
+    F     :: Union{Vertex{Q}, NL_Vertex{Q}},
     SGph2 :: SymmetryGroup
     ;
     mode  :: Symbol,
@@ -59,7 +64,11 @@ function SDE_channel_L_ph(
     end
 
     # compute Lph
-    Lph = copy(F.γt.K2)
+    if F isa Vertex
+        Lph = MeshFunction(meshes(F.γt.K2, Val(1)), meshes(F.γt.K2, Val(2)), meshes(Πph, Val(3)); data_t = Q)
+    else
+        Lph = copy(F.γt.K2)
+    end
 
     SGph2(Lph, InitFunction{3, Q}(diagram); mode)
 
