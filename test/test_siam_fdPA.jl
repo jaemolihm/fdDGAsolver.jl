@@ -71,7 +71,7 @@ using Test
     res = fdDGAsolver.solve!(S2; strategy = :fdPA, parallel_mode = :threads, verbose = false);
 
     @test absmax(S2.Σ - S_fd.Σ) < 3e-3
-    @test S2.Σ(π*T) ≈ 0.024671843669397217 - 0.17580005229517814im
+    @test S2.Σ(π*T) ≈ 0.024689439265173106 - 0.1758792004501562im
 
     Ω = MatsubaraFrequency(T, 0, Boson)
     ν = MatsubaraFrequency(T, 1, Fermion)

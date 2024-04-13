@@ -1,4 +1,3 @@
-
 # Parquet iteration
 function iterate_solver!(S :: AbstractSolver;
     strategy :: Symbol = :fdPA,
@@ -6,6 +5,8 @@ function iterate_solver!(S :: AbstractSolver;
     ) ::Nothing
 
     @assert strategy in (:fdPA, :scPA) "Calculation strategy unknown"
+
+    zero_out_points_outside_box!(S)
 
     if update_Σ
         # If Σ is not updated, G and bubbles are already set at the initialization step,
@@ -49,6 +50,8 @@ function iterate_solver!(S :: AbstractSolver;
     # update F
     set!(S.F, S.Fbuff)
     reduce!(S.F)
+
+    zero_out_points_outside_box!(S)
 
     # update Σ
     if update_Σ

@@ -52,6 +52,8 @@ module fdDGAsolver
     include("nonlocal_2/SDE.jl")
     include("nonlocal_2/build_K3_cache.jl")
 
+    include("zero_out.jl")
+
 
     @compile_workload begin
         MPI.Init()
