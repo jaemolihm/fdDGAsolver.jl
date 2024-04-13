@@ -1,9 +1,9 @@
 function BSE_L_K3!(
-    S :: Union{NL_ParquetSolver{Q}, NL2_ParquetSolver{Q}},
-    Γ :: NL_MF_K3{Q},
+    S  :: NL_ParquetSolver{Q},
+    Γ  :: NL_MF_K3{Q},
     F0 :: NL_MF_K3{Q},
-      :: Type{aCh}
-    ) :: Nothing where {Q}
+       :: Type{aCh}
+    )  :: Nothing where {Q}
 
     # model the diagram
     @inline function diagram(wtpl)
