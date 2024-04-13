@@ -88,6 +88,7 @@ function fixed_point!(
     x :: Vector{Q},
     S :: AbstractSolver{Q}
     ;
+    filename_log :: Union{Nothing, String} = nothing,
     kwargs_solver...
     ) :: Nothing where {Q}
 
@@ -96,6 +97,14 @@ function fixed_point!(
 
     # Iterate the solver
     iterate_solver!(S; kwargs_solver...)
+
+    if filename_log !== nothing
+        if mpi_ismain()
+            h5open(filename_log, "w") do f
+                save!(f, "S", S)
+            end
+        end
+    end
 
     # calculate residue
     flatten!(S, R)
