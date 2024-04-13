@@ -70,8 +70,8 @@ function bubbles_real_space!(
 
     G_real_space = fft(reshape(G.data, :, LG, LG), (2, 3)) / LG^2
 
-    Πpp_R = zeros(eltype(Πpp.data), n1, n2, L, L, L, L)
-    Πph_R = zeros(eltype(Πph.data), n1, n2, L, L, L, L)
+    Πpp_R = Base.ReshapedArray(Πpp.data, (n1, n2, L, L, L, L), ())
+    Πph_R = Base.ReshapedArray(Πph.data, (n1, n2, L, L, L, L), ())
 
     # Scan G(R) and G(R') for R and R' in [-L/2, L/2]²
     Rs_G_1d = (-div(L, 2)) : div(L, 2)
@@ -113,8 +113,8 @@ function bubbles_real_space!(
         end
     end
 
-    Πpp.data .= reshape(bfft(Πpp_R, (3, 4, 5, 6)), n1, n2, L^2, L^2)
-    Πph.data .= reshape(bfft(Πph_R, (3, 4, 5, 6)), n1, n2, L^2, L^2)
+    bfft!(Πpp_R, (3, 4, 5, 6))
+    bfft!(Πph_R, (3, 4, 5, 6))
 
     return nothing
 end

@@ -102,8 +102,8 @@ function SDE!(
         G_data_R = fft(reshape(G.data, :, LG, LG), (2, 3)) / LG^2
         Σ_data_R = zeros(eltype(Σ.data), length(meshes(Σ, Val(1))), LΣ, LΣ)
 
-        Lpp_data_R = fft(reshape(Lpp.data, n1, n2, L, L, L, L), (3, 4, 5, 6)) / L^4
-        Lph_data_R = fft(reshape(Lph.data, n1, n2, L, L, L, L), (3, 4, 5, 6)) / L^4
+        Lpp_data_R = fft!(Base.ReshapedArray(Lpp.data, (n1, n2, L, L, L, L), ()), (3, 4, 5, 6)) ./ L^4
+        Lph_data_R = fft!(Base.ReshapedArray(Lph.data, (n1, n2, L, L, L, L), ()), (3, 4, 5, 6)) ./ L^4
 
         Rs_L_1d = (-div(L, 2)) : div(L, 2)
         Rs = collect(Iterators.product(Rs_L_1d, Rs_L_1d))
