@@ -374,13 +374,11 @@ end
 # reducer
 function reduce!(
     F :: AbstractVertex
-    ;
-    max_class :: Int = 3,
     ) :: Nothing
 
-    reduce!(F.γp; max_class)
-    reduce!(F.γt; max_class)
-    reduce!(F.γa; max_class)
+    reduce!(F.γp)
+    reduce!(F.γt)
+    reduce!(F.γa)
 
     return nothing
 end

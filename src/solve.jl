@@ -3,14 +3,9 @@
 function iterate_solver!(S :: AbstractSolver;
     strategy :: Symbol = :fdPA,
     update_Σ :: Bool = true,
-    max_class :: Int = 3,
     ) ::Nothing
 
     @assert strategy in (:fdPA, :scPA) "Calculation strategy unknown"
-
-    if max_class ∉ (1, 2, 3)
-        throw(ArgumentError("Wrong max_class $max_class. Must be 1 or 2 or 3."))
-    end
 
     if update_Σ
         # If Σ is not updated, G and bubbles are already set at the initialization step,
@@ -23,47 +18,37 @@ function iterate_solver!(S :: AbstractSolver;
         bubbles!(S)
     end
 
-    if max_class >= 3
-        (; Γpx, F0p, F0a, F0t, Γpp, Γa, Γt, Fp, Fa, Ft) = build_K3_cache(S)
-    end
+
+    (; Γpx, F0p, F0a, F0t, Γpp, Γa, Γt, Fp, Fa, Ft) = build_K3_cache(S)
+
 
     if strategy == :fdPA
         # calculate FL
-        if max_class >= 2
-            BSE_L_K2!(S, pCh)
-            BSE_L_K2!(S, aCh)
-            BSE_L_K2!(S, tCh)
-        end
+        BSE_L_K2!(S, pCh)
+        BSE_L_K2!(S, aCh)
+        BSE_L_K2!(S, tCh)
 
-        if max_class >= 3
-            BSE_L_K3!(S, Γpp, F0p, pCh)
-            BSE_L_K3!(S, Γa,  F0a, aCh)
-            BSE_L_K3!(S, Γt,  F0t, tCh)
-        end
+        BSE_L_K3!(S, Γpp, F0p, pCh)
+        BSE_L_K3!(S, Γa,  F0a, aCh)
+        BSE_L_K3!(S, Γt,  F0t, tCh)
     end
 
     # calculate Fbuff
-    if max_class >= 1
-        BSE_K1!(S, pCh)
-        BSE_K1!(S, aCh)
-        BSE_K1!(S, tCh)
-    end
+    BSE_K1!(S, pCh)
+    BSE_K1!(S, aCh)
+    BSE_K1!(S, tCh)
 
-    if max_class >= 2
-        BSE_K2!(S, pCh)
-        BSE_K2!(S, aCh)
-        BSE_K2!(S, tCh)
-    end
+    BSE_K2!(S, pCh)
+    BSE_K2!(S, aCh)
+    BSE_K2!(S, tCh)
 
-    if max_class >= 3
-        BSE_K3!(S, Γpx, Fp, F0p, pCh)
-        BSE_K3!(S, Γa,  Fa, F0a, aCh)
-        BSE_K3!(S, Γt,  Ft, F0t, tCh)
-    end
+    BSE_K3!(S, Γpx, Fp, F0p, pCh)
+    BSE_K3!(S, Γa,  Fa, F0a, aCh)
+    BSE_K3!(S, Γt,  Ft, F0t, tCh)
 
     # update F
     set!(S.F, S.Fbuff)
-    reduce!(S.F; max_class)
+    reduce!(S.F)
 
     # update Σ
     if update_Σ

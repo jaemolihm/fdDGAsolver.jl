@@ -21,7 +21,7 @@
 - [x] Do we need all versions of box_eval? It seems that this is now only very rarely used.
 - [ ] How is the density spin component defined and what purpose does it serve?
 - [ ] Would it be nicer to have one function which converts momenta and frequencies?
-- [ ] The reduce function now has to go through a couple of if statements regarding the max_class parameter? How about we introduce some enum similar as for the SpinTag and ChannelTag that denotes the asymptotic Kernel so we can have a compile time dispatch?
+- [x] The reduce function now has to go through a couple of if statements regarding the max_class parameter? How about we introduce some enum similar as for the SpinTag and ChannelTag that denotes the asymptotic Kernel so we can have a compile time dispatch?
 - [ ] The method loading CTINT reference data, is that still working or is it outdated?
 - [x] in Dyson! Why do we not iterate over MeshPoints but the values? Is the Sigma grid different from the G grid?
 - [ ] Can you remind me of how you ultimately calculate the SDE and maybe document the different contributions?

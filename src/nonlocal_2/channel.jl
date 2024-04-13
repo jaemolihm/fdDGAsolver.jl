@@ -194,34 +194,28 @@ end
 end
 
 # subtract the lower-order asymptotic vertices from the higher-order ones
-function reduce!(γ :: NL2_Channel; max_class :: Int = 3) :: Nothing
-    # max_class: asymptotic classes higher than max_class is ignored
-    max_class == 1 && return
+function reduce!(γ :: NL2_Channel) :: Nothing
 
     for iP in eachindex(get_P_mesh(γ))
         P = value(get_P_mesh(γ)[iP])
 
-        if max_class >= 2
-            for iΩ in eachindex(meshes(γ.K2, Val(1)))
-                Ω = value(meshes(γ.K2, Val(1))[iΩ])
-                view(γ.K2, Ω, :, P, :) .-= γ.K1[Ω, P]
-            end
+        for iΩ in eachindex(meshes(γ.K2, Val(1)))
+            Ω = value(meshes(γ.K2, Val(1))[iΩ])
+            view(γ.K2, Ω, :, P, :) .-= γ.K1[Ω, P]
         end
 
-        if max_class >= 3
-            for iΩ in eachindex(meshes(γ.K3, Val(1)))
-                Ω = value(meshes(γ.K3, Val(1))[iΩ])
-                view(γ.K3, Ω, :, :, P) .-= γ.K1[Ω, P]
+        for iΩ in eachindex(meshes(γ.K3, Val(1)))
+            Ω = value(meshes(γ.K3, Val(1))[iΩ])
+            view(γ.K3, Ω, :, :, P) .-= γ.K1[Ω, P]
 
-                for iν in eachindex(meshes(γ.K3, Val(2)))
-                    ν = value(meshes(γ.K3, Val(2))[iν])
-                    view(γ.K3, Ω, ν, :, P) .-= γ.K2[Ω, ν, P, kSW]
-                end
+            for iν in eachindex(meshes(γ.K3, Val(2)))
+                ν = value(meshes(γ.K3, Val(2))[iν])
+                view(γ.K3, Ω, ν, :, P) .-= γ.K2[Ω, ν, P, kSW]
+            end
 
-                for iω in eachindex(meshes(γ.K3, Val(3)))
-                    ω = value(meshes(γ.K3, Val(3))[iω])
-                    view(γ.K3, Ω, :, ω, P) .-= γ.K2[Ω, ω, P, kSW]
-                end
+            for iω in eachindex(meshes(γ.K3, Val(3)))
+                ω = value(meshes(γ.K3, Val(3))[iω])
+                view(γ.K3, Ω, :, ω, P) .-= γ.K2[Ω, ω, P, kSW]
             end
         end
 

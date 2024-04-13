@@ -247,42 +247,32 @@ end
 # Subtract the lower-order asymptotic vertices from the higher-order ones
 function reduce!(
     γ :: NL_Channel,
-    ;
-    max_class :: Int = 3,
     ) :: Nothing
-
-    # max_class: asymptotic classes higher than max_class is ignored.
-
-    max_class == 1 && return
 
     for iP in eachindex(get_P_mesh(γ))
         P = value(get_P_mesh(γ)[iP])
 
-        if max_class >= 2
-            for iΩ in eachindex(meshes(γ.K2, Val(1)))
-                Ω = value(meshes(γ.K2, Val(1))[iΩ])
-                K1val = γ.K1[Ω, P]
+        for iΩ in eachindex(meshes(γ.K2, Val(1)))
+            Ω = value(meshes(γ.K2, Val(1))[iΩ])
+            K1val = γ.K1[Ω, P]
 
-                for iν in eachindex(meshes(γ.K2, Val(2)))
-                    ν = value(meshes(γ.K2, Val(2))[iν])
-                    γ.K2[Ω, ν, P] -= K1val
-                end
+            for iν in eachindex(meshes(γ.K2, Val(2)))
+                ν = value(meshes(γ.K2, Val(2))[iν])
+                γ.K2[Ω, ν, P] -= K1val
             end
         end
 
-        if max_class >= 3
-            for iΩ in eachindex(meshes(γ.K3, Val(1)))
-                Ω = value(meshes(γ.K3, Val(1))[iΩ])
-                K1val = γ.K1[Ω, P]
+        for iΩ in eachindex(meshes(γ.K3, Val(1)))
+            Ω = value(meshes(γ.K3, Val(1))[iΩ])
+            K1val = γ.K1[Ω, P]
 
-                for iν in eachindex(meshes(γ.K3, Val(2)))
-                    ν = value(meshes(γ.K3, Val(2))[iν])
-                    K2val = γ.K2[Ω, ν, P]
+            for iν in eachindex(meshes(γ.K3, Val(2)))
+                ν = value(meshes(γ.K3, Val(2))[iν])
+                K2val = γ.K2[Ω, ν, P]
 
-                    for iνp in eachindex(meshes(γ.K3, Val(3)))
-                        νp = value(meshes(γ.K3, Val(3))[iνp])
-                        γ.K3[Ω, ν, νp, P] -= K1val + K2val + γ.K2[Ω, νp, P]
-                    end
+                for iνp in eachindex(meshes(γ.K3, Val(3)))
+                    νp = value(meshes(γ.K3, Val(3))[iνp])
+                    γ.K3[Ω, ν, νp, P] -= K1val + K2val + γ.K2[Ω, νp, P]
                 end
             end
         end
