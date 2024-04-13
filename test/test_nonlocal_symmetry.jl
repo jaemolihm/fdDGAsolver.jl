@@ -59,7 +59,6 @@ end;
 
     nmax = 3
     nG  = 8nmax
-    nΣ  = 8nmax
     nK1 = 4nmax
     nK2 = (2nmax, nmax)
     nK3 = (2nmax, nmax)
@@ -67,7 +66,7 @@ end;
     mK_G = BrillouinZoneMesh(BrillouinZone(6, k1, k2))
     mK_Γ = BrillouinZoneMesh(BrillouinZone(3, k1, k2))
 
-    S = parquet_solver_hubbard_parquet_approximation(nG, nΣ, nK1, nK2, nK3, mK_G, mK_Γ; T, U, μ, t1, t2, mode = :threads)
+    S = parquet_solver_hubbard_parquet_approximation(nG, nK1, nK2, nK3, mK_G, mK_Γ; T, U, μ, t1, t2, mode = :threads)
 
     # Solve without symmetries
 
@@ -120,7 +119,6 @@ end
 
     nmax = 4
     nG  = 8nmax
-    nΣ  = 8nmax
     nK1 = 4nmax
     nK2 = (2nmax, nmax)
     nK3 = (2nmax, nmax)
@@ -128,7 +126,7 @@ end
     mK_G = BrillouinZoneMesh(BrillouinZone(6, k1, k2))
     mK_Γ = BrillouinZoneMesh(BrillouinZone(3, k1, k2))
 
-    S = parquet_solver_hubbard_parquet_approximation(nG, nΣ, nK1, nK2, nK3, mK_G, mK_Γ; T, U, μ, t1, mode = :polyester)
+    S = parquet_solver_hubbard_parquet_approximation(nG, nK1, nK2, nK3, mK_G, mK_Γ; T, U, μ, t1, mode = :polyester)
 
     # Set G0 to some auxiliary value for testing
     S.G0 = hubbard_bare_Green(meshes(S.G0)...; μ = 1.0, t1 = 0.5)

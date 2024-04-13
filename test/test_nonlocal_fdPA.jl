@@ -17,7 +17,6 @@ using Test
 
     nmax = 2
     nG  = 12nmax
-    nΣ  = 12nmax
     nK1 = 8nmax
     nK2 = (2nmax, nmax)
     nK3 = (2nmax, nmax)
@@ -27,13 +26,13 @@ using Test
     mK_Γ = BrillouinZoneMesh(BrillouinZone(nq, k1, k2))
 
     # Reference solution
-    S0 = parquet_solver_hubbard_parquet_approximation(nG, nΣ, nK1, nK2, nK3, mK_G, mK_Γ; T, U, μ, t1, mode = :threads)
+    S0 = parquet_solver_hubbard_parquet_approximation(nG, nK1, nK2, nK3, mK_G, mK_Γ; T, U, μ, t1, mode = :threads)
     init_sym_grp!(S0)
     res = fdDGAsolver.solve!(S0; strategy = :scPA, verbose = false)
 
 
     # Test scPA and fdPA gives identical results for the trivial case (G0 = Σ0 = Π0 = 0)
-    S0_fd = parquet_solver_hubbard_parquet_approximation(nG, nΣ, nK1, nK2, nK3, mK_G, mK_Γ; T, U, μ, t1, mode = :threads)
+    S0_fd = parquet_solver_hubbard_parquet_approximation(nG, nK1, nK2, nK3, mK_G, mK_Γ; T, U, μ, t1, mode = :threads)
     init_sym_grp!(S0_fd)
     res = fdDGAsolver.solve!(S0_fd; strategy = :fdPA, verbose = false);
 
@@ -44,14 +43,14 @@ using Test
     # Target solution at μ_fd and t2_fd
     μ_fd = 0.5
     t2_fd = -0.3
-    S = parquet_solver_hubbard_parquet_approximation(nG, nΣ, nK1, nK2, nK3, mK_G, mK_Γ; T, U, μ = μ_fd, t1, t2 = t2_fd, mode = :threads)
+    S = parquet_solver_hubbard_parquet_approximation(nG, nK1, nK2, nK3, mK_G, mK_Γ; T, U, μ = μ_fd, t1, t2 = t2_fd, mode = :threads)
     init_sym_grp!(S)
     res = fdDGAsolver.solve!(S; strategy = :scPA, verbose = false)
 
 
     # Solve target using fdPA
     Gbare = hubbard_bare_Green(meshes(S0.G)...; μ = μ_fd, t1, t2 = t2_fd)
-    S_fd = NL_ParquetSolver(nG, nΣ, nK1, nK2, nK3, mK_Γ, Gbare, S0.G, S0.Σ, S0.F; mode = :threads)
+    S_fd = NL_ParquetSolver(nK1, nK2, nK3, mK_Γ, Gbare, S0.G, S0.Σ, S0.F; mode = :threads)
     init_sym_grp!(S_fd)
     fdDGAsolver.solve!(S_fd; strategy = :fdPA, verbose = false)
 
@@ -87,7 +86,6 @@ end
 
     nmax = 2
     nG  = 12nmax
-    nΣ  = 12nmax
     nK1 = 8nmax
     nK2 = (2nmax, nmax)
     nK3 = (2nmax, nmax)
@@ -97,13 +95,13 @@ end
     mK_Γ = BrillouinZoneMesh(BrillouinZone(nq, k1, k2))
 
     # Reference solution
-    S0 = parquet_solver_hubbard_parquet_approximation_NL2(nG, nΣ, nK1, nK2, nK3, mK_G, mK_Γ; T, U, μ, t1, mode = :threads)
+    S0 = parquet_solver_hubbard_parquet_approximation_NL2(nG, nK1, nK2, nK3, mK_G, mK_Γ; T, U, μ, t1, mode = :threads)
     init_sym_grp!(S0)
     res = fdDGAsolver.solve!(S0; strategy = :scPA, verbose = false)
 
 
     # Test scPA and fdPA gives identical results for the trivial case (G0 = Σ0 = Π0 = 0)
-    S0_fd = parquet_solver_hubbard_parquet_approximation_NL2(nG, nΣ, nK1, nK2, nK3, mK_G, mK_Γ; T, U, μ, t1, mode = :threads)
+    S0_fd = parquet_solver_hubbard_parquet_approximation_NL2(nG, nK1, nK2, nK3, mK_G, mK_Γ; T, U, μ, t1, mode = :threads)
     init_sym_grp!(S0_fd)
     res = fdDGAsolver.solve!(S0_fd; strategy = :fdPA, verbose = false);
 
@@ -114,14 +112,14 @@ end
     # Target solution at μ_fd and t2_fd
     μ_fd = 0.5
     t2_fd = -0.3
-    S = parquet_solver_hubbard_parquet_approximation_NL2(nG, nΣ, nK1, nK2, nK3, mK_G, mK_Γ; T, U, μ = μ_fd, t1, t2 = t2_fd, mode = :threads)
+    S = parquet_solver_hubbard_parquet_approximation_NL2(nG, nK1, nK2, nK3, mK_G, mK_Γ; T, U, μ = μ_fd, t1, t2 = t2_fd, mode = :threads)
     init_sym_grp!(S)
     res = fdDGAsolver.solve!(S; strategy = :scPA, verbose = false)
 
 
     # Solve target using fdPA
     Gbare = hubbard_bare_Green(meshes(S0.G)...; μ = μ_fd, t1, t2 = t2_fd)
-    S_fd = NL2_ParquetSolver(nG, nΣ, nK1, nK2, nK3, mK_Γ, Gbare, S0.G, S0.Σ, S0.F; mode = :threads)
+    S_fd = NL2_ParquetSolver(nK1, nK2, nK3, mK_Γ, Gbare, S0.G, S0.Σ, S0.F; mode = :threads)
     init_sym_grp!(S_fd)
     fdDGAsolver.solve!(S_fd; strategy = :fdPA, verbose = false)
 

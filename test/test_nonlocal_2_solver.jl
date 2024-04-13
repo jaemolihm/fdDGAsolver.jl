@@ -14,7 +14,6 @@ using Test
 
     nmax = 4
     nG  = 4nmax
-    nΣ  = 4nmax
     nK1 = 3nmax
     nK2 = (2nmax, nmax)
     nK3 = (2nmax, nmax)
@@ -24,13 +23,13 @@ using Test
     mK_G = BrillouinZoneMesh(BrillouinZone(8, k1, k2))
     mK_Γ = BrillouinZoneMesh(BrillouinZone(4, k1, k2))
 
-    S = parquet_solver_hubbard_parquet_approximation_NL2(nG, nΣ, nK1, nK2, nK3, mK_G, mK_Γ; T, U, μ, t1)
+    S = parquet_solver_hubbard_parquet_approximation_NL2(nG, nK1, nK2, nK3, mK_G, mK_Γ; T, U, μ, t1)
 
     # Fill in random dummy data
     unflatten!(S, rand(ComplexF64, length(flatten(S))))
 
     @test fdDGAsolver.numG(S) == nG
-    @test fdDGAsolver.numΣ(S) == nΣ
+    @test fdDGAsolver.numΣ(S) == nG
     @test fdDGAsolver.numK1(S) == nK1
     @test fdDGAsolver.numK2(S) == nK2
     @test fdDGAsolver.numK3(S) == nK3
@@ -39,7 +38,7 @@ using Test
 
     # Test flatten and unflatten
 
-    S_copy = parquet_solver_hubbard_parquet_approximation_NL2(nG, nΣ, nK1, nK2, nK3, mK_G, mK_Γ; T, U, μ, t1)
+    S_copy = parquet_solver_hubbard_parquet_approximation_NL2(nG, nK1, nK2, nK3, mK_G, mK_Γ; T, U, μ, t1)
     set!(S_copy.F, 0)
     unflatten!(S_copy, flatten(S))
     @test absmax(S.F.γa.K3 - S_copy.F.γa.K3) < 1e-10

@@ -4,6 +4,10 @@
 [![codecov](https://codecov.io/gh/jaemolihm/fdDGAsolver.jl/graph/badge.svg?token=38YPJVWVMA)](https://codecov.io/gh/jaemolihm/fdDGAsolver.jl)
 
 
+### API changes made by JML (13.04.2024)
+* The `nΣ` argument of `parquet_solver_*` function is removed. `Σ` uses the same grid as `G`, which is determined by `nG`.
+* The `nG` and `nΣ` arguments of `ParquetSolver` constructors are removed. The meshes of `Gbare` is used.
+
 ### TODO
 * In `ParquetSolver`, `S.FL` have zero K1 vertices, so evaluations of K1 can be avoided.
 * Make mesh_index(SVector, BrillouinMesh) non allocating?
@@ -19,7 +23,7 @@
 - [ ] Would it be nicer to have one function which converts momenta and frequencies?
 - [ ] The reduce function now has to go through a couple of if statements regarding the max_class parameter? How about we introduce some enum similar as for the SpinTag and ChannelTag that denotes the asymptotic Kernel so we can have a compile time dispatch?
 - [ ] The method loading CTINT reference data, is that still working or is it outdated?
-- [ ] in Dyson! Why do we not iterate over MeshPoints but the values? Is the Sigma grid different from the G grid?
+- [x] in Dyson! Why do we not iterate over MeshPoints but the values? Is the Sigma grid different from the G grid?
 - [ ] Can you remind me of how you ultimately calculate the SDE and maybe document the different contributions?
 - [ ] Comment the K3 cache in a bit more detail please!
 - [ ] When using getindex with an SWaveBrillouinPoint the respective momentum argument is summed over. Where and why do we need that?

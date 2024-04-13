@@ -15,13 +15,12 @@ using Test
 
     nmax = 6
     nG  = 6nmax
-    nΣ  = 6nmax
     nK1 = 4nmax
     nK2 = (2nmax, nmax)
     nK3 = (2nmax, nmax)
 
     for Q in [Float64, ComplexF64], mode in [:serial, :threads, :polyester, :hybrid]
-        S = parquet_solver_siam_parquet_approximation(nG, nΣ, nK1, nK2, nK3, Q; e, T, D, Δ, U)
+        S = parquet_solver_siam_parquet_approximation(nG, nK1, nK2, nK3, Q; e, T, D, Δ, U)
         init_sym_grp!(S)
 
         res = fdDGAsolver.solve!(S; strategy = :scPA, verbose = false, parallel_mode = mode);
@@ -49,12 +48,11 @@ end
 
     nmax = 6
     nG  = 6nmax
-    nΣ  = 6nmax
     nK1 = 4nmax
     nK2 = (2nmax, nmax)
     nK3 = (2nmax, nmax)
 
-    S = parquet_solver_siam_parquet_approximation(nG, nΣ, nK1, nK2, nK3; e, T, D, Δ, U)
+    S = parquet_solver_siam_parquet_approximation(nG, nK1, nK2, nK3; e, T, D, Δ, U)
     init_sym_grp!(S)
 
     res = fdDGAsolver.solve!(S; strategy = :scPA, verbose = false, parallel_mode = :threads);

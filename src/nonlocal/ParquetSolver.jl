@@ -62,8 +62,6 @@ mutable struct NL_ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
 
     # constructor
     function NL_ParquetSolver(
-        nG    :: Int64,
-        nΣ    :: Int64,
         nK1   :: Int64,
         nK2   :: NTuple{2,Int64},
         nK3   :: NTuple{2,Int64},
@@ -87,13 +85,9 @@ mutable struct NL_ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
         bubbles_real_space!(Π0pp, Π0ph, G0)
 
         # single-particle Green's function and self-energy
-        # The self-energy has the same momentum resolution as the vertex mk_Γ,
-        # which is coarser than that of the bare and full Green functions mk_G.
         # Initialization: G = Gbare, Σ = 0
-        mK_G = meshes(Gbare, Val(2))
-        G = MeshFunction(MatsubaraMesh(T, nG, Fermion), mK_G; data_t = Q)
-        Σ = MeshFunction(MatsubaraMesh(T, nΣ, Fermion), mK_G; data_t = Q)
-        set!(G, Gbare)
+        G = copy(Gbare)
+        Σ = copy(Gbare)
         set!(Σ, 0)
 
         # bubbles
@@ -127,6 +121,9 @@ mutable struct NL_ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
             throw(ArgumentError("F0 must be a AbstractVertex or RefVertex, not $(typeof(F0))"))
         end
 
+        # Check consistency of meshes
+        @assert meshes(Gbare) == meshes(G0) == meshes(Σ0) == meshes(Σ) == meshes(Σ)
+
         return new{Q, RefVT}(Gbare, G0, Π0pp, Π0ph, Σ0, F0, G, Πpp, Πph, Σ, F, Fbuff, copy(Fbuff), SGΣ, SGpp, SGph, SGppL, SGphL, SG0pp2, SG0ph2, SGΠpp, SGΠph, mode)::NL_ParquetSolver{Q}
     end
 end
@@ -144,7 +141,6 @@ end
 # Construct for parquet approximation
 function parquet_solver_hubbard_parquet_approximation(
     nG::Int64,
-    nΣ::Int64,
     nK1::Int64,
     nK2::NTuple{2,Int64},
     nK3::NTuple{2,Int64},
@@ -160,18 +156,17 @@ function parquet_solver_hubbard_parquet_approximation(
 
     # Mesh for the Green functions and self-energy
     mG = MatsubaraMesh(T, nG, Fermion)
-    mΣ = MatsubaraMesh(T, nΣ, Fermion)
 
     Gbare = hubbard_bare_Green(mG, mK_G, Q; μ, t1, t2, t3)
 
     # Reference system: G0 = Σ0 = 0, F0 = U (parquet approximation)
     G0 = MeshFunction(mG, mK_G; data_t = Q)
-    Σ0 = MeshFunction(mΣ, mK_G; data_t = Q)
+    Σ0 = MeshFunction(mG, mK_G; data_t = Q)
     F0 = RefVertex(T, U, Q)
     set!(G0, 0)
     set!(Σ0, 0)
 
-    NL_ParquetSolver(nG, nΣ, nK1, nK2, nK3, mK_Γ, Gbare, G0, Σ0, F0; mode)
+    NL_ParquetSolver(nK1, nK2, nK3, mK_Γ, Gbare, G0, Σ0, F0; mode)
 end
 
 

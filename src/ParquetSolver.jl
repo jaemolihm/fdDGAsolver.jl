@@ -60,8 +60,6 @@ mutable struct ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
 
     # constructor
     function ParquetSolver(
-        nG::Int64,
-        nΣ::Int64,
         nK1::Int64,
         nK2::NTuple{2,Int64},
         nK3::NTuple{2,Int64},
@@ -85,9 +83,8 @@ mutable struct ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
 
         # single-particle Green's function and self-energy
         # Initialization: G = Gbare, Σ = 0
-        G = MeshFunction(MatsubaraMesh(T, nG, Fermion); data_t=Q)
-        Σ = MeshFunction(MatsubaraMesh(T, nΣ, Fermion); data_t=Q)
-        set!(G, Gbare)
+        G = copy(Gbare)
+        Σ = copy(Gbare)
         set!(Σ, 0)
 
         # bubbles
@@ -118,6 +115,9 @@ mutable struct ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
             throw(ArgumentError("F0 must be a Vertex or RefVertex, not $(typeof(F0))"))
         end
 
+        # Check consistency of meshes
+        @assert meshes(Gbare) == meshes(G0) == meshes(Σ0) == meshes(Σ) == meshes(Σ)
+
         return new{Q, RefVT}(Gbare, G0, Π0pp, Π0ph, Σ0, F0, G, Πpp, Πph, Σ, F, Fbuff, copy(Fbuff), SGΣ, SGpp, SGph, SGppL, SGphL, SG0pp2, SG0ph2, mode)::ParquetSolver{Q}
     end
 end
@@ -135,7 +135,6 @@ end
 # Construct for parquet approximation
 function parquet_solver_siam_parquet_approximation(
     nG::Int64,
-    nΣ::Int64,
     nK1::Int64,
     nK2::NTuple{2,Int64},
     nK3::NTuple{2,Int64},
@@ -151,18 +150,17 @@ function parquet_solver_siam_parquet_approximation(
 
     # Mesh for the Green functions and self-energy
     mG = MatsubaraMesh(T, nG, Fermion)
-    mΣ = MatsubaraMesh(T, nΣ, Fermion)
 
     Gbare = siam_bare_Green(mG, Q; e, Δ, D)
 
     # Reference system: G0 = Σ0 = 0, F0 = U (parquet approximation)
     G0 = MeshFunction(mG; data_t = Q)
-    Σ0 = MeshFunction(mΣ; data_t = Q)
+    Σ0 = MeshFunction(mG; data_t = Q)
     F0 = fdDGAsolver.RefVertex(T, U, Q)
     set!(G0, 0)
     set!(Σ0, 0)
 
-    ParquetSolver(nG, nΣ, nK1, nK2, nK3, Gbare, G0, Σ0, F0; mode)
+    ParquetSolver(nK1, nK2, nK3, Gbare, G0, Σ0, F0; mode)
 end
 
 # construct from CTINT input data
@@ -170,8 +168,6 @@ function ParquetSolver(
     data::HDF5.File,
     T::Float64,
     U::Float64,
-    numG::Int64,
-    numΣ::Int64,
     numK1::Int64,
     numK2::NTuple{2,Int64},
     numK3::NTuple{2,Int64},
@@ -265,7 +261,7 @@ function ParquetSolver(
     end
 
     println("Building target system ...")
-    return ParquetSolver(numG, numΣ, numK1, numK2, numK3, G, Σ, RefVertex(U, Fp_p, Fp_x, Ft_p, Ft_x))::ParquetSolver{Q}
+    return ParquetSolver(numK1, numK2, numK3, G, Σ, RefVertex(U, Fp_p, Fp_x, Ft_p, Ft_x))::ParquetSolver{Q}
 end
 
 # symmetry group initialization
