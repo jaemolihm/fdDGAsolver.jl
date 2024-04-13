@@ -64,10 +64,10 @@ function BSE_K3!(
             Fpl = Ftslice[i]
 
             # central part
-            if is_inbounds(ω, meshes(S.FL.γt.K3, Val(2))) && is_inbounds(νp, meshes(S.FL.γt.K3, Val(3)))
+            if is_inbounds(ω, meshes(S.FL.γt.K3, Val(2)))
                 val -= Πslice[i] * Fpl * (2 * S.FL.γt.K3[Ω, ω, νp] - S.FL.γa.K3[Ω, ω, νp])
-            else
-                val -= Πslice[i] * Fpl * (2 * S.FL.γt.K2(Ω, ω) - S.FL.γa.K2(Ω, ω))
+            elseif is_inbounds(ω, meshes(S.FL.γt.K2, Val(2)))
+                val -= Πslice[i] * Fpl * (2 * S.FL.γt.K2[Ω, ω] - S.FL.γa.K2[Ω, ω])
             end
         end
 
