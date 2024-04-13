@@ -8,10 +8,9 @@ function Dyson!(
     Gbare :: MF_G,
     ) :: Nothing
 
-    for iν in eachindex(meshes(G, Val(1)))
-        ν = value(meshes(G, Val(1))[iν])
+    for ν in meshes(G, Val(1))
         # G and Σ actually store im * G and im * Σ, so -Σ in the Dyson equation becomes +Σ.
-        G[ν] = 1 / (1 / Gbare[ν] + Σ(ν))
+        G[ν] = 1 / (1 / Gbare[ν] + Σ[ν])
     end
 
     return nothing
@@ -23,14 +22,9 @@ function Dyson!(
     Gbare :: NL_MF_G,
     ) :: Nothing
 
-    for ik in eachindex(meshes(G, Val(2)))
-        k = value(meshes(G, Val(2))[ik])
-        for iν in eachindex(meshes(G, Val(1)))
-            ν = value(meshes(G, Val(1))[iν])
-
-            # G and Σ is im * G and im * Σ, so -Σ in the Dyson equation becomes +Σ.
-            G[ν, k] = 1 / (1 / Gbare[ν, k] + Σ(ν, k))
-        end
+    for k in meshes(G, Val(2)), ν in meshes(G, Val(1))
+        # G and Σ is im * G and im * Σ, so -Σ in the Dyson equation becomes +Σ.
+        G[ν, k] = 1 / (1 / Gbare[ν, k] + Σ[ν, k])
     end
 
     return nothing
