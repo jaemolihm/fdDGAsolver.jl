@@ -22,7 +22,7 @@ function BSE_L_K3!(
             val -= Γslice[i] * Π0 * F0slice[i]
         end
 
-        return temperature(S) * val
+        return temperature(S) * val / numP_Γ(S)
     end
 
     # compute K3

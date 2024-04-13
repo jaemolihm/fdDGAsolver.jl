@@ -10,6 +10,7 @@ function build_K3_cache(
     # Vertices multiplied by bubbles from the left
 
     Γpx = MeshFunction(meshes(S.F.γp.K3, Val(1)), mΠν, meshes(S.F.γp.K3, Val(3)), meshes(S.F.γp.K3, Val(4)); data_t=Q)
+    set!(Γpx, 0)
     F0p = copy(Γpx)
     F0a = copy(Γpx)
     F0t = copy(Γpx)
@@ -32,11 +33,12 @@ function build_K3_cache(
     # Vertices multiplied by bubbles from the right
 
     Γpp = MeshFunction(meshes(S.F.γp.K3, Val(1)), meshes(S.F.γp.K3, Val(2)), mΠν, meshes(S.F.γp.K3, Val(4)); data_t=Q)
-    Γa = deepcopy(Γpp)
-    Γt = deepcopy(Γpp)
-    Fp = deepcopy(Γpp)
-    Fa = deepcopy(Γpp)
-    Ft = deepcopy(Γpp)
+    set!(Γpp, 0)
+    Γa = copy(Γpp)
+    Γt = copy(Γpp)
+    Fp = copy(Γpp)
+    Fa = copy(Γpp)
+    Ft = copy(Γpp)
 
     Threads.@threads for i in CartesianIndices(Γpp.data)
         Ω  = value(meshes(Γpp, Val(1))[i.I[1]])
