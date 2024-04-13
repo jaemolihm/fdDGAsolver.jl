@@ -15,12 +15,9 @@ function build_K3_cache(
     F0a = copy(Γpx)
     F0t = copy(Γpx)
 
-    Threads.@threads for i in CartesianIndices(Γpx.data)
-        Ω  = value(meshes(Γpx, Val(1))[i.I[1]])
-        ν  = value(meshes(Γpx, Val(2))[i.I[2]])
-        νp = value(meshes(Γpx, Val(3))[i.I[3]])
-        P  = value(meshes(Γpx, Val(4))[i.I[4]])
-        k  = value(meshes(Γpx, Val(5))[i.I[5]])
+    Threads.@threads for i in mpi_split(1 : length(Γpx.data))
+        Ω, ν, νp, P, k = value.(MatsubaraFunctions.to_meshes(Γpx, i))
+
         Γpx[i] = S.F( Ω, ν, νp, P, k, kSW, pCh, xSp; F0=false, γp=false)
         F0p[i] = S.F0(Ω, ν, νp, P, k, kSW, pCh, xSp)
         F0a[i] = S.F0(Ω, ν, νp, P, k, kSW, aCh, pSp)
@@ -31,6 +28,11 @@ function build_K3_cache(
         F0t[i] = 2 * F0t[i] - F0a[i]
     end
 
+    mpi_allreduce!(Γpx)
+    mpi_allreduce!(F0p)
+    mpi_allreduce!(F0a)
+    mpi_allreduce!(F0t)
+
     # Vertices multiplied by bubbles from the right
 
     Γpp = MeshFunction(meshes(S.F.γp.K3, Val(1)), meshes(S.F.γp.K3, Val(2)), mΠν, meshes(S.F.γp.K3, Val(4)), mΠk; data_t=Q)
@@ -40,12 +42,8 @@ function build_K3_cache(
     Fa = deepcopy(Γpp)
     Ft = deepcopy(Γpp)
 
-    Threads.@threads for i in CartesianIndices(Γpp.data)
-        Ω  = value(meshes(Γpp, Val(1))[i.I[1]])
-        ν  = value(meshes(Γpp, Val(2))[i.I[2]])
-        νp = value(meshes(Γpp, Val(3))[i.I[3]])
-        P  = value(meshes(Γpp, Val(4))[i.I[4]])
-        kp = value(meshes(Γpp, Val(5))[i.I[5]])
+    Threads.@threads for i in mpi_split(1 : length(Γpp.data))
+        Ω, ν, νp, P, kp = value.(MatsubaraFunctions.to_meshes(Γpp, i))
 
         # r-irreducible vertex in each channel r = p, a, t
         Γpp[i] = S.F(Ω, ν, νp, P, kSW, kp, pCh, pSp; F0=false, γp=false)
@@ -63,6 +61,13 @@ function build_K3_cache(
         Γt[i] = Γt[i] * 2 - Γa[i]
         Ft[i] = Ft[i] * 2 - Fa[i]
     end
+
+    mpi_allreduce!(Γpp)
+    mpi_allreduce!(Γa)
+    mpi_allreduce!(Γt)
+    mpi_allreduce!(Fp)
+    mpi_allreduce!(Fa)
+    mpi_allreduce!(Ft)
 
 
     (; Γpx, F0p, F0a, F0t, Γpp, Γa, Γt, Fp, Fa, Ft)
