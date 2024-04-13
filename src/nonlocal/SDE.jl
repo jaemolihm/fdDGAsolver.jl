@@ -367,17 +367,19 @@ function SDE_U2_using_G(
     mode  :: Symbol,
     )   :: NL_MF_G{Q} where {Q}
 
+    # Σ_U²(ν, R) = U² * T² * ∑_{ω1, ω2, ν} G(ω1, -R) * G(ω2, R) * G(ω1 - ω2 + ν, R)
+
     T = temperature(meshes(Σ, Val(1)))
     Σ_U² = copy(Σ)
     set!(Σ_U², 0)
 
     L = bz(meshes(G, Val(2))).L
-    G_pR = fft(reshape(G.data, :, L, L), (2, 3)) / L^2
+    G_pR =  fft(reshape(G.data, :, L, L), (2, 3)) / L^2
     G_mR = bfft(reshape(G.data, :, L, L), (2, 3)) / L^2
 
     Σ_U²_R = zeros(eltype(Σ.data), length(meshes(Σ, Val(1))), L, L)
 
-    for (iR1, iR2) in collect(Iterators.product(axes(G_pR, 2), axes(G_pR, 3)))
+    Threads.@threads for (iR1, iR2) in collect(Iterators.product(axes(G_pR, 2), axes(G_pR, 3)))
         Gp = MeshFunction((meshes(G, Val(1)),), view(G_pR, :, iR1, iR2))
         Gm = MeshFunction((meshes(G, Val(1)),), view(G_mR, :, iR1, iR2))
 
