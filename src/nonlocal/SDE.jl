@@ -405,42 +405,6 @@ function SDE_U2_using_G(
     Σ_U²
 end;
 
-# function SDE_using_K12!(
-#     Σ :: MF_G{Q},
-#     G :: MF_G{Q},
-#     F :: Vertex{Q},
-#     SGΣ :: SymmetryGroup,
-#     ;
-#     mode :: Symbol,
-#     include_Hartree = true,
-#     ) :: MF_G{Q} where {Q}
-
-#     # model the diagram
-#     @inline function diagram(wtpl)
-
-#         ν   = wtpl[1]
-#         val = zero(Q)
-
-#         for iω in eachindex(meshes(G, 1))
-#             ω = value(meshes(G, 1)[iω])
-#             # SDE using only K1 + K2 in p channel
-#             val += G[ω] * (box_eval(F.γp.K1, ν + ω) + box_eval(F.γp.K2, ν + ω, ν))
-#         end
-
-#         return temperature(F) * val
-#     end
-
-#     # compute Σ
-#     SGΣ(Σ, InitFunction{1, Q}(diagram); mode)
-
-#     if include_Hartree
-#         n = compute_occupation(G)
-#         # We store im * Σ in S.Σ, so we multiply im.
-#         Σ.data .+= Q((n - 1/2) * bare_vertex(F) * im)
-#     end
-
-#     return Σ
-# end
 
 function self_energy_sanity_check(Σ :: NL_MF_G)
     passed = true

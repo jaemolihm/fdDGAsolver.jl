@@ -14,7 +14,7 @@
 - [ ] Use `buffer_fold_back`
 - [ ] Type instability for `init_sym_grp`
 - [x] There is a modified add! function in matsubarafunctions_piracy which allows you to multiply with a number and then add to another MeshFunction, would it be helpful to have that in the library? Then we could remove it here.
-- [ ] Do we need all versions of box_eval? It seems that this is now only very rarely used.
+- [x] Do we need all versions of box_eval? It seems that this is now only very rarely used.
 - [ ] How is the density spin component defined and what purpose does it serve?
 - [ ] Would it be nicer to have one function which converts momenta and frequencies?
 - [ ] The reduce function now has to go through a couple of if statements regarding the max_class parameter? How about we introduce some enum similar as for the SpinTag and ChannelTag that denotes the asymptotic Kernel so we can have a compile time dispatch?

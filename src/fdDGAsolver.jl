@@ -14,8 +14,6 @@ module fdDGAsolver
         using FFTW
     end
 
-    include("box_eval.jl")
-
     include("types.jl")
     include("convention.jl")
     include("symmetries.jl")
