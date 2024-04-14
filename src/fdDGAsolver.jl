@@ -54,6 +54,8 @@ module fdDGAsolver
 
     include("zero_out.jl")
 
+    include("fixed_momentum_view.jl")
+
 
     @compile_workload begin
         MPI.Init()
@@ -107,6 +109,7 @@ module fdDGAsolver
         parquet_solver_siam_parquet_approximation,
         parquet_solver_hubbard_parquet_approximation,
         parquet_solver_hubbard_parquet_approximation_NL2,
-        SDE, BSE_K1!, BSE_K2!, BSE_K3!, BSE_L_K2!, BSE_L_K3!, build_K3_cache
+        SDE!, BSE_K1!, BSE_K2!, BSE_K3!, BSE_L_K2!, BSE_L_K3!, build_K3_cache, iterate_solver!,
+        get_P_mesh
 
 end

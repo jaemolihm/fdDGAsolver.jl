@@ -1,7 +1,7 @@
 # conversion between different frequency/momentum representations
 #----------------------------------------------------------------------------------------------#
 
-function _convert_channel(
+@inline function _convert_channel(
     A,
     b,
     bp,
