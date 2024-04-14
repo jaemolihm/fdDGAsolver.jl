@@ -58,6 +58,18 @@ mutable struct ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
     # Parallelization mode
     mode::Symbol
 
+    # Pre-evaluated vertices. To be used in the BSE of the K3 class
+    cache_Γpx :: MF_K3{Q}
+    cache_F0p :: MF_K3{Q}
+    cache_F0a :: MF_K3{Q}
+    cache_F0t :: MF_K3{Q}
+    cache_Γpp :: MF_K3{Q}
+    cache_Γa  :: MF_K3{Q}
+    cache_Γt  :: MF_K3{Q}
+    cache_Fp  :: MF_K3{Q}
+    cache_Fa  :: MF_K3{Q}
+    cache_Ft  :: MF_K3{Q}
+
     # constructor
     function ParquetSolver(
         nK1::Int64,
@@ -118,7 +130,24 @@ mutable struct ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
         # Check consistency of meshes
         @assert meshes(Gbare) == meshes(G0) == meshes(Σ0) == meshes(Σ) == meshes(Σ)
 
-        return new{Q, RefVT}(Gbare, G0, Π0pp, Π0ph, Σ0, F0, G, Πpp, Πph, Σ, F, Fbuff, copy(Fbuff), SGΣ, SGpp, SGph, SGppL, SGphL, SG0pp2, SG0ph2, mode)::ParquetSolver{Q}
+        # Pre-evaluated caches for the BSE of the K3 class
+        # The vertices are contracted with the bubble to the right or to the left.
+        # The fermionic frequencies for the contracted side uses the frequency mesh of the
+        # bubble, which is larger than that of the K3 vertex.
+        cache_Γpx = MeshFunction(meshes(F.γp.K3, Val(1)), mΠν, meshes(F.γp.K3, Val(3)); data_t = Q)
+        cache_F0p = MeshFunction(meshes(F.γp.K3, Val(1)), mΠν, meshes(F.γp.K3, Val(3)); data_t = Q)
+        cache_F0a = MeshFunction(meshes(F.γp.K3, Val(1)), mΠν, meshes(F.γp.K3, Val(3)); data_t = Q)
+        cache_F0t = MeshFunction(meshes(F.γp.K3, Val(1)), mΠν, meshes(F.γp.K3, Val(3)); data_t = Q)
+        cache_Γpp = MeshFunction(meshes(F.γp.K3, Val(1)), meshes(F.γp.K3, Val(2)), mΠν; data_t = Q)
+        cache_Γa  = MeshFunction(meshes(F.γp.K3, Val(1)), meshes(F.γp.K3, Val(2)), mΠν; data_t = Q)
+        cache_Γt  = MeshFunction(meshes(F.γp.K3, Val(1)), meshes(F.γp.K3, Val(2)), mΠν; data_t = Q)
+        cache_Fp  = MeshFunction(meshes(F.γp.K3, Val(1)), meshes(F.γp.K3, Val(2)), mΠν; data_t = Q)
+        cache_Fa  = MeshFunction(meshes(F.γp.K3, Val(1)), meshes(F.γp.K3, Val(2)), mΠν; data_t = Q)
+        cache_Ft  = MeshFunction(meshes(F.γp.K3, Val(1)), meshes(F.γp.K3, Val(2)), mΠν; data_t = Q)
+
+        return new{Q, RefVT}(Gbare, G0, Π0pp, Π0ph, Σ0, F0, G, Πpp, Πph, Σ, F, Fbuff, copy(Fbuff),
+        SGΣ, SGpp, SGph, SGppL, SGphL, SG0pp2, SG0ph2, mode, cache_Γpx, cache_F0p, cache_F0a,
+        cache_F0t, cache_Γpp, cache_Γa, cache_Γt, cache_Fp, cache_Fa, cache_Ft) :: ParquetSolver{Q}
     end
 end
 

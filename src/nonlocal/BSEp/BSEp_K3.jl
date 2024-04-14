@@ -1,7 +1,5 @@
 function BSE_L_K3!(
     S  :: NL_ParquetSolver{Q},
-    Γ  :: NL_MF_K3{Q},
-    F0 :: NL_MF_K3{Q},
        :: Type{pCh}
     )  :: Nothing where {Q}
 
@@ -10,12 +8,12 @@ function BSE_L_K3!(
 
         Ω, ν, νp, P = wtpl
         val     = zero(Q)
-        Γslice  = view(Γ,  Ω, ν,  :, P)
-        F0slice = view(F0, Ω, :, νp, P)
+        Γslice  = view(S.cache_Γpp, Ω, ν,  :, P)
+        F0slice = view(S.cache_F0p, Ω, :, νp, P)
 
         # additional minus sign because we use crossing symmetry here
-        for i in eachindex(meshes(Γ, Val(3)))
-            ω = value(meshes(Γ, Val(3))[i])
+        for i in eachindex(meshes(S.cache_Γpp, Val(3)))
+            ω = value(meshes(S.cache_Γpp, Val(3))[i])
             Π0 = S.Π0pp[Ω, ω, P, kSW]
 
             val -= Γslice[i] * Π0 * F0slice[i]
@@ -32,9 +30,6 @@ end
 
 function BSE_K3!(
     S :: NL_ParquetSolver{Q},
-    Γ :: NL_MF_K3{Q},
-    F :: NL_MF_K3{Q},
-    F0 :: NL_MF_K3{Q},
       :: Type{pCh}
     ) :: Nothing where {Q}
 
@@ -43,12 +38,12 @@ function BSE_K3!(
 
         Ω, ν, νp, P = wtpl
         val     = zero(Q)
-        Γslice  = view(Γ,  Ω, :, νp, P)
-        Fslice  = view(F,  Ω, ν,  :, P)
-        F0slice = view(F0, Ω, :, νp, P)
+        Γslice  = view(S.cache_Γpx, Ω, :, νp, P)
+        Fslice  = view(S.cache_Fp,  Ω, ν,  :, P)
+        F0slice = view(S.cache_F0p, Ω, :, νp, P)
 
-        for i in eachindex(meshes(Γ, Val(2)))
-            ω  = value(meshes(Γ, Val(2))[i])
+        for i in eachindex(meshes(S.cache_Fp, Val(3)))
+            ω  = value(meshes(S.cache_Fp, Val(3))[i])
             Π0 = S.Π0pp[Ω, ω, P, kSW]
             Π  = S.Πpp[ Ω, ω, P, kSW]
 

@@ -17,9 +17,7 @@ function iterate_solver!(S :: AbstractSolver;
         bubbles!(S)
     end
 
-
-    (; Γpx, F0p, F0a, F0t, Γpp, Γa, Γt, Fp, Fa, Ft) = build_K3_cache(S)
-
+    build_K3_cache!(S)
 
     if strategy == :fdPA
         # calculate FL
@@ -27,9 +25,9 @@ function iterate_solver!(S :: AbstractSolver;
         BSE_L_K2!(S, aCh)
         BSE_L_K2!(S, tCh)
 
-        BSE_L_K3!(S, Γpp, F0p, pCh)
-        BSE_L_K3!(S, Γa,  F0a, aCh)
-        BSE_L_K3!(S, Γt,  F0t, tCh)
+        BSE_L_K3!(S, pCh)
+        BSE_L_K3!(S, aCh)
+        BSE_L_K3!(S, tCh)
     end
 
     # calculate Fbuff
@@ -41,9 +39,9 @@ function iterate_solver!(S :: AbstractSolver;
     BSE_K2!(S, aCh)
     BSE_K2!(S, tCh)
 
-    BSE_K3!(S, Γpx, Fp, F0p, pCh)
-    BSE_K3!(S, Γa,  Fa, F0a, aCh)
-    BSE_K3!(S, Γt,  Ft, F0t, tCh)
+    BSE_K3!(S, pCh)
+    BSE_K3!(S, aCh)
+    BSE_K3!(S, tCh)
 
     # update F
     set!(S.F, S.Fbuff)

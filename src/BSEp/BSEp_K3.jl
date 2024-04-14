@@ -1,7 +1,5 @@
 function BSE_L_K3!(
     S :: ParquetSolver{Q},
-    Γ :: MF_K3{Q},
-    F0 :: MF_K3{Q},
       :: Type{pCh}
     ) :: Nothing where {Q}
 
@@ -10,13 +8,15 @@ function BSE_L_K3!(
 
         Ω, ν, νp = wtpl
         val      = zero(Q)
-        Π0slice  = view(S.Π0pp, Ω, :)
-        Γslice   = view(Γ, Ω, ν, :)
-        F0slice  = view(F0, Ω, :, νp)
+        Γslice   = view(S.cache_Γpp, Ω, ν, :)
+        F0slice  = view(S.cache_F0p, Ω, :, νp)
 
         # additional minus sign because we use crossing symmetry here
-        for i in 1 : length(meshes(Γ, Val(3)))
-            val -= Γslice[i] * Π0slice[i] * F0slice[i]
+        for i in eachindex(Γslice)
+            ω = value(meshes(S.cache_Γpp, Val(3))[i])
+            Π0 = S.Π0pp[Ω, ω]
+
+            val -= Γslice[i] * Π0 * F0slice[i]
         end
 
         return temperature(S) * val
@@ -30,9 +30,6 @@ end
 
 function BSE_K3!(
     S :: ParquetSolver{Q},
-    Γ :: MF_K3{Q},
-    F :: MF_K3{Q},
-    F0 :: MF_K3{Q},
       :: Type{pCh}
     ) :: Nothing where {Q}
 
@@ -41,25 +38,23 @@ function BSE_K3!(
 
         Ω, ν, νp = wtpl
         val      = zero(Q)
-        Π0slice  = view(S.Π0pp, Ω, :)
-        Πslice   = view(S.Πpp, Ω, :)
-        Γslice   = view(Γ, Ω, :, νp)
-        Fslice   = view(F, Ω, ν, :)
-        F0slice  = view(F0, Ω, :, νp)
+        Γslice   = view(S.cache_Γpx, Ω, :, νp)
+        Fslice   = view(S.cache_Fp,  Ω, ν,  :)
+        F0slice  = view(S.cache_F0p, Ω, :, νp)
 
-        # vectorize 1ℓ and right part, additional minus sign because we use crossing symmetry here
-        for i in 1 : length(meshes(Γ, Val(2)))
-            val -= Fslice[i] * ((Πslice[i] - Π0slice[i]) * F0slice[i] + Πslice[i] * Γslice[i])
-        end
+        for i in eachindex(Fslice)
+            ω  = value(meshes(S.cache_Fp, Val(3))[i])
+            Π0 = S.Π0pp[Ω, ω]
+            Π  = S.Πpp[ Ω, ω]
 
-        for i in eachindex(meshes(Γ, Val(2)))
-            ω  = value(meshes(Γ, Val(2))[i])
+            # 1ℓ and right part, additional minus sign because we use crossing symmetry here
+            val -= Fslice[i] * ((Π - Π0) * F0slice[i] + Π * Γslice[i])
 
             # central part
             if is_inbounds(Ω - ω, meshes(S.FL.γp.K3, Val(2)))
-                val += Fslice[i] * Πslice[i] * S.FL.γp.K3[Ω, Ω - ω, νp]
+                val += Fslice[i] * Π * S.FL.γp.K3[Ω, Ω - ω, νp]
             elseif is_inbounds(Ω - ω, meshes(S.FL.γp.K2, Val(2)))
-                val += Fslice[i] * Πslice[i] * S.FL.γp.K2[Ω, Ω - ω]
+                val += Fslice[i] * Π * S.FL.γp.K2[Ω, Ω - ω]
             end
         end
 

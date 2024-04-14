@@ -1,7 +1,5 @@
 function BSE_L_K3!(
-    S :: ParquetSolver,
-    Γ :: MF_K3{Q},
-    F0 :: MF_K3{Q},
+    S :: ParquetSolver{Q},
       :: Type{aCh}
     ) :: Nothing where {Q}
 
@@ -11,10 +9,10 @@ function BSE_L_K3!(
         Ω, ν, νp = wtpl
         val      = zero(Q)
         Π0slice  = view(S.Π0ph, Ω, :)
-        Γslice   = view(Γ, Ω, ν, :)
-        F0slice  = view(F0, Ω, :, νp)
+        Γslice   = view(S.cache_Γa, Ω, ν, :)
+        F0slice  = view(S.cache_F0a, Ω, :, νp)
 
-        for i in 1 : length(meshes(Γ, Val(3)))
+        for i in eachindex(Γslice)
             val += Γslice[i] * Π0slice[i] * F0slice[i]
         end
 
@@ -28,10 +26,7 @@ function BSE_L_K3!(
 end
 
 function BSE_K3!(
-    S :: ParquetSolver,
-    Γ :: MF_K3{Q},
-    F :: MF_K3{Q},
-    F0 :: MF_K3{Q},
+    S :: ParquetSolver{Q},
       :: Type{aCh}
     ) :: Nothing where {Q}
 
@@ -40,25 +35,23 @@ function BSE_K3!(
 
         Ω, ν, νp = wtpl
         val      = zero(Q)
-        Π0slice  = view(S.Π0ph, Ω, :)
-        Πslice   = view(S.Πph, Ω, :)
-        Γslice   = view(Γ, Ω, νp, :)
-        Fslice   = view(F, Ω, ν, :)
-        F0slice  = view(F0, Ω, :, νp)
+        Γslice   = view(S.cache_Γa,  Ω, νp, :)
+        Fslice   = view(S.cache_Fa,  Ω, ν, :)
+        F0slice  = view(S.cache_F0a, Ω, :, νp)
 
-        # vectorize 1ℓ and right part
-        for i in 1 : length(meshes(Γ, Val(3)))
-            val += Fslice[i] * ((Πslice[i] - Π0slice[i]) * F0slice[i] + Πslice[i] * Γslice[i])
-        end
+        for i in eachindex(Fslice)
+            ω = value(meshes(S.cache_Fa, Val(3))[i])
+            Π0 = S.Π0ph[Ω, ω]
+            Π  = S.Πph[ Ω, ω]
 
-        for i in eachindex(meshes(Γ, Val(3)))
-            ω = value(meshes(Γ, Val(3))[i])
+            # 1ℓ and right part
+            val += Fslice[i] * ((Π - Π0) * F0slice[i] + Π * Γslice[i])
 
             # central part
             if is_inbounds(ω, meshes(S.FL.γa.K3, Val(2)))
-                val += Fslice[i] * Πslice[i] * S.FL.γa.K3[Ω, ω, νp]
+                val += Fslice[i] * Π * S.FL.γa.K3[Ω, ω, νp]
             elseif is_inbounds(ω, meshes(S.FL.γa.K2, Val(2)))
-                val += Fslice[i] * Πslice[i] * S.FL.γa.K2[Ω, ω]
+                val += Fslice[i] * Π * S.FL.γa.K2[Ω, ω]
             end
         end
 

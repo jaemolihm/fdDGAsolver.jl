@@ -1,71 +1,66 @@
 # Build cache MeshFunction for K3 BSE
-function build_K3_cache(S :: ParquetSolver{Q}) where {Q}
+function build_K3_cache!(S :: ParquetSolver{Q}) where {Q}
 
-    mΠν = meshes(S.Πph, Val(2))
+    set!(S.cache_Γpx, 0)
+    set!(S.cache_F0p, 0)
+    set!(S.cache_F0a, 0)
+    set!(S.cache_F0t, 0)
+    set!(S.cache_Γpp, 0)
+    set!(S.cache_Γa,  0)
+    set!(S.cache_Γt,  0)
+    set!(S.cache_Fp,  0)
+    set!(S.cache_Fa,  0)
+    set!(S.cache_Ft,  0)
 
     # Vertices multiplied by bubbles to the left
 
-    # Γpx : Target   , p-channel irreducible, spin cross
-    # F0p : Reference, p-channel full       , spin cross
-    # F0a : Reference, a-channel full       , spin parallel
-    # F0t : Reference, t-channel full       , spin density
-    Γpx = MeshFunction(meshes(S.F.γp.K3, Val(1)), mΠν, meshes(S.F.γp.K3, Val(2)); data_t = Q)
-    set!(Γpx, 0)
-    F0p = copy(Γpx)
-    F0a = copy(Γpx)
-    F0t = copy(Γpx)
+    Threads.@threads for i in mpi_split(1 : length(S.cache_Γpx.data))
+        Ω, ν, νp = value.(MatsubaraFunctions.to_meshes(S.cache_Γpx, i))
 
-    Threads.@threads for i in CartesianIndices(Γpx.data)
-        Ω  = value(meshes(Γpx, Val(1))[i.I[1]])
-        ν  = value(meshes(Γpx, Val(2))[i.I[2]])
-        νp = value(meshes(Γpx, Val(3))[i.I[3]])
-        Γpx[i] = S.F(Ω, ν, νp, pCh, xSp; F0=false, γp=false)
-        F0p[i] = S.F0(Ω, ν, νp, pCh, xSp)
-        F0a[i] = S.F0(Ω, ν, νp, aCh, pSp)
-        F0t[i] = S.F0(Ω, ν, νp, tCh, pSp)
+        S.cache_Γpx[i] = S.F( Ω, ν, νp, pCh, xSp; F0=false, γp=false)
+        S.cache_F0p[i] = S.F0(Ω, ν, νp, pCh, xSp)
+        S.cache_F0a[i] = S.F0(Ω, ν, νp, aCh, pSp)
+        S.cache_F0t[i] = S.F0(Ω, ν, νp, tCh, pSp)
 
         # Convert from pSp (parallel spin component) to dSp (density component)
         # using the relation dSp = 2 * pSp + xSp = 2 * pSp - pSp(a) (crossing symmetry)
-        F0t[i] = 2 * F0t[i] - F0a[i]
+        S.cache_F0t[i] = 2 * S.cache_F0t[i] - S.cache_F0a[i]
     end
+
+    mpi_allreduce!(S.cache_Γpx)
+    mpi_allreduce!(S.cache_F0p)
+    mpi_allreduce!(S.cache_F0a)
+    mpi_allreduce!(S.cache_F0t)
+
 
     # Vertices multiplied by bubbles from the right
 
-    # Γpp : Target, p-channel irreducible, spin parallel
-    # Γa  : Target, a-channel irreducible, spin parallel
-    # Γt  : Target, t-channel irreducible, spin density
-    # Fp  : Target, a-channel full,        spin parallel
-    # Fa  : Target, a-channel full,        spin parallel
-    # Ft  : Target, a-channel full,        spin density
-    Γpp = MeshFunction(meshes(S.F.γp.K3, Val(1)), meshes(S.F.γp.K3, Val(2)), mΠν; data_t = Q)
-    set!(Γpp, 0)
-    Γa = copy(Γpp)
-    Γt = copy(Γpp)
-    Fp = copy(Γpp)
-    Fa = copy(Γpp)
-    Ft = copy(Γpp)
-
-    Threads.@threads for i in CartesianIndices(Γpp.data)
-        Ω  = value(meshes(Γpp, Val(1))[i.I[1]])
-        ν  = value(meshes(Γpp, Val(2))[i.I[2]])
-        νp = value(meshes(Γpp, Val(3))[i.I[3]])
+    Threads.@threads for i in mpi_split(1 : length(S.cache_Γpp.data))
+        Ω, ν, νp = value.(MatsubaraFunctions.to_meshes(S.cache_Γpp, i))
 
         # r-irreducible vertex in each channel r = p, a, t
-        Γpp[i] = S.F(Ω, ν, νp, pCh, pSp; F0=false, γp=false)
-        Γa[i]  = S.F(Ω, ν, νp, aCh, pSp; F0=false, γa=false)
-        Γt[i]  = S.F(Ω, ν, νp, tCh, pSp; F0=false, γt=false)
+        S.cache_Γpp[i] = S.F(Ω, ν, νp, pCh, pSp; F0=false, γp=false)
+        S.cache_Γa[i]  = S.F(Ω, ν, νp, aCh, pSp; F0=false, γa=false)
+        S.cache_Γt[i]  = S.F(Ω, ν, νp, tCh, pSp; F0=false, γt=false)
 
         # Total vertex in each channel. We compute the reducible part and add the
         # irreducible part computed above
-        Fp[i]  = S.F(Ω, ν, νp, pCh, pSp; γa=false, γt=false) + Γpp[i]
-        Fa[i]  = S.F(Ω, ν, νp, aCh, pSp; γp=false, γt=false) + Γa[i]
-        Ft[i]  = S.F(Ω, ν, νp, tCh, pSp; γp=false, γa=false) + Γt[i]
+        S.cache_Fp[i]  = S.F(Ω, ν, νp, pCh, pSp; γa=false, γt=false) + S.cache_Γpp[i]
+        S.cache_Fa[i]  = S.F(Ω, ν, νp, aCh, pSp; γp=false, γt=false) + S.cache_Γa[i]
+        S.cache_Ft[i]  = S.F(Ω, ν, νp, tCh, pSp; γp=false, γa=false) + S.cache_Γt[i]
 
         # Convert from pSp (parallel spin component) to dSp (density component)
         # using the relation dSp = 2 * pSp + xSp = 2 * pSp - pSp(a) (crossing symmetry)
-        Γt[i] = Γt[i] * 2 - Γa[i]
-        Ft[i] = Ft[i] * 2 - Fa[i]
+        S.cache_Γt[i] = S.cache_Γt[i] * 2 - S.cache_Γa[i]
+        S.cache_Ft[i] = S.cache_Ft[i] * 2 - S.cache_Fa[i]
     end
 
-    (; Γpx, F0p, F0a, F0t, Γpp, Γa, Γt, Fp, Fa, Ft)
+    mpi_allreduce!(S.cache_Γpp)
+    mpi_allreduce!(S.cache_Γa)
+    mpi_allreduce!(S.cache_Γt)
+    mpi_allreduce!(S.cache_Fp)
+    mpi_allreduce!(S.cache_Fa)
+    mpi_allreduce!(S.cache_Ft)
+
+    return nothing
 end
