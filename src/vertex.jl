@@ -405,7 +405,11 @@ function load_vertex(
     label :: String
     )     :: T where {T <: AbstractVertex}
 
-    F0 = load_refvertex(file, label * "/F0")
+    if haskey(attributes(file[label * "/F0"]), "U")
+        F0 = load_refvertex(file, label * "/F0")
+    else
+        F0 = load_vertex(Vertex, file, label * "/F0")
+    end
     γp = load_channel(channel_type(T), file, label * "/γp")
     γt = load_channel(channel_type(T), file, label * "/γt")
     γa = load_channel(channel_type(T), file, label * "/γa")
