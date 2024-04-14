@@ -408,7 +408,11 @@ function load_vertex(
     if haskey(attributes(file[label * "/F0"]), "U")
         F0 = load_refvertex(file, label * "/F0")
     else
-        F0 = load_vertex(Vertex, file, label * "/F0")
+        try
+            F0 = load_vertex(Vertex, file, label * "/F0")
+        catch
+            F0 = load_vertex(NL_Vertex, file, label * "/F0")
+        end
     end
     γp = load_channel(channel_type(T), file, label * "/γp")
     γt = load_channel(channel_type(T), file, label * "/γt")

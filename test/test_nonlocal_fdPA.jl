@@ -56,7 +56,7 @@ using Test
 
 
     # Test fdPA self-energy
-    @info absmax(S_fd.Σ - S.Σ) < 1e-4
+    @test absmax(S_fd.Σ - S.Σ) < 2e-4
 
     # Test fdPA vertex
     @test absmax(S_fd.F.γp.K1 + S_fd.F0.γp.K1 - S.F.γp.K1) < 2e-3
