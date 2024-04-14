@@ -60,8 +60,8 @@ end;
     nmax = 3
     nG  = 8nmax
     nK1 = 4nmax
-    nK2 = (2nmax, nmax)
-    nK3 = (2nmax, nmax)
+    nK2 = (nmax, nmax)
+    nK3 = (nmax, nmax)
 
     mK_G = BrillouinZoneMesh(BrillouinZone(6, k1, k2))
     mK_Γ = BrillouinZoneMesh(BrillouinZone(3, k1, k2))
@@ -120,8 +120,8 @@ end
     nmax = 4
     nG  = 8nmax
     nK1 = 4nmax
-    nK2 = (2nmax, nmax)
-    nK3 = (2nmax, nmax)
+    nK2 = (nmax, nmax)
+    nK3 = (nmax, nmax)
 
     mK_G = BrillouinZoneMesh(BrillouinZone(6, k1, k2))
     mK_Γ = BrillouinZoneMesh(BrillouinZone(3, k1, k2))

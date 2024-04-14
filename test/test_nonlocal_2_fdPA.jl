@@ -18,8 +18,8 @@ using Test
     nmax = 2
     nG  = 12nmax
     nK1 = 8nmax
-    nK2 = (2nmax, nmax)
-    nK3 = (2nmax, nmax)
+    nK2 = (nmax, nmax)
+    nK3 = (nmax, nmax)
 
     nq = 3
     mK_G = BrillouinZoneMesh(BrillouinZone(24, k1, k2))
