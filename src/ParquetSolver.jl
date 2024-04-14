@@ -94,10 +94,10 @@ mutable struct ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
         bubbles!(Π0pp, Π0ph, G0)
 
         # single-particle Green's function and self-energy
-        # Initialization: G = Gbare, Σ = 0
-        G = copy(Gbare)
-        Σ = copy(Gbare)
-        set!(Σ, 0)
+        # Initialization: Σ = Σ0
+        G = copy(G0)
+        Σ = copy(Σ0)
+        Dyson!(G, Σ, Gbare)
 
         # bubbles
         Πpp = copy(Π0pp)
