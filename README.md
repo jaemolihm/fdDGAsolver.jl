@@ -9,14 +9,14 @@
 * The `nG` and `nΣ` arguments of `ParquetSolver` constructors are removed. The meshes of `Gbare` is used.
 
 ### TODO
-* In `ParquetSolver`, `S.FL` have zero K1 vertices, so evaluations of K1 can be avoided.
-* Make mesh_index(SVector, BrillouinMesh) non allocating?
-* `euclidean(k, mK)` allocates because `basis(mK)` is type untstable (should be `SMatrix{2,2,F,4}` not `SMatrix{2,2,F}`.) I defined `euclidean` in `matsubarafunctions_piracy.jl` as a workaround.
-* Fix logging (e.g. per 10 iterations)
+* Fix disk logging (e.g. per 10 iterations)
+* Optimize NL2 SDE
+* Bubble for NL can be swave only. Update bubbles and BSE's.
 
 
 ### TODO (Comments from Dominik)
-- [ ] Use `buffer_fold_back`
+- [x] Use `buffer_fold_back`
+    * Instead of using buffering, I defined `fixed_momentum_view` so that in the NL2 K2 BSE, the momentum indexing occurs only once per q loop. (Previously it was inside both q and omega loops so it occured `N_ω * N_q` times per call to `diagram`. Now its `N_q` times.)
 - [ ] Type instability for `init_sym_grp`
 - [x] There is a modified add! function in matsubarafunctions_piracy which allows you to multiply with a number and then add to another MeshFunction, would it be helpful to have that in the library? Then we could remove it here.
 - [x] Do we need all versions of box_eval? It seems that this is now only very rarely used.
