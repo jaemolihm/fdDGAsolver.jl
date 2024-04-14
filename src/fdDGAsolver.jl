@@ -78,17 +78,21 @@ module fdDGAsolver
 
         S = parquet_solver_siam_parquet_approximation(nG, nK1, nK2, nK3; e = 0., T, U, Δ = 3., D = 10., mode = :hybrid)
         init_sym_grp!(S)
-        iterate_solver!(S; strategy = :fdPA)
+        solve!(S; strategy = :fdPA, maxiter = 1, verbose = false)
         unflatten!(S, flatten(S))
 
         S = parquet_solver_hubbard_parquet_approximation(nG, nK1, nK2, nK3, mK_G, mK_Γ; T, U, μ, t1, mode = :hybrid)
         init_sym_grp!(S)
-        iterate_solver!(S; strategy = :fdPA)
+        solve!(S; strategy = :fdPA, maxiter = 1, verbose = false)
         unflatten!(S, flatten(S))
+
+        S2 = NL2_ParquetSolver(nK1, nK2, nK3, mK_Γ, S.Gbare, S.G, S.Σ, S.F; mode = :hybrid)
+        init_sym_grp!(S2)
+        solve!(S2; strategy = :fdPA, maxiter = 1, verbose = false)
 
         S = parquet_solver_hubbard_parquet_approximation_NL2(nG, nK1, nK2, nK3, mK_G, mK_Γ; T, U, μ, t1, mode = :hybrid)
         init_sym_grp!(S)
-        iterate_solver!(S; strategy = :fdPA)
+        solve!(S; strategy = :fdPA, maxiter = 1, verbose = false)
         unflatten!(S, flatten(S))
     end
 
