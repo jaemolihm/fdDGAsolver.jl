@@ -10,15 +10,21 @@ function BSE_L_K2!(
         val     = zero(Q)
         Π0slice = view(S.Π0pp, Ω, :, P, :)
 
-        for i in eachindex(Π0slice)
-            ω = value(meshes(S.Π0pp, Val(2))[i.I[1]])
-            q = value(meshes(S.Π0pp, Val(4))[i.I[2]])
+        for iq in axes(Π0slice, 2)
+            q = value(meshes(S.Π0pp, Val(4))[iq])
 
-            # Vertices
-            Γp  = S.F( Ω,     ν,    ω, P,     k,  q, pCh, pSp; F0 = false, γp = false)
-            F0p = S.F0(Ω, Ω - ω, νInf, P, P - q, k0, pCh, pSp)
+            Fview  = fixed_momentum_view(S.F,  P,     k,  q, pCh)
+            F0view = fixed_momentum_view(S.F0, P, P - q, k0, pCh)
 
-            val += Γp * Π0slice[i] * F0p
+            for iω in axes(Π0slice, 1)
+                ω = value(meshes(S.Π0pp, Val(2))[iω])
+
+                # Vertices
+                Γp  = Fview( Ω,     ν,    ω, pCh, pSp; F0 = false, γp = false)
+                F0p = F0view(Ω, Ω - ω, νInf, pCh, pSp)
+
+                val += Γp * Π0slice[iω, iq] * F0p
+            end
         end
 
         return temperature(S) * val / numP_Γ(S)
@@ -44,17 +50,24 @@ function BSE_K2!(
         Π0slice = view(S.Π0pp, Ω, :, P, :)
         Πslice  = view(S.Πpp , Ω, :, P, :)
 
-        for i in eachindex(Π0slice)
-            ω = value(meshes(S.Π0pp, Val(2))[i.I[1]])
-            q = value(meshes(S.Π0pp, Val(4))[i.I[2]])
+        for iq in axes(Π0slice, 2)
+            q = value(meshes(S.Π0pp, Val(4))[iq])
 
-            # vertices
-            Fl  = S.F( Ω,     ν,    ω, P,     k,  q, pCh, pSp)
-            F0r = S.F0(Ω, Ω - ω, νInf, P, P - q, k0, pCh, pSp)
-            FLr = S.FL(Ω, Ω - ω, νInf, P, P - q, k0, pCh, pSp)
+            Fview  = fixed_momentum_view(S.F,  P,     k,  q, pCh)
+            F0view = fixed_momentum_view(S.F0, P, P - q, k0, pCh)
+            FLview = fixed_momentum_view(S.FL, P, P - q, k0, pCh)
 
-            # 1ℓ and central part
-            val += Fl * ((Πslice[i] - Π0slice[i]) * F0r + Πslice[i] * FLr)
+            for iω in axes(Π0slice, 1)
+                ω = value(meshes(S.Π0pp, Val(2))[iω])
+
+                # vertices
+                Fl  = Fview( Ω,     ν,    ω, pCh, pSp)
+                F0r = F0view(Ω, Ω - ω, νInf, pCh, pSp)
+                FLr = FLview(Ω, Ω - ω, νInf, pCh, pSp)
+
+                # 1ℓ and central part
+                val += Fl * ((Πslice[iω, iq] - Π0slice[iω, iq]) * F0r + Πslice[iω, iq] * FLr)
+            end
         end
 
         return temperature(S) * val / numP_Γ(S)

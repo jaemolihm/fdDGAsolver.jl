@@ -20,8 +20,8 @@ using Test
     unflatten!(F3, rand(ComplexF64, length(flatten(F3))))
 
     Ω = MatsubaraFrequency(T, -1, Boson)
-    ν = MatsubaraFrequency(T, -1, Fermion)
-    ω = MatsubaraFrequency(T, 1, Fermion)
+    ν0 = MatsubaraFrequency(T, -1, Fermion)
+    ω0 = MatsubaraFrequency(T, 1, Fermion)
     P = BrillouinPoint(-1, 2)
     k = BrillouinPoint(2, 7)
     q = BrillouinPoint(1, -2)
@@ -30,7 +30,7 @@ using Test
         F1view = fdDGAsolver.fixed_momentum_view(F1, P, k, q, Ch)
         F2view = fdDGAsolver.fixed_momentum_view(F2, P, k, q, Ch)
         F3view = fdDGAsolver.fixed_momentum_view(F3, P, k, q, Ch)
-        for Sp in (pSp, xSp, dSp)
+        for Sp in (pSp, xSp, dSp), ν in [ν0, νInf], ω in [ω0, νInf]
             for (γa, γp, γt, F0) in [
                 (true, true, true, true),
                 (true, false, false, false),

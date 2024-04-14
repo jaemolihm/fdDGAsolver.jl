@@ -256,15 +256,15 @@ end
     # only for the same channel evaluated.
 
     if Ch === pCh && γp
-        val += F.γp(convert_frequency(Ω, ν, νp, Ch, pCh)...)
+        val += F.γp(Ω, ν, νp)
     end
 
     if Ch === tCh && γt
-        val += F.γt(convert_frequency(Ω, ν, νp, Ch, tCh)...)
+        val += F.γt(Ω, ν, νp)
     end
 
     if Ch === aCh && γa
-        val += F.γa(convert_frequency(Ω, ν, νp, Ch, aCh)...)
+        val += F.γa(Ω, ν, νp)
     end
 
     return val

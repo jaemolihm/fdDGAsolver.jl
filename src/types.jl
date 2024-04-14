@@ -106,6 +106,8 @@ Base.:-(::MatsubaraFrequency{Boson}, ::InfiniteMatsubaraFrequency) = InfiniteMat
 Base.:+(::InfiniteMatsubaraFrequency, ::MatsubaraFrequency{Boson}) = InfiniteMatsubaraFrequency()
 Base.:-(::InfiniteMatsubaraFrequency, ::MatsubaraFrequency{Boson}) = InfiniteMatsubaraFrequency()
 
+MatsubaraFunctions.is_inbounds(::InfiniteMatsubaraFrequency, ::Mesh) = false
+
 # origin of the Brillouin zone
 #----------------------------------------------------------------------------------------------#
 
