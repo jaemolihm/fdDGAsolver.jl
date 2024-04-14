@@ -117,6 +117,22 @@ end
     k1 = 2pi * SVector(1., 0.)
     k2 = 2pi * SVector(0., 1.)
 
+    # Auxiliary SIAM
+    D = 4 * t1
+    e = μ
+    Δ = 1.5
+
+    nmax = 8
+    nG  = 8nmax
+    nK1 = 4nmax
+    nK2 = (nmax + 1, nmax)
+    nK3 = (nmax + 1, nmax)
+
+    S0 = parquet_solver_siam_parquet_approximation(nG, nK1, nK2, nK3; e, T, U, Δ, D)
+    init_sym_grp!(S0)
+    fdDGAsolver.solve!(S0; strategy = :scPA, parallel_mode = :threads, verbose = false);
+
+    # Hubbard model using fdPA
     nmax = 4
     nG  = 8nmax
     nK1 = 4nmax
@@ -126,15 +142,22 @@ end
     mK_G = BrillouinZoneMesh(BrillouinZone(6, k1, k2))
     mK_Γ = BrillouinZoneMesh(BrillouinZone(3, k1, k2))
 
-    S = parquet_solver_hubbard_parquet_approximation(nG, nK1, nK2, nK3, mK_G, mK_Γ; T, U, μ, t1, mode = :polyester)
+    mG = MatsubaraMesh(T, nG, Fermion)
+    Gbare = hubbard_bare_Green(mG, mK_G; μ, t1)
+    G0 = copy(Gbare)
+    Σ0 = copy(Gbare)
+    set!(G0, 0)
+    set!(Σ0, 0)
+    for ν in meshes(G0, Val(1))
+        view(G0, ν, :) .= S0.G[value(ν)]
+        view(Σ0, ν, :) .= S0.Σ[value(ν)]
+    end
 
-    # Set G0 to some auxiliary value for testing
-    S.G0 = hubbard_bare_Green(meshes(S.G0)...; μ = 1.0, t1 = 0.5)
-    fdDGAsolver.bubbles_momentum_space!(S.Π0pp, S.Π0ph, S.G0)
+    S = NL_ParquetSolver(nK1, nK2, nK3, mK_Γ, Gbare, G0, Σ0, S0.F)
 
     # Solve without symmetries
 
-    res = fdDGAsolver.solve!(S; strategy = :fdPA, update_Σ = false, verbose = false);
+    res = fdDGAsolver.solve!(S; strategy = :fdPA, parallel_mode = :threads, verbose = false);
 
     # Check vertices are nonzero
 
@@ -153,12 +176,12 @@ end
 
     @testset "symmetry error" begin
         # These symmetry are exact only when the fdPA is converged
-        @test S.SGppL[2](S.FL.γp.K2) < 3e-3
-        @test S.SGphL[2](S.FL.γa.K2) < 3e-4
+        @test S.SGppL[2](S.FL.γp.K2) < 1e-3
+        @test S.SGphL[2](S.FL.γa.K2) < 1e-3
         @test S.SGphL[2](S.FL.γt.K2) < 1e-3
-        @test S.SGppL[3](S.FL.γp.K3) < 3e-3
-        @test S.SGphL[3](S.FL.γa.K3) < 4e-4
-        @test S.SGphL[3](S.FL.γt.K3) < 1e-3
+        @test S.SGppL[3](S.FL.γp.K3) < 1e-4
+        @test S.SGphL[3](S.FL.γa.K3) < 1e-4
+        @test S.SGphL[3](S.FL.γt.K3) < 1e-4
     end
 
 end

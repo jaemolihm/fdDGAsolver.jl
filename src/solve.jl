@@ -45,7 +45,6 @@ function iterate_solver!(S :: AbstractSolver;
 
     # update F
     set!(S.F, S.Fbuff)
-    reduce!(S.F)
 
     # Symmetrize F (symmetry can be broken during reduction)
     my_symmetrize!(S)

@@ -32,8 +32,7 @@ function SDE_channel_L_pp(
         Lpp = copy(F.γp.K2)
     end
 
-    # SGpp2(Lpp, InitFunction{3, Q}(diagram); mode = mode)
-    SGpp2(Lpp, InitFunction{3, Q}(diagram); mode = mode)
+    SGpp2(Lpp, InitFunction{3, Q}(diagram); mode)
 
     return Lpp
 end

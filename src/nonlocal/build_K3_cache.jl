@@ -22,9 +22,15 @@ function build_K3_cache!(
         Ω, ν, νp, P = value.(MatsubaraFunctions.to_meshes(S.cache_Γpx, i))
 
         S.cache_Γpx[i] = S.F( Ω, ν, νp, P, kSW, kSW, pCh, xSp; F0=false, γp=false)
-        S.cache_F0p[i] = S.F0(Ω, ν, νp, P, kSW, kSW, pCh, xSp)
-        S.cache_F0a[i] = S.F0(Ω, ν, νp, P, kSW, kSW, aCh, pSp)
-        S.cache_F0t[i] = S.F0(Ω, ν, νp, P, kSW, kSW, tCh, pSp)
+
+        S.cache_F0p[i] = ( S.F0(Ω, ν,   νp, P, kSW, kSW, pCh, xSp)
+                         - S.F0(Ω, ν, νInf, P, kSW, kSW, pCh, xSp) )
+
+        S.cache_F0a[i] = ( S.F0(Ω, ν,   νp, P, kSW, kSW, aCh, pSp)
+                         - S.F0(Ω, ν, νInf, P, kSW, kSW, aCh, pSp) )
+
+        S.cache_F0t[i] = ( S.F0(Ω, ν,   νp, P, kSW, kSW, tCh, pSp)
+                         - S.F0(Ω, ν, νInf, P, kSW, kSW, tCh, pSp) )
 
         # Convert from pSp (parallel spin component) to dSp (density component)
         # using the relation dSp = 2 * pSp + xSp = 2 * pSp - pSp(a) (crossing symmetry)
@@ -49,9 +55,17 @@ function build_K3_cache!(
 
         # Total vertex in each channel. We compute the reducible part and add the
         # irreducible part computed above
-        S.cache_Fp[i]  = S.F(Ω, ν, νp, P, kSW, kSW, pCh, pSp; γa=false, γt=false) + S.cache_Γpp[i]
-        S.cache_Fa[i]  = S.F(Ω, ν, νp, P, kSW, kSW, aCh, pSp; γp=false, γt=false) + S.cache_Γa[i]
-        S.cache_Ft[i]  = S.F(Ω, ν, νp, P, kSW, kSW, tCh, pSp; γp=false, γa=false) + S.cache_Γt[i]
+        S.cache_Fp[i]  = ( S.F(Ω,    ν, νp, P, kSW, kSW, pCh, pSp; γa=false, γt=false)
+                         - S.F(Ω, νInf, νp, P, kSW, kSW, pCh, pSp; γa=false, γt=false)
+                         + S.cache_Γpp[i] )
+
+        S.cache_Fa[i]  = ( S.F(Ω,    ν, νp, P, kSW, kSW, aCh, pSp; γp=false, γt=false)
+                         - S.F(Ω, νInf, νp, P, kSW, kSW, aCh, pSp; γp=false, γt=false)
+                         + S.cache_Γa[i] )
+
+        S.cache_Ft[i]  = ( S.F(Ω,    ν, νp, P, kSW, kSW, tCh, pSp; γp=false, γa=false)
+                         - S.F(Ω, νInf, νp, P, kSW, kSW, tCh, pSp; γp=false, γa=false)
+                         + S.cache_Γt[i] )
 
         # Convert from pSp (parallel spin component) to dSp (density component)
         # using the relation dSp = 2 * pSp + xSp = 2 * pSp - pSp(a) (crossing symmetry)

@@ -52,7 +52,7 @@ function BSE_K2!(
             ω = value(meshes(S.Π0ph, Val(2))[i])
 
             # vertices
-            Fl  = S.F(Ω, ν, ω, tCh, dSp)
+            Fl  = S.F(Ω, ν, ω, tCh, dSp) - S.F(Ω, νInf, ω, tCh, dSp)
             F0r = S.F0(Ω, ω, νInf, tCh, dSp)
             FLr = S.FL(Ω, ω, νInf, tCh, dSp)
 

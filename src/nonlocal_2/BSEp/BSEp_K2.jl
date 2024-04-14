@@ -61,7 +61,7 @@ function BSE_K2!(
                 ω = value(meshes(S.Π0pp, Val(2))[iω])
 
                 # vertices
-                Fl  = Fview( Ω,     ν,    ω, pCh, pSp)
+                Fl  = Fview( Ω,     ν,    ω, pCh, pSp) - Fview(Ω, νInf, ω, pCh, pSp)
                 F0r = F0view(Ω, Ω - ω, νInf, pCh, pSp)
                 FLr = FLview(Ω, Ω - ω, νInf, pCh, pSp)
 
