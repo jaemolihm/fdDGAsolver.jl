@@ -114,8 +114,8 @@ end
     ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     P  :: BrillouinPoint,
-    k  :: BrillouinPoint,
-    kp :: BrillouinPoint,
+    k  :: Union{BrillouinPoint, SWaveBrillouinPoint},
+    kp :: Union{BrillouinPoint, SWaveBrillouinPoint},
        :: Type{Ch},
        :: Type{pSp}
     ;
@@ -138,18 +138,15 @@ end
     # only for the same channel evaluated.
 
     if Ch === pCh && γp
-        val += F.γp(convert_frequency(Ω, ν, νp, Ch, pCh)...,
-                    convert_momentum( P, k, kp, Ch, pCh)...)
+        val += F.γp(Ω, ν, νp, P, k, kp)
     end
 
     if Ch === tCh && γt
-        val += F.γt(convert_frequency(Ω, ν, νp, Ch, tCh)...,
-                    convert_momentum( P, k, kp, Ch, tCh)...)
+        val += F.γt(Ω, ν, νp, P, k, kp)
     end
 
     if Ch === aCh && γa
-        val += F.γa(convert_frequency(Ω, ν, νp, Ch, aCh)...,
-                    convert_momentum( P, k, kp, Ch, aCh)...)
+        val += F.γa(Ω, ν, νp, P, k, kp)
     end
 
     return val

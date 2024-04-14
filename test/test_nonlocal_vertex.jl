@@ -205,7 +205,9 @@ end
     F = fdDGAsolver.NL_Vertex(RefVertex(T, 2.), T, 10, (4, 3), (2, 1), mK)
     unflatten!(F, rand(ComplexF64, length(flatten(F))))
 
-    for P_ in mK, k_ in mK
+    ν0 = MatsubaraFrequency(T, 2, Fermion)
+    ω0 = MatsubaraFrequency(T, -1, Fermion)
+    for P_ in [mK[1], mK[8]], k_ in [mK[1], mK[4]], ν in [ν0, νInf], ω in [ω0, νInf]
         P = value(P_)
         k = value(k_)
 
