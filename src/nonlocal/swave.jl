@@ -3,6 +3,7 @@ struct SWaveBrillouinPoint <: AbstractValue; end
 const kSW = SWaveBrillouinPoint()
 
 MatsubaraFunctions.fold_back(:: SWaveBrillouinPoint, :: KMesh) = SWaveBrillouinPoint()
+MatsubaraFunctions.mesh_index_bc(:: SWaveBrillouinPoint, :: KMesh) = SWaveBrillouinPoint()
 
 
 function Base.getindex(
@@ -51,7 +52,7 @@ function Base.getindex(
     f  :: NL_MF_Π{Q},
     w1 :: Union{MeshPoint, <: AbstractValue, Int},
     w2 :: Union{MeshPoint, <: AbstractValue, Int},
-    P  :: BrillouinPoint,
+    P  :: Union{MeshPoint, <: AbstractValue, Int},
        :: SWaveBrillouinPoint,
     )  :: Q where {Q}
 
@@ -86,7 +87,7 @@ function Base.getindex(
     w1 :: Union{MeshPoint, <: AbstractValue, Int},
     w2 :: Union{MeshPoint, <: AbstractValue, Int},
        :: SWaveBrillouinPoint,
-    k2 :: BrillouinPoint,
+    k2 :: Union{MeshPoint, <: AbstractValue, Int},
     )  :: Q where {Q}
 
     i1 = MatsubaraFunctions.mesh_index(w1, meshes(f, Val(1)))

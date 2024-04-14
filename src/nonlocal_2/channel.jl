@@ -59,9 +59,9 @@ end
     Ω  :: MatsubaraFrequency,
     ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     ω  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
-    P_ :: Union{BrillouinPoint, SWaveBrillouinPoint},
-    k_ :: Union{BrillouinPoint, SWaveBrillouinPoint},
-    q_ :: Union{BrillouinPoint, SWaveBrillouinPoint},
+    P  :: Union{BrillouinPoint, SWaveBrillouinPoint},
+    k  :: Union{BrillouinPoint, SWaveBrillouinPoint},
+    q  :: Union{BrillouinPoint, SWaveBrillouinPoint},
     ;
     K1 :: Bool = true,
     K2 :: Bool = true,
@@ -69,31 +69,31 @@ end
     )  :: Q where {Q}
 
     val = zero(Q)
-    P   = fold_back(P_, get_P_mesh(γ))
-    k   = fold_back(k_, get_P_mesh(γ))
-    q   = fold_back(q_, get_P_mesh(γ))
+    iP = MatsubaraFunctions.mesh_index_bc(P, get_P_mesh(γ))
+    ik = MatsubaraFunctions.mesh_index_bc(k, get_P_mesh(γ))
+    iq = MatsubaraFunctions.mesh_index_bc(q, get_P_mesh(γ))
 
     if is_inbounds(Ω, meshes(γ.K1, Val(1)))
-        K1 && (val += γ.K1[Ω, P])
+        K1 && (val += γ.K1[Ω, iP])
 
         if is_inbounds(Ω, meshes(γ.K2, Val(1)))
             ν1_inbounds = is_inbounds(ν, meshes(γ.K2, Val(2)))
             ν2_inbounds = is_inbounds(ω, meshes(γ.K2, Val(2)))
 
             if ν1_inbounds && ν2_inbounds
-                K2 && (val += γ.K2[Ω, ν, P, k] + γ.K2[Ω, ω, P, q])
+                K2 && (val += γ.K2[Ω, ν, iP, ik] + γ.K2[Ω, ω, iP, iq])
 
                 if (K3 && is_inbounds(Ω, meshes(γ.K3, Val(1))) &&
                           is_inbounds(ν, meshes(γ.K3, Val(2))) &&
                           is_inbounds(ω, meshes(γ.K3, Val(3))))
-                    val += γ.K3[Ω, ν, ω, P]
+                    val += γ.K3[Ω, ν, ω, iP]
                 end
 
             elseif ν1_inbounds
-                K2 && (val += γ.K2[Ω, ν, P, k])
+                K2 && (val += γ.K2[Ω, ν, iP, ik])
 
             elseif ν2_inbounds
-                K2 && (val += γ.K2[Ω, ω, P, q])
+                K2 && (val += γ.K2[Ω, ω, iP, iq])
             end
         end
     end
@@ -106,9 +106,9 @@ end
     Ω  :: MatsubaraFrequency,
     ν  :: InfiniteMatsubaraFrequency,
     ω  :: MatsubaraFrequency,
-    P_ :: Union{BrillouinPoint, SWaveBrillouinPoint},
-    k_ :: Union{BrillouinPoint, SWaveBrillouinPoint},
-    q_ :: Union{BrillouinPoint, SWaveBrillouinPoint},
+    P  :: Union{BrillouinPoint, SWaveBrillouinPoint},
+    k  :: Union{BrillouinPoint, SWaveBrillouinPoint},
+    q  :: Union{BrillouinPoint, SWaveBrillouinPoint},
     ;
     K1 :: Bool = true,
     K2 :: Bool = true,
@@ -116,20 +116,20 @@ end
     )  :: Q where {Q}
 
     val = zero(Q)
-    P   = fold_back(P_, get_P_mesh(γ))
-    q   = fold_back(q_, get_P_mesh(γ))
+    iP = MatsubaraFunctions.mesh_index_bc(P, get_P_mesh(γ))
+    iq = MatsubaraFunctions.mesh_index_bc(q, get_P_mesh(γ))
 
     if K1
         if is_inbounds(Ω, meshes(γ.K1, Val(1)))
-            val += γ.K1[Ω, P]
+            val += γ.K1[Ω, iP]
 
             if K2 && is_inbounds(Ω, meshes(γ.K2, Val(1))) && is_inbounds(ω, meshes(γ.K2, Val(2)))
-                val += γ.K2[Ω, ω, P, q]
+                val += γ.K2[Ω, ω, iP, iq]
             end
         end
     else
         if K2 && is_inbounds(Ω, meshes(γ.K2, Val(1))) && is_inbounds(ω, meshes(γ.K2, Val(2)))
-            val += γ.K2[Ω, ω, P, q]
+            val += γ.K2[Ω, ω, iP, iq]
         end
     end
 
@@ -140,9 +140,9 @@ end
     Ω  :: MatsubaraFrequency,
     ν  :: MatsubaraFrequency,
     ω  :: InfiniteMatsubaraFrequency,
-    P_ :: Union{BrillouinPoint, SWaveBrillouinPoint},
-    k_ :: Union{BrillouinPoint, SWaveBrillouinPoint},
-    q_ :: Union{BrillouinPoint, SWaveBrillouinPoint},
+    P  :: Union{BrillouinPoint, SWaveBrillouinPoint},
+    k  :: Union{BrillouinPoint, SWaveBrillouinPoint},
+    q  :: Union{BrillouinPoint, SWaveBrillouinPoint},
     ;
     K1 :: Bool = true,
     K2 :: Bool = true,
@@ -150,20 +150,20 @@ end
     )  :: Q where {Q}
 
     val = zero(Q)
-    P   = fold_back(P_, get_P_mesh(γ))
-    k   = fold_back(k_, get_P_mesh(γ))
+    iP = MatsubaraFunctions.mesh_index_bc(P, get_P_mesh(γ))
+    ik = MatsubaraFunctions.mesh_index_bc(k, get_P_mesh(γ))
 
     if K1
         if is_inbounds(Ω, meshes(γ.K1, Val(1)))
-            K1 && (val += γ.K1[Ω, P])
+            K1 && (val += γ.K1[Ω, iP])
 
             if K2 && is_inbounds(Ω, meshes(γ.K2, Val(1))) && is_inbounds(ν, meshes(γ.K2, Val(2)))
-                val += γ.K2[Ω, ν, P, k]
+                val += γ.K2[Ω, ν, iP, ik]
             end
         end
     else
         if K2 && is_inbounds(Ω, meshes(γ.K2, Val(1))) && is_inbounds(ν, meshes(γ.K2, Val(2)))
-            val += γ.K2[Ω, ν, P, k]
+            val += γ.K2[Ω, ν, iP, ik]
         end
     end
 
@@ -174,9 +174,9 @@ end
     Ω  :: MatsubaraFrequency,
     ν  :: InfiniteMatsubaraFrequency,
     ω  :: InfiniteMatsubaraFrequency,
-    P_ :: Union{BrillouinPoint, SWaveBrillouinPoint},
-    k_ :: Union{BrillouinPoint, SWaveBrillouinPoint},
-    q_ :: Union{BrillouinPoint, SWaveBrillouinPoint},
+    P  :: Union{BrillouinPoint, SWaveBrillouinPoint},
+    k  :: Union{BrillouinPoint, SWaveBrillouinPoint},
+    q  :: Union{BrillouinPoint, SWaveBrillouinPoint},
     ;
     K1 :: Bool = true,
     K2 :: Bool = true,
@@ -184,10 +184,10 @@ end
     )  :: Q where {Q}
 
     val = zero(Q)
-    P   = fold_back(P_, get_P_mesh(γ))
+    iP = MatsubaraFunctions.mesh_index_bc(P, get_P_mesh(γ))
 
     if K1 && is_inbounds(Ω, meshes(γ.K1, Val(1)))
-        val += γ.K1[Ω, P]
+        val += γ.K1[Ω, iP]
     end
 
     return val

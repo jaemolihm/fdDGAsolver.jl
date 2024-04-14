@@ -91,7 +91,7 @@ end
     Ω  :: MatsubaraFrequency,
     ν  :: MatsubaraFrequency,
     νp :: MatsubaraFrequency,
-    P_ :: Union{BrillouinPoint, SWaveBrillouinPoint},
+    P  :: Union{BrillouinPoint, SWaveBrillouinPoint},
     ;
     K1 :: Bool = true,
     K2 :: Bool = true,
@@ -100,29 +100,29 @@ end
 
     val = zero(Q)
 
-    P = fold_back(P_, get_P_mesh(γ))
+    iP = MatsubaraFunctions.mesh_index_bc(P, get_P_mesh(γ))
 
     if is_inbounds(Ω, meshes(γ.K1, Val(1)))
-        K1 && (val += γ.K1[Ω, P])
+        K1 && (val += γ.K1[Ω, iP])
 
         if is_inbounds(Ω, meshes(γ.K2, Val(1)))
             ν1_inbounds = is_inbounds(ν, meshes(γ.K2, Val(2)))
             ν2_inbounds = is_inbounds(νp, meshes(γ.K2, Val(2)))
 
             if ν1_inbounds && ν2_inbounds
-                K2 && (val += γ.K2[Ω, ν, P] + γ.K2[Ω, νp, P])
+                K2 && (val += γ.K2[Ω, ν, iP] + γ.K2[Ω, νp, iP])
 
                 if (K3 && is_inbounds( Ω, meshes(γ.K3, Val(1))) &&
                           is_inbounds( ν, meshes(γ.K3, Val(2))) &&
                           is_inbounds(νp, meshes(γ.K3, Val(3))))
-                    val += γ.K3[Ω, ν, νp, P]
+                    val += γ.K3[Ω, ν, νp, iP]
                 end
 
             elseif ν1_inbounds
-                K2 && (val += γ.K2[Ω, ν, P])
+                K2 && (val += γ.K2[Ω, ν, iP])
 
             elseif ν2_inbounds
-                K2 && (val += γ.K2[Ω, νp, P])
+                K2 && (val += γ.K2[Ω, νp, iP])
             end
         end
     end
@@ -135,7 +135,7 @@ end
     Ω  :: MatsubaraFrequency,
     ν  :: InfiniteMatsubaraFrequency,
     νp :: MatsubaraFrequency,
-    P_ :: Union{BrillouinPoint, SWaveBrillouinPoint},
+    P  :: Union{BrillouinPoint, SWaveBrillouinPoint},
     ;
     K1 :: Bool = true,
     K2 :: Bool = true,
@@ -146,20 +146,20 @@ end
 
     val = zero(Q)
 
-    P = fold_back(P_, get_P_mesh(γ))
+    iP = MatsubaraFunctions.mesh_index_bc(P, get_P_mesh(γ))
 
     if K1
         if is_inbounds(Ω, meshes(γ.K1, Val(1)))
-            val += γ.K1[Ω, P]
+            val += γ.K1[Ω, iP]
 
             if K2 && is_inbounds(Ω, meshes(γ.K2, Val(1))) && is_inbounds(νp, meshes(γ.K2, Val(2)))
-                val += γ.K2[Ω, νp, P]
+                val += γ.K2[Ω, νp, iP]
             end
         end
     else
         # K1 not included
         if K2 && is_inbounds(Ω, meshes(γ.K2, Val(1))) && is_inbounds(νp, meshes(γ.K2, Val(2)))
-            val += γ.K2[Ω, νp, P]
+            val += γ.K2[Ω, νp, iP]
         end
     end
 
@@ -170,7 +170,7 @@ end
     Ω  :: MatsubaraFrequency,
     ν  :: MatsubaraFrequency,
     νp :: InfiniteMatsubaraFrequency,
-    P_ :: Union{BrillouinPoint, SWaveBrillouinPoint},
+    P  :: Union{BrillouinPoint, SWaveBrillouinPoint},
     ;
     K1 :: Bool = true,
     K2 :: Bool = true,
@@ -181,20 +181,20 @@ end
 
     val = zero(Q)
 
-    P = fold_back(P_, get_P_mesh(γ))
+    iP = MatsubaraFunctions.mesh_index_bc(P, get_P_mesh(γ))
 
     if K1
         if is_inbounds(Ω, meshes(γ.K1, Val(1)))
-            K1 && (val += γ.K1[Ω, P])
+            K1 && (val += γ.K1[Ω, iP])
 
             if K2 && is_inbounds(Ω, meshes(γ.K2, Val(1))) && is_inbounds(ν, meshes(γ.K2, Val(2)))
-                val += γ.K2[Ω, ν, P]
+                val += γ.K2[Ω, ν, iP]
             end
         end
     else
         # K1 not included
         if K2 && is_inbounds(Ω, meshes(γ.K2, Val(1))) && is_inbounds(ν, meshes(γ.K2, Val(2)))
-            val += γ.K2[Ω, ν, P]
+            val += γ.K2[Ω, ν, iP]
         end
     end
 
@@ -205,7 +205,7 @@ end
     Ω  :: MatsubaraFrequency,
     ν  :: InfiniteMatsubaraFrequency,
     νp :: InfiniteMatsubaraFrequency,
-    P_ :: Union{BrillouinPoint, SWaveBrillouinPoint},
+    P  :: Union{BrillouinPoint, SWaveBrillouinPoint},
     ;
     K1 :: Bool = true,
     K2 :: Bool = true,
@@ -216,10 +216,10 @@ end
 
     val = zero(Q)
 
-    P = fold_back(P_, get_P_mesh(γ))
+    iP = MatsubaraFunctions.mesh_index_bc(P, get_P_mesh(γ))
 
     if K1 && is_inbounds(Ω, meshes(γ.K1, Val(1)))
-        val += γ.K1[Ω, P]
+        val += γ.K1[Ω, iP]
     end
 
     return val
