@@ -18,8 +18,8 @@ using Test
     nmax = 2
     nG  = 12nmax
     nK1 = 8nmax
-    nK2 = (nmax, nmax)
-    nK3 = (nmax, nmax)
+    nK2 = (nmax + 1, nmax)
+    nK3 = (nmax + 1, nmax)
 
     nq = 3
     mK_G = BrillouinZoneMesh(BrillouinZone(24, k1, k2))
@@ -62,12 +62,12 @@ using Test
     @test absmax(S_fd.F.γp.K1 + S_fd.F0.γp.K1 - S.F.γp.K1) < 2e-3
     @test absmax(S_fd.F.γa.K1 + S_fd.F0.γa.K1 - S.F.γa.K1) < 2e-3
     @test absmax(S_fd.F.γt.K1 + S_fd.F0.γt.K1 - S.F.γt.K1) < 2e-3
-    @test absmax(S_fd.F.γp.K2 + S_fd.F0.γp.K2 - S.F.γp.K2) < 3e-3
-    @test absmax(S_fd.F.γa.K2 + S_fd.F0.γa.K2 - S.F.γa.K2) < 3e-3
-    @test absmax(S_fd.F.γt.K2 + S_fd.F0.γt.K2 - S.F.γt.K2) < 3e-3
-    @test absmax(S_fd.F.γp.K3 + S_fd.F0.γp.K3 - S.F.γp.K3) < 4e-3
-    @test absmax(S_fd.F.γa.K3 + S_fd.F0.γa.K3 - S.F.γa.K3) < 4e-3
-    @test absmax(S_fd.F.γt.K3 + S_fd.F0.γt.K3 - S.F.γt.K3) < 4e-3
+    @test absmax(S_fd.F.γp.K2 + S_fd.F0.γp.K2 - S.F.γp.K2) < 2e-3
+    @test absmax(S_fd.F.γa.K2 + S_fd.F0.γa.K2 - S.F.γa.K2) < 2e-3
+    @test absmax(S_fd.F.γt.K2 + S_fd.F0.γt.K2 - S.F.γt.K2) < 2e-3
+    @test absmax(S_fd.F.γp.K3 + S_fd.F0.γp.K3 - S.F.γp.K3) < 2e-3
+    @test absmax(S_fd.F.γa.K3 + S_fd.F0.γa.K3 - S.F.γa.K3) < 2e-3
+    @test absmax(S_fd.F.γt.K3 + S_fd.F0.γt.K3 - S.F.γt.K3) < 2e-3
 
     Ω  = MatsubaraFrequency(T, 0, Boson)
     ν  = MatsubaraFrequency(T, 1, Fermion)

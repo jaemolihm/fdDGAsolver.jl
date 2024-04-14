@@ -16,8 +16,8 @@ using Test
     nmax = 8
     nG  = 24nmax
     nK1 = 12nmax
-    nK2 = (nmax, nmax)
-    nK3 = (nmax, nmax)
+    nK2 = (nmax + 1, nmax)
+    nK3 = (nmax + 1, nmax)
 
     # scPA for the reference point
     S0 = parquet_solver_siam_parquet_approximation(nG, nK1, nK2, nK3; e, T, U, Δ, D)
@@ -71,8 +71,8 @@ using Test
     # fdPA with different box sizes for the vertex
     nmax = 6
     nK1 = 12nmax
-    nK2 = (nmax, nmax)
-    nK3 = (nmax, nmax)
+    nK2 = (nmax + 1, nmax)
+    nK3 = (nmax + 1, nmax)
 
     Gbare = fdDGAsolver.siam_bare_Green(meshes(S0.G, Val(1)); e = e_fd, Δ = Δ_fd, D = D_fd)
 
@@ -81,7 +81,7 @@ using Test
     res = fdDGAsolver.solve!(S_fd2; strategy = :fdPA, parallel_mode = :threads, verbose = false);
 
     @test absmax(S_fd2.Σ - S.Σ) < 3e-3
-    @test S_fd2.Σ(π*T) ≈ 0.02474594503345386 - 0.1761305108665338im
+    @test S_fd2.Σ(π*T) ≈ 0.024706538716026787 - 0.17609214618757657im
 
     @test absmax(S_fd.F.γp.K1 + S_fd.F0.γp.K1 - S.F.γp.K1) < 5e-4
     @test absmax(S_fd.F.γa.K1 + S_fd.F0.γa.K1 - S.F.γa.K1) < 5e-4

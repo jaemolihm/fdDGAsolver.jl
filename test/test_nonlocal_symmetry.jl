@@ -60,8 +60,8 @@ end;
     nmax = 3
     nG  = 8nmax
     nK1 = 4nmax
-    nK2 = (nmax, nmax)
-    nK3 = (nmax, nmax)
+    nK2 = (nmax + 1, nmax)
+    nK3 = (nmax + 1, nmax)
 
     mK_G = BrillouinZoneMesh(BrillouinZone(6, k1, k2))
     mK_Γ = BrillouinZoneMesh(BrillouinZone(3, k1, k2))
@@ -120,8 +120,8 @@ end
     nmax = 4
     nG  = 8nmax
     nK1 = 4nmax
-    nK2 = (nmax, nmax)
-    nK3 = (nmax, nmax)
+    nK2 = (nmax + 1, nmax)
+    nK3 = (nmax + 1, nmax)
 
     mK_G = BrillouinZoneMesh(BrillouinZone(6, k1, k2))
     mK_Γ = BrillouinZoneMesh(BrillouinZone(3, k1, k2))
@@ -152,7 +152,7 @@ end
     init_sym_grp!(S)
 
     @testset "symmetry error" begin
-        # These symmetry are exact only when the fdPA is converged (?)
+        # These symmetry are exact only when the fdPA is converged
         @test S.SGppL[2](S.FL.γp.K2) < 3e-3
         @test S.SGphL[2](S.FL.γa.K2) < 3e-4
         @test S.SGphL[2](S.FL.γt.K2) < 1e-3

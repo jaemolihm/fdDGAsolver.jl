@@ -15,8 +15,8 @@ using Test
     nmax = 4
     nG  = 4nmax
     nK1 = 3nmax
-    nK2 = (2nmax, nmax)
-    nK3 = (2nmax, nmax)
+    nK2 = (nmax + 1, nmax)
+    nK3 = (nmax + 1, nmax)
 
     k1 = 2pi * SVector(1., 0.)
     k2 = 2pi * SVector(0., 1.)
