@@ -4,8 +4,8 @@ mutable struct NL2_ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
 
     # single-particle Green's function and bubbles for reference system
     G0::NL_MF_G{Q}
-    Π0pp::NL_MF_Π{Q}
-    Π0ph::NL_MF_Π{Q}
+    Π0pp::NL2_MF_Π{Q}
+    Π0ph::NL2_MF_Π{Q}
 
     # self-energy for reference system
     Σ0::NL_MF_G{Q}
@@ -15,8 +15,8 @@ mutable struct NL2_ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
 
     # single-particle Green's function and bubbles for target system
     G::NL_MF_G{Q}
-    Πpp::NL_MF_Π{Q}
-    Πph::NL_MF_Π{Q}
+    Πpp::NL2_MF_Π{Q}
+    Πph::NL2_MF_Π{Q}
 
     # self-energy for target system
     Σ::NL_MF_G{Q}
@@ -29,6 +29,12 @@ mutable struct NL2_ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
 
     # channel-decomposed two-particle vertex buffer for left part
     FL::NL2_Vertex{Q, RefVertex{Q}}
+
+    # K2 vertices used in the SDE
+    Lpp  :: NL2_MF_K2{Q}
+    Lph  :: NL2_MF_K2{Q}
+    L0pp :: NL2_MF_K2{Q}
+    L0ph :: NL2_MF_K2{Q}
 
     # symmetry group for the self energy
     SGΣ::SymmetryGroup
@@ -106,6 +112,16 @@ mutable struct NL2_ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
         F = NL2_Vertex(F0, T, nK1, nK2, nK3, mK_Γ)
         Fbuff = NL2_Vertex(RefVertex(T, 0.0, Q), T, nK1, nK2, nK3, mK_Γ)
 
+        # Vertices for the SDE
+        Lpp = copy(F.γp.K2)
+        Lph = copy(Lpp)
+        if F0 isa AbstractVertex
+            L0pp = MeshFunction(meshes(F0.γp.K3, Val(1)), meshes(F0.γp.K3, Val(2)), mK_Γ, mK_Γ; data_t = Q)
+        elseif F0 isa RefVertex
+            L0pp = MeshFunction(meshes(F0.Fp_p, Val(1)), meshes(F0.Fp_p, Val(2)), mK_Γ, mK_Γ; data_t = Q)
+        end
+        L0ph = copy(L0pp)
+
         # symmetry groups
         SGΣ = SymmetryGroup(Σ)
         SGpp = SymmetryGroup[SymmetryGroup(F.γp.K1), SymmetryGroup(F.γp.K2), SymmetryGroup(F.γp.K3)]
@@ -117,9 +133,9 @@ mutable struct NL2_ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
         if F0 isa NL2_Vertex
             F0_K2 = F0.γp.K2
         elseif F0 isa NL_Vertex || F0 isa Vertex
-            F0_K2 = MeshFunction(meshes(F0.γp.K3, Val(1)), meshes(F0.γp.K3, Val(2)), mK_Γ; data_t = Q)
+            F0_K2 = MeshFunction(meshes(F0.γp.K3, Val(1)), meshes(F0.γp.K3, Val(2)), mK_Γ, mK_Γ; data_t = Q)
         elseif F0 isa RefVertex
-            F0_K2 = MeshFunction(meshes(F0.Fp_p, Val(1)), meshes(F0.Fp_p, Val(2)), mK_Γ; data_t = Q)
+            F0_K2 = MeshFunction(meshes(F0.Fp_p, Val(1)), meshes(F0.Fp_p, Val(2)), mK_Γ, mK_Γ; data_t = Q)
         else
             throw(ArgumentError("F0 must be a AbstractVertex or RefVertex, not $(typeof(F0))"))
         end
@@ -145,6 +161,7 @@ mutable struct NL2_ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
         cache_Ft  = MeshFunction(meshes(F.γp.K3, Val(1)), meshes(F.γp.K3, Val(2)), mΠν, mK_Γ; data_t = Q)
 
         return new{Q, RefVT}(Gbare, G0, Π0pp, Π0ph, Σ0, F0, G, Πpp, Πph, Σ, F, Fbuff, copy(Fbuff),
+        Lpp, Lph, L0pp, L0ph,
         SGΣ, SGpp, SGph, SGppL, SGphL, SG0pp2, SG0ph2, mode, cache_Γpx, cache_F0p, cache_F0a,
         cache_F0t, cache_Γpp, cache_Γa, cache_Γt, cache_Fp, cache_Fa, cache_Ft) :: NL2_ParquetSolver{Q}
     end
@@ -269,44 +286,18 @@ function init_sym_grp!(
 
 
     # Symmetry group of F0, needed for the BSE of the reference vertex in SDE for fdPA
-    if S.F0 isa NL2_Vertex
-        # U * Π * F0 has bosonic and fermionic momentum dependence
-        F0_K2 = S.F0.γp.K2
-
-        S.SG0pp2 = my_SymmetryGroup([
-            Symmetry{4}(w -> sK2_NL2_pp1(w, mK_Γ)),
-            Symmetry{4}(w -> sK2_NL2_pp2(w, mK_Γ)),
-            Symmetry{4}(w -> sK2_NL2_ref(w, mK_Γ)),
-            Symmetry{4}(w -> sK2_NL2_rot(w, mK_Γ)),
-        ], F0_K2)
-        S.SG0ph2 = my_SymmetryGroup([
-            Symmetry{4}(w -> sK2_NL2_ph1(w, mK_Γ)),
-            Symmetry{4}(w -> sK2_NL2_ph2(w, mK_Γ)),
-            Symmetry{4}(w -> sK2_NL2_ref(w, mK_Γ)),
-            Symmetry{4}(w -> sK2_NL2_rot(w, mK_Γ)),
-        ], F0_K2)
-
-    else
-        # U * Π * F0 has only bosonic momentum dependence
-        if S.F0 isa NL_Vertex || S.F0 isa Vertex
-            F0_K2 = MeshFunction(meshes(S.F0.γp.K3, Val(1)), meshes(S.F0.γp.K3, Val(2)), mK_Γ; data_t = eltype(S))
-        elseif S.F0 isa RefVertex
-            F0_K2 = MeshFunction(meshes(S.F0.Fp_p, Val(1)), meshes(S.F0.Fp_p, Val(2)), mK_Γ; data_t = eltype(S))
-        end
-
-        S.SG0pp2 = my_SymmetryGroup([
-            Symmetry{3}(w -> sK2pp1( w, mK_Γ)),
-            Symmetry{3}(w -> sK2pp2( w, mK_Γ)),
-            Symmetry{3}(w -> sK2_ref(w, mK_Γ)),
-            Symmetry{3}(w -> sK2_rot(w, mK_Γ)),
-        ], F0_K2)
-        S.SG0ph2 = my_SymmetryGroup([
-            Symmetry{3}(w -> sK2ph1( w, mK_Γ)),
-            Symmetry{3}(w -> sK2ph2( w, mK_Γ)),
-            Symmetry{3}(w -> sK2_ref(w, mK_Γ)),
-            Symmetry{3}(w -> sK2_rot(w, mK_Γ)),
-        ], F0_K2)
-    end
+    S.SG0pp2 = my_SymmetryGroup([
+        Symmetry{4}(w -> sK2_NL2_pp1(w, mK_Γ)),
+        Symmetry{4}(w -> sK2_NL2_pp2(w, mK_Γ)),
+        Symmetry{4}(w -> sK2_NL2_ref(w, mK_Γ)),
+        Symmetry{4}(w -> sK2_NL2_rot(w, mK_Γ)),
+    ], S.L0pp)
+    S.SG0ph2 = my_SymmetryGroup([
+        Symmetry{4}(w -> sK2_NL2_ph1(w, mK_Γ)),
+        Symmetry{4}(w -> sK2_NL2_ph2(w, mK_Γ)),
+        Symmetry{4}(w -> sK2_NL2_ref(w, mK_Γ)),
+        Symmetry{4}(w -> sK2_NL2_rot(w, mK_Γ)),
+    ], S.L0pp)
 
 
     return nothing

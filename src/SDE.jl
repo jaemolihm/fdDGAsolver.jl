@@ -1,15 +1,16 @@
 # Define AbstractSolver interface
 
-function SDE_channel_L_pp(S :: AbstractSolver)
-    SDE_channel_L_pp(S.Πpp, S.F, S.SGpp[2]; S.mode)
-end
-
-function SDE_channel_L_ph(S :: AbstractSolver)
-    SDE_channel_L_ph(S.Πph, S.F, S.SGph[2]; S.mode)
+function SDE!(Σ, S :: AbstractSolver; include_U² = true, include_Hartree = true)
+    SDE!(Σ, S.G, S.Πpp, S.Πph, S.Lpp, S.Lph, S.F, S.SGΣ, S.SGpp[2], S.SGph[2]; S.mode, include_U², include_Hartree)
+    return Σ
 end
 
 function SDE!(S :: AbstractSolver; include_U² = true, include_Hartree = true)
-    SDE!(S.Σ, S.G, S.Πpp, S.Πph, S.F, S.SGΣ, S.SGpp[2], S.SGph[2]; S.mode, include_U², include_Hartree)
+    SDE!(S.Σ, S; include_U², include_Hartree)
+end
+
+function SDE(S :: AbstractSolver; include_U² = true, include_Hartree = true)
+    SDE!(copy(S.Σ), S; include_U², include_Hartree)
 end
 
 function SDE_U2(S :: AbstractSolver)
@@ -31,13 +32,14 @@ end
 
 # Implementations for ParquetSolver (local vertex)
 
-function SDE_channel_L_pp(
+function SDE_channel_L_pp!(
+    Lpp   :: MF_K2{Q},
     Πpp   :: MF_Π{Q},
     F     :: Vertex{Q},
     SGpp2 :: SymmetryGroup
     ;
     mode  :: Symbol,
-    )     :: MF_K2{Q} where {Q}
+    )     :: Nothing where {Q}
 
     # model the diagram
     @inline function diagram(wtpl)
@@ -56,20 +58,19 @@ function SDE_channel_L_pp(
     end
 
     # compute Lpp
-    Lpp = copy(F.γp.K2)
-
     SGpp2(Lpp, InitFunction{2, Q}(diagram); mode = mode)
 
-    return Lpp
+    return nothing
 end
 
-function SDE_channel_L_ph(
+function SDE_channel_L_ph!(
+    Lph   :: MF_K2{Q},
     Πph   :: MF_Π{Q},
     F     :: Vertex{Q},
     SGph2 :: SymmetryGroup
     ;
     mode  :: Symbol,
-    )     :: MF_K2{Q} where {Q}
+    )     :: Nothing where {Q}
 
     # model the diagram
     @inline function diagram(wtpl)
@@ -88,22 +89,21 @@ function SDE_channel_L_ph(
     end
 
     # compute Lph
-    Lph = copy(F.γt.K2)
-
     SGph2(Lph, InitFunction{2, Q}(diagram); mode)
 
-    return Lph
+    return nothing
 end
 
 # U * Π * (F - U) for F <: RefVertex
 
-function SDE_channel_L_pp(
+function SDE_channel_L_pp!(
+    Lpp   :: MF_K2{Q},
     Πpp   :: MF_Π{Q},
     F     :: RefVertex{Q},
     SGpp2 :: SymmetryGroup
     ;
     mode  :: Symbol,
-    )     :: MF_K2{Q} where {Q}
+    )     :: Nothing where {Q}
 
     # model the diagram
     @inline function diagram(wtpl)
@@ -122,22 +122,20 @@ function SDE_channel_L_pp(
     end
 
     # compute Lpp
-    Lpp = MeshFunction(meshes(F.Fp_p, Val(1)), meshes(F.Fp_p, Val(2)); data_t = Q)
+    SGpp2(Lpp, InitFunction{2, Q}(diagram); mode = mode)
 
-    # SGpp2(Lpp, InitFunction{2, Q}(diagram); mode = mode)
-    SymmetryGroup(Lpp)(Lpp, InitFunction{2, Q}(diagram); mode = mode)
-
-    return Lpp
+    return nothing
 end
 
 
-function SDE_channel_L_ph(
+function SDE_channel_L_ph!(
+    Lph   :: MF_K2{Q},
     Πph   :: MF_Π{Q},
     F     :: RefVertex{Q},
     SGph2 :: SymmetryGroup
     ;
     mode  :: Symbol,
-    )     :: MF_K2{Q} where {Q}
+    )     :: Nothing where {Q}
 
     # model the diagram
     @inline function diagram(wtpl)
@@ -156,12 +154,9 @@ function SDE_channel_L_ph(
     end
 
     # compute Lph
-    Lph = MeshFunction(meshes(F.Fp_p, Val(1)), meshes(F.Fp_p, Val(2)); data_t = Q)
+    SGph2(Lph, InitFunction{2, Q}(diagram); mode)
 
-    # SGph2(Lph, InitFunction{2, Q}(diagram); mode)
-    SymmetryGroup(Lph)(Lph, InitFunction{2, Q}(diagram); mode = mode)
-
-    return Lph
+    return nothing
 end
 
 function SDE!(
@@ -169,6 +164,8 @@ function SDE!(
     G     :: MF_G{Q},
     Πpp   :: MF_Π{Q},
     Πph   :: MF_Π{Q},
+    Lpp   :: MF_K2{Q},
+    Lph   :: MF_K2{Q},
     F     :: Union{Vertex{Q}, RefVertex{Q}},
     SGΣ   :: SymmetryGroup,
     SGpp2 :: SymmetryGroup,
@@ -180,8 +177,8 @@ function SDE!(
     )     :: MF_G{Q} where {Q}
     # γa, γp, γt contribution to the self-energy in the asymptotic decomposition
 
-    Lpp = SDE_channel_L_pp(Πpp, F, SGpp2; mode)
-    Lph = SDE_channel_L_ph(Πph, F, SGph2; mode)
+    SDE_channel_L_pp!(Lpp, Πpp, F, SGpp2; mode)
+    SDE_channel_L_ph!(Lph, Πph, F, SGph2; mode)
 
     # model the diagram
     @inline function diagram(wtpl)

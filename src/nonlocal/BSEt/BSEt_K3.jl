@@ -14,7 +14,7 @@ function BSE_L_K3!(
         # additional minus sign for xSp terms because we use crossing symmetry here
         for i in eachindex(meshes(S.cache_Γt, Val(3)))
             ω = value(meshes(S.cache_Γt, Val(3))[i])
-            Π0 = S.Π0ph[Ω, ω, P, kSW]
+            Π0 = S.Π0ph[Ω, ω, P]
 
             val -= Γslice[i] * Π0 * F0slice[i]
         end
@@ -49,8 +49,8 @@ function BSE_K3!(
 
         for i in eachindex(meshes(S.cache_Ft, Val(3)))
             ω = value(meshes(S.cache_Ft, Val(3))[i])
-            Π0 = S.Π0ph[Ω, ω, P, kSW]
-            Π  = S.Πph[ Ω, ω, P, kSW]
+            Π0 = S.Π0ph[Ω, ω, P]
+            Π  = S.Πph[ Ω, ω, P]
 
             # 1ℓ and right part, additional minus sign for xSp terms because we use crossing symmetry here
             val -= (Π - Π0) * Fslice[i] * F0slice[i] + Π * Fslice[i] * Γslice[i]

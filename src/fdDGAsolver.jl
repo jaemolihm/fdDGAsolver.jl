@@ -48,6 +48,7 @@ module fdDGAsolver
     include("nonlocal/BSE.jl")
     include("nonlocal/build_K3_cache.jl")
 
+    include("nonlocal_2/bubble.jl")
     include("nonlocal_2/BSE.jl")
     include("nonlocal_2/SDE.jl")
     include("nonlocal_2/build_K3_cache.jl")

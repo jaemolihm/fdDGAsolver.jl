@@ -1,88 +1,77 @@
 # Implementations for NL_ParquetSolver (nonlocal vertex with bosonic momentum dependence)
 
-function SDE_channel_L_pp(
+function SDE_channel_L_pp!(
+    Lpp   :: NL_MF_K2{Q},
     Πpp   :: NL_MF_Π{Q},
     F     :: Union{Vertex{Q}, NL_Vertex{Q}},
     SGpp2 :: SymmetryGroup
     ;
     mode  :: Symbol,
-    )     :: NL_MF_K2{Q} where {Q}
+    )     :: Nothing where {Q}
 
     # model the diagram
     @inline function diagram(wtpl)
 
         Ω, ν, P = wtpl
         val     = zero(Q)
-        Πslice  = view(Πpp, Ω, :, P, :)
+        Πslice  = view(Πpp, Ω, :, P)
 
         for i in eachindex(Πslice)
-            ω = value(meshes(Πpp, Val(2))[i.I[1]])
-            q = value(meshes(Πpp, Val(4))[i.I[2]])
+            ω = value(meshes(Πpp, Val(2))[i])
 
-            val += bare_vertex(F) * Πslice[i] * F.γp(Ω, Ω - ω, ν, P, P - q, k0)
+            val += bare_vertex(F) * Πslice[i] * F.γp(Ω, Ω - ω, ν, P)
         end
 
-        return temperature(F) * val / length(meshes(Πpp, Val(4)))
+        return temperature(F) * val
     end
 
     # compute Lpp
-    if F isa Vertex
-        Lpp = MeshFunction(meshes(F.γt.K2, Val(1)), meshes(F.γt.K2, Val(2)), meshes(Πpp, Val(3)); data_t = Q)
-    else
-        Lpp = copy(F.γp.K2)
-    end
-
     SGpp2(Lpp, InitFunction{3, Q}(diagram); mode)
 
-    return Lpp
+    return nothing
 end
 
-function SDE_channel_L_ph(
+function SDE_channel_L_ph!(
+    Lph   :: NL_MF_K2{Q},
     Πph   :: NL_MF_Π{Q},
     F     :: Union{Vertex{Q}, NL_Vertex{Q}},
     SGph2 :: SymmetryGroup
     ;
     mode  :: Symbol,
-    )     :: NL_MF_K2{Q} where {Q}
+    )     :: Nothing where {Q}
 
     # model the diagram
     @inline function diagram(wtpl)
 
         Ω, ν, P = wtpl
         val     = zero(Q)
-        Πslice  = view(Πph, Ω, :, P, :)
+        Πslice  = view(Πph, Ω, :, P)
 
         for i in eachindex(Πslice)
-            ω = value(meshes(Πph, Val(2))[i.I[1]])
-            q = value(meshes(Πph, Val(4))[i.I[2]])
+            ω = value(meshes(Πph, Val(2))[i])
 
-            val += bare_vertex(F) * Πslice[i] * (F.γt(Ω, ν, ω, P, k0, q) + F.γa(Ω, ν, ω, P, k0, q))
+            val += bare_vertex(F) * Πslice[i] * (F.γt(Ω, ν, ω, P) + F.γa(Ω, ν, ω, P))
         end
 
-        return temperature(F) * val / length(meshes(Πph, Val(4)))
+        return temperature(F) * val
     end
 
     # compute Lph
-    if F isa Vertex
-        Lph = MeshFunction(meshes(F.γt.K2, Val(1)), meshes(F.γt.K2, Val(2)), meshes(Πph, Val(3)); data_t = Q)
-    else
-        Lph = copy(F.γt.K2)
-    end
-
     SGph2(Lph, InitFunction{3, Q}(diagram); mode)
 
-    return Lph
+    return nothing
 end
 
 # U * Π * (F - U) for F <: RefVertex
 
-function SDE_channel_L_pp(
+function SDE_channel_L_pp!(
+    Lpp   :: NL_MF_K2{Q},
     Πpp   :: NL_MF_Π{Q},
     F     :: RefVertex{Q},
     SGpp2 :: SymmetryGroup
     ;
     mode  :: Symbol,
-    )     :: NL_MF_K2{Q} where {Q}
+    )     :: Nothing where {Q}
 
     # model the diagram
     @inline function diagram(wtpl)
@@ -94,27 +83,26 @@ function SDE_channel_L_pp(
             ω = value(meshes(Πpp, Val(2))[iω])
 
             # RefVertex has no momentum dependence
-            val += bare_vertex(F) * Πpp[Ω, ω, P, kSW] * (F(Ω, Ω - ω, ν, pCh, pSp) - bare_vertex(F, pCh, pSp))
+            val += bare_vertex(F) * Πpp[Ω, ω, P] * (F(Ω, Ω - ω, ν, pCh, pSp) - bare_vertex(F, pCh, pSp))
         end
 
         return temperature(F) * val
     end
 
     # compute Lpp
-    Lpp = MeshFunction(meshes(F.Fp_p, Val(1)), meshes(F.Fp_p, Val(2)), meshes(Πpp, Val(3)); data_t = Q)
-
     SGpp2(Lpp, InitFunction{3, Q}(diagram); mode)
 
-    return Lpp
+    return nothing
 end
 
-function SDE_channel_L_ph(
+function SDE_channel_L_ph!(
+    Lph   :: NL_MF_K2{Q},
     Πph   :: NL_MF_Π{Q},
     F     :: RefVertex{Q},
     SGph2 :: SymmetryGroup
     ;
     mode  :: Symbol,
-    )     :: NL_MF_K2{Q} where {Q}
+    )     :: Nothing where {Q}
 
     # model the diagram
     @inline function diagram(wtpl)
@@ -126,18 +114,16 @@ function SDE_channel_L_ph(
             ω = value(meshes(Πph, Val(2))[iω])
 
             # RefVertex has no momentum dependence
-            val += bare_vertex(F) * Πph[Ω, ω, P, kSW] * (F(Ω, ν, ω, aCh, pSp) + F(Ω, ν, ω, tCh, pSp) - bare_vertex(F, aCh, pSp) - bare_vertex(F, tCh, pSp))
+            val += bare_vertex(F) * Πph[Ω, ω, P] * (F(Ω, ν, ω, aCh, pSp) + F(Ω, ν, ω, tCh, pSp) - bare_vertex(F, aCh, pSp) - bare_vertex(F, tCh, pSp))
         end
 
         return temperature(F) * val
     end
 
     # compute Lph
-    Lph = MeshFunction(meshes(F.Fp_p, Val(1)), meshes(F.Fp_p, Val(2)), meshes(Πph, Val(3)); data_t = Q)
-
     SGph2(Lph, InitFunction{3, Q}(diagram); mode)
 
-    return Lph
+    return nothing
 end
 
 
@@ -146,6 +132,8 @@ function SDE!(
     G     :: NL_MF_G{Q},
     Πpp   :: NL_MF_Π{Q},
     Πph   :: NL_MF_Π{Q},
+    Lpp   :: NL_MF_K2{Q},
+    Lph   :: NL_MF_K2{Q},
     F     :: Union{NL_Vertex{Q}, Vertex{Q}, RefVertex{Q}},
     SGΣ   :: SymmetryGroup,
     SGpp2 :: SymmetryGroup,
@@ -158,8 +146,8 @@ function SDE!(
     )     :: NL_MF_G{Q} where {Q}
     # γa, γp, γt contribution to the self-energy in the asymptotic decomposition
 
-    Lpp = SDE_channel_L_pp(Πpp, F, SGpp2; mode)
-    Lph = SDE_channel_L_ph(Πph, F, SGph2; mode)
+    SDE_channel_L_pp!(Lpp, Πpp, F, SGpp2; mode)
+    SDE_channel_L_ph!(Lph, Πph, F, SGph2; mode)
 
     meshK_G = meshes(G, Val(2))
 

@@ -100,7 +100,7 @@ const MF_K3{Q} = MeshFunction{3, Q, Tuple{BMesh, FMesh, FMesh}, Array{Q, 3}}
 #----------------------------------------------------------------------------------------------#
 
 const NL_MF_G{Q} = MeshFunction{2, Q, Tuple{FMesh, KMesh}, Array{Q, 2}}
-const NL_MF_Π{Q} = MeshFunction{4, Q, Tuple{BMesh, FMesh, KMesh, KMesh}, Array{Q, 4}}
+const NL_MF_Π{Q} = MeshFunction{3, Q, Tuple{BMesh, FMesh, KMesh}, Array{Q, 3}}
 
 # MeshFunction aliases : nonlocal vertex with only bosonic frequency dependence
 #----------------------------------------------------------------------------------------------#
@@ -112,6 +112,7 @@ const NL_MF_K3{Q} = MeshFunction{4, Q, Tuple{BMesh, FMesh, FMesh, KMesh}, Array{
 # MeshFunction aliases : nonlocal vertex with bosonic and fermionic frequency dependences
 #----------------------------------------------------------------------------------------------#
 
+const NL2_MF_Π{Q} = MeshFunction{4, Q, Tuple{BMesh, FMesh, KMesh, KMesh}, Array{Q, 4}}
 const NL2_MF_K2{Q} = MeshFunction{4, Q, Tuple{BMesh, FMesh, KMesh, KMesh}, Array{Q, 4}}
 const NL2_MF_K3{Q} = MeshFunction{5, Q, Tuple{BMesh, FMesh, FMesh, KMesh, KMesh}, Array{Q, 5}}
 

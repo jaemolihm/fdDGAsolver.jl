@@ -242,6 +242,19 @@ end
     return γ(Ω, ν, νp, args...; kwargs...)
 end
 
+@inline function (γ :: Union{Channel{Q}, RefVertex{Q}, Vertex{Q}})(
+    Ω  :: MatsubaraFrequency,
+    ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    P  :: Union{BrillouinPoint, SWaveBrillouinPoint},
+    args...
+    ;
+    kwargs...
+    )  :: Q where {Q}
+
+    return γ(Ω, ν, νp, args...; kwargs...)
+end
+
 
 # reducer
 # Subtract the lower-order asymptotic vertices from the higher-order ones

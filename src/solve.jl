@@ -58,9 +58,9 @@ function iterate_solver!(S :: AbstractSolver;
             # Σ = SDE(ΔΓ, Π, G)
             SDE!(S; include_U² = false, include_Hartree = false)
             #   + SDE(Γ₀, Π, G)
-            add!(S.Σ, SDE!(copy(S.Σ), S.G, S.Πpp, S.Πph, S.F0, S.SGΣ, S.SG0pp2, S.SG0ph2; S.mode))
+            add!(S.Σ, SDE!(copy(S.Σ), S.G, S.Πpp, S.Πph, S.L0pp, S.L0ph, S.F0, S.SGΣ, S.SG0pp2, S.SG0ph2; S.mode))
             #   - SDE(Γ₀, Π₀, G₀)
-            mult_add!(S.Σ, SDE!(copy(S.Σ), S.G0, S.Π0pp, S.Π0ph, S.F0, S.SGΣ, S.SG0pp2, S.SG0ph2; S.mode), -1)
+            mult_add!(S.Σ, SDE!(copy(S.Σ), S.G0, S.Π0pp, S.Π0ph, S.L0pp, S.L0ph, S.F0, S.SGΣ, S.SG0pp2, S.SG0ph2; S.mode), -1)
             #   + Σ₀
             add!(S.Σ, S.Σ0)
 

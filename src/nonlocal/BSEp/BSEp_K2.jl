@@ -8,20 +8,19 @@ function BSE_L_K2!(
 
         Ω, ν, P = wtpl
         val     = zero(Q)
-        Π0slice = view(S.Π0pp, Ω, :, P, :)
+        Π0slice = view(S.Π0pp, Ω, :, P)
 
         for i in eachindex(Π0slice)
-            ω = value(meshes(S.Π0pp, Val(2))[i.I[1]])
-            q = value(meshes(S.Π0pp, Val(4))[i.I[2]])
+            ω = value(meshes(S.Π0pp, Val(2))[i])
 
             # Vertices
-            Γp  = S.F( Ω,     ν,    ω, P,   kSW,  q, pCh, pSp; F0 = false, γp = false)
-            F0p = S.F0(Ω, Ω - ω, νInf, P, P - q, k0, pCh, pSp)
+            Γp  = S.F( Ω,     ν,    ω, P, kSW, kSW, pCh, pSp; F0 = false, γp = false)
+            F0p = S.F0(Ω, Ω - ω, νInf, P, kSW, kSW, pCh, pSp)
 
             val += Γp * Π0slice[i] * F0p
         end
 
-        return temperature(S) * val / numP_Γ(S)
+        return temperature(S) * val
     end
 
     # compute K2
@@ -41,23 +40,22 @@ function BSE_K2!(
 
         Ω, ν, P = wtpl
         val     = zero(Q)
-        Π0slice = view(S.Π0pp, Ω, :, P, :)
-        Πslice  = view(S.Πpp , Ω, :, P, :)
+        Π0slice = view(S.Π0pp, Ω, :, P)
+        Πslice  = view(S.Πpp , Ω, :, P)
 
         for i in eachindex(Π0slice)
-            ω = value(meshes(S.Π0pp, Val(2))[i.I[1]])
-            q = value(meshes(S.Π0pp, Val(4))[i.I[2]])
+            ω = value(meshes(S.Π0pp, Val(2))[i])
 
             # vertices
-            Fl  = S.F( Ω,     ν,    ω, P,   kSW,  q, pCh, pSp) - S.F(Ω, νInf, ω, P, kSW, q, pCh, pSp)
-            F0r = S.F0(Ω, Ω - ω, νInf, P, P - q, k0, pCh, pSp)
-            FLr = S.FL(Ω, Ω - ω, νInf, P, P - q, k0, pCh, pSp)
+            Fl  = S.F( Ω,     ν,    ω, P, kSW, kSW, pCh, pSp) - S.F(Ω, νInf, ω, P, kSW, kSW, pCh, pSp)
+            F0r = S.F0(Ω, Ω - ω, νInf, P, kSW, kSW, pCh, pSp)
+            FLr = S.FL(Ω, Ω - ω, νInf, P, kSW, kSW, pCh, pSp)
 
             # 1ℓ and central part
             val += Fl * ((Πslice[i] - Π0slice[i]) * F0r + Πslice[i] * FLr)
         end
 
-        return temperature(S) * val / numP_Γ(S)
+        return temperature(S) * val
     end
 
     # compute K2

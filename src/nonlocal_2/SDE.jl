@@ -1,12 +1,13 @@
 # Implementations for NL2_ParquetSolver (nonlocal vertex with bosonic and fermionic momentum dependences)
 
-function SDE_channel_L_pp(
-    Πpp   :: NL_MF_Π{Q},
-    F     :: NL2_Vertex{Q},
+function SDE_channel_L_pp!(
+    Lpp   :: NL2_MF_K2{Q},
+    Πpp   :: NL2_MF_Π{Q},
+    F     :: Union{Vertex{Q}, NL_Vertex{Q}, NL2_Vertex{Q}},
     SGpp2 :: SymmetryGroup
     ;
     mode  :: Symbol,
-    )     :: NL2_MF_K2{Q} where {Q}
+    )     :: Nothing where {Q}
 
     # model the diagram
     @inline function diagram(wtpl)
@@ -26,20 +27,19 @@ function SDE_channel_L_pp(
     end
 
     # compute Lpp
-    Lpp = copy(F.γp.K2)
-
     SGpp2(Lpp, InitFunction{4, Q}(diagram); mode = mode)
 
-    return Lpp
+    return nothing
 end
 
-function SDE_channel_L_ph(
-    Πph   :: NL_MF_Π{Q},
-    F     :: NL2_Vertex{Q},
+function SDE_channel_L_ph!(
+    Lph   :: NL2_MF_K2{Q},
+    Πph   :: NL2_MF_Π{Q},
+    F     :: Union{Vertex{Q}, NL_Vertex{Q}, NL2_Vertex{Q}},
     SGph2 :: SymmetryGroup
     ;
     mode  :: Symbol,
-    )     :: NL2_MF_K2{Q} where {Q}
+    )     :: Nothing where {Q}
 
     # model the diagram
     @inline function diagram(wtpl)
@@ -59,20 +59,90 @@ function SDE_channel_L_ph(
     end
 
     # compute Lph
-    Lph = copy(F.γt.K2)
-
     SGph2(Lph, InitFunction{4, Q}(diagram); mode)
 
-    return Lph
+    return nothing
+end
+
+
+
+# U * Π * (F - U) for F <: RefVertex
+
+function SDE_channel_L_pp!(
+    Lpp   :: NL2_MF_K2{Q},
+    Πpp   :: NL2_MF_Π{Q},
+    F     :: RefVertex{Q},
+    SGpp2 :: SymmetryGroup
+    ;
+    mode  :: Symbol,
+    )     :: Nothing where {Q}
+
+    # model the diagram
+    @inline function diagram(wtpl)
+
+        Ω, ν, P, k = wtpl
+        val     = zero(Q)
+        Πslice  = view(Πpp, Ω, :, P, :)
+
+        for i in eachindex(Πslice)
+            ω = value(meshes(Πpp, Val(2))[i.I[1]])
+            q = value(meshes(Πpp, Val(4))[i.I[2]])
+
+            # RefVertex has no momentum dependence
+            val += bare_vertex(F) * Πpp[Ω, ω, P, q] * (F(Ω, Ω - ω, ν, pCh, pSp) - bare_vertex(F, pCh, pSp))
+        end
+
+        return temperature(F) * val / length(meshes(Πpp, Val(4)))
+    end
+
+    # compute Lpp
+    SGpp2(Lpp, InitFunction{4, Q}(diagram); mode)
+
+    return nothing
+end
+
+function SDE_channel_L_ph!(
+    Lph   :: NL2_MF_K2{Q},
+    Πph   :: NL2_MF_Π{Q},
+    F     :: RefVertex{Q},
+    SGph2 :: SymmetryGroup
+    ;
+    mode  :: Symbol,
+    )     :: Nothing where {Q}
+
+    # model the diagram
+    @inline function diagram(wtpl)
+
+        Ω, ν, P, k = wtpl
+        val     = zero(Q)
+        Πslice  = view(Πph, Ω, :, P, :)
+
+        for i in eachindex(Πslice)
+            ω = value(meshes(Πph, Val(2))[i.I[1]])
+            q = value(meshes(Πph, Val(4))[i.I[2]])
+
+            # RefVertex has no momentum dependence
+            val += bare_vertex(F) * Πph[Ω, ω, P, q] * (F(Ω, ν, ω, aCh, pSp) + F(Ω, ν, ω, tCh, pSp) - bare_vertex(F, aCh, pSp) - bare_vertex(F, tCh, pSp))
+        end
+
+        return temperature(F) * val / length(meshes(Πph, Val(4)))
+    end
+
+    # compute Lph
+    SGph2(Lph, InitFunction{4, Q}(diagram); mode)
+
+    return nothing
 end
 
 
 function SDE!(
     Σ     :: NL_MF_G{Q},
     G     :: NL_MF_G{Q},
-    Πpp   :: NL_MF_Π{Q},
-    Πph   :: NL_MF_Π{Q},
-    F     :: NL2_Vertex{Q},
+    Πpp   :: NL2_MF_Π{Q},
+    Πph   :: NL2_MF_Π{Q},
+    Lpp   :: NL2_MF_K2{Q},
+    Lph   :: NL2_MF_K2{Q},
+    F     :: Union{AbstractVertex{Q}, RefVertex{Q}},
     SGΣ   :: SymmetryGroup,
     SGpp2 :: SymmetryGroup,
     SGph2 :: SymmetryGroup,
@@ -84,8 +154,8 @@ function SDE!(
     )     :: NL_MF_G{Q} where {Q}
     # γa, γp, γt contribution to the self-energy in the asymptotic decomposition
 
-    Lpp = SDE_channel_L_pp(Πpp, F, SGpp2; mode)
-    Lph = SDE_channel_L_ph(Πph, F, SGph2; mode)
+    SDE_channel_L_pp!(Lpp, Πpp, F, SGpp2; mode)
+    SDE_channel_L_ph!(Lph, Πph, F, SGph2; mode)
 
     if use_real_space
         # Real-space evaluation
@@ -162,7 +232,7 @@ function SDE!(
             end
         end
 
-        Σ_data_R .*= temperature(F)
+        Σ_data_R .*= temperature(meshes(G, Val(1)))
 
         Σ.data .= reshape(bfft(Σ_data_R, (2, 3)), :, LΣ^2)
 

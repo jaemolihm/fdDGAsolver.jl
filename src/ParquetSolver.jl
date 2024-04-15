@@ -34,6 +34,12 @@ mutable struct ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
     # channel-decomposed two-particle vertex buffer for left part
     FL::Vertex{Q, RefVertex{Q}}
 
+    # K2 vertices used in the SDE
+    Lpp  :: MF_K2{Q}
+    Lph  :: MF_K2{Q}
+    L0pp :: MF_K2{Q}
+    L0ph :: MF_K2{Q}
+
     # symmetry group for the self energy
     SGΣ::SymmetryGroup
 
@@ -109,6 +115,16 @@ mutable struct ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
         F = Vertex(F0, T, nK1, nK2, nK3)
         Fbuff = Vertex(RefVertex(T, 0.0, Q), T, nK1, nK2, nK3)
 
+        # Vertices for the SDE
+        Lpp = copy(F.γp.K2)
+        Lph = copy(Lpp)
+        if F0 isa AbstractVertex
+            L0pp = copy(F0.γp.K2)
+        elseif F0 isa RefVertex
+            L0pp = MeshFunction(meshes(F0.Fp_p, Val(1)), meshes(F0.Fp_p, Val(2)); data_t = Q)
+        end
+        L0ph = copy(L0pp)
+
         # symmetry groups
         SGΣ = SymmetryGroup(Σ)
         SGpp = SymmetryGroup[SymmetryGroup(F.γp.K1), SymmetryGroup(F.γp.K2), SymmetryGroup(F.γp.K3)]
@@ -147,6 +163,7 @@ mutable struct ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
         cache_Ft  = MeshFunction(meshes(F.γp.K3, Val(1)), meshes(F.γp.K3, Val(2)), mΠν; data_t = Q)
 
         return new{Q, RefVT}(Gbare, G0, Π0pp, Π0ph, Σ0, F0, G, Πpp, Πph, Σ, F, Fbuff, copy(Fbuff),
+        Lpp, Lph, L0pp, L0ph,
         SGΣ, SGpp, SGph, SGppL, SGphL, SG0pp2, SG0ph2, mode, cache_Γpx, cache_F0p, cache_F0a,
         cache_F0t, cache_Γpp, cache_Γa, cache_Γt, cache_Fp, cache_Fa, cache_Ft) :: ParquetSolver{Q}
     end
@@ -319,13 +336,8 @@ function init_sym_grp!(
     S.SGphL[3] = my_SymmetryGroup([Symmetry{3}(sK3ph1), Symmetry{3}(sK3ph3)], S.F.γt.K3)
 
     # For F0
-    if S.F0 isa Vertex
-        F0_K2 = S.F0.γp.K2
-    elseif S.F0 isa RefVertex
-        F0_K2 = MeshFunction(meshes(S.F0.Fp_p, Val(1)), meshes(S.F0.Fp_p, Val(2)); data_t = eltype(S.F0))
-    end
-    S.SG0pp2 = my_SymmetryGroup([Symmetry{2}(sK2pp1), Symmetry{2}(sK2pp2)], F0_K2)
-    S.SG0ph2 = my_SymmetryGroup([Symmetry{2}(sK2ph1), Symmetry{2}(sK2ph2)], F0_K2)
+    S.SG0pp2 = my_SymmetryGroup([Symmetry{2}(sK2pp1), Symmetry{2}(sK2pp2)], S.L0pp)
+    S.SG0ph2 = my_SymmetryGroup([Symmetry{2}(sK2ph1), Symmetry{2}(sK2ph2)], S.L0pp)
 
     return nothing
 end

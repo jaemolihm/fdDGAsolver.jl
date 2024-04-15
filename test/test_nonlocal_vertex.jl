@@ -4,12 +4,12 @@ using HDF5
 using StaticArrays
 using Test
 
-@testset "NL bubbles" begin
+@testset "nonlocal bubbles" begin
 
     # Test bubbles are correct when Π and G have different BZ mesh
 
     T = 0.5
-    μ = 0.
+    μ = 0.2
     t1 = 1.0
 
     k1 = 2pi * SVector(1., 0.)
@@ -33,8 +33,21 @@ using Test
     fdDGAsolver.bubbles_momentum_space!(Πpp1, Πph1, G1)
     fdDGAsolver.bubbles_momentum_space!(Πpp2, Πph2, G2)
 
+    @test Πpp1 isa fdDGAsolver.NL2_MF_Π
     @test Πpp1.data ≈ Πpp2.data
     @test Πph1.data ≈ Πph2.data
+
+    # Bubble without fermionic momentum dependence
+    # Check this agrees with manual integration of the fermionic momentum
+    Πpp0 = MeshFunction(mΠΩ, mΠν, mK_Π)
+    Πph0 = copy(Πpp0)
+
+    fdDGAsolver.bubbles_real_space!(Πpp0, Πph0, G1)
+    fdDGAsolver.bubbles_real_space!(Πpp1, Πph1, G1)
+
+    @test Πpp0 isa fdDGAsolver.NL_MF_Π
+    @test Πpp0.data ≈ dropdims(sum(Πpp1.data, dims=4), dims=4) ./ length(mK_Π)
+    @test Πph0.data ≈ dropdims(sum(Πph1.data, dims=4), dims=4) ./ length(mK_Π)
 
 end
 

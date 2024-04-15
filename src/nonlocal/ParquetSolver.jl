@@ -30,6 +30,12 @@ mutable struct NL_ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
     # channel-decomposed two-particle vertex buffer for left part
     FL::NL_Vertex{Q, RefVertex{Q}}
 
+    # K2 vertices used in the SDE
+    Lpp  :: NL_MF_K2{Q}
+    Lph  :: NL_MF_K2{Q}
+    L0pp :: NL_MF_K2{Q}
+    L0ph :: NL_MF_K2{Q}
+
     # symmetry group for the self energy
     SGΣ::SymmetryGroup
 
@@ -86,7 +92,7 @@ mutable struct NL_ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
         # precompute bubbles for reference system
         mΠΩ = MatsubaraMesh(temperature(F0), nK1, Boson)
         mΠν = MatsubaraMesh(temperature(F0), 2 * nK1, Fermion)
-        Π0pp = MeshFunction(mΠΩ, mΠν, mK_Γ, mK_Γ; data_t=Q)
+        Π0pp = MeshFunction(mΠΩ, mΠν, mK_Γ; data_t=Q)
         Π0ph = copy(Π0pp)
 
         bubbles_real_space!(Π0pp, Π0ph, G0)
@@ -105,6 +111,16 @@ mutable struct NL_ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
         # channel-decomposed two-particle vertex
         F = NL_Vertex(F0, T, nK1, nK2, nK3, mK_Γ)
         Fbuff = NL_Vertex(RefVertex(T, 0.0, Q), T, nK1, nK2, nK3, mK_Γ)
+
+        # Vertices for the SDE
+        Lpp = copy(F.γp.K2)
+        Lph = copy(Lpp)
+        if F0 isa AbstractVertex
+            L0pp = MeshFunction(meshes(F0.γp.K3, Val(1)), meshes(F0.γp.K3, Val(2)), mK_Γ; data_t = Q)
+        elseif F0 isa RefVertex
+            L0pp = MeshFunction(meshes(F0.Fp_p, Val(1)), meshes(F0.Fp_p, Val(2)), mK_Γ; data_t = Q)
+        end
+        L0ph = copy(L0pp)
 
         # symmetry groups
         SGΣ = SymmetryGroup(Σ)
@@ -143,6 +159,7 @@ mutable struct NL_ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
         cache_Ft  = MeshFunction(meshes(F.γp.K3, Val(1)), meshes(F.γp.K3, Val(2)), mΠν, mK_Γ; data_t = Q)
 
         return new{Q, RefVT}(Gbare, G0, Π0pp, Π0ph, Σ0, F0, G, Πpp, Πph, Σ, F, Fbuff, copy(Fbuff),
+        Lpp, Lph, L0pp, L0ph,
         SGΣ, SGpp, SGph, SGppL, SGphL, SG0pp2, SG0ph2, mode, cache_Γpx, cache_F0p, cache_F0a,
         cache_F0t, cache_Γpp, cache_Γa, cache_Γt, cache_Fp, cache_Fa, cache_Ft) :: NL_ParquetSolver{Q}
     end
@@ -279,23 +296,18 @@ function init_sym_grp!(
     #     Symmetry{4}(w -> sΠ_rot(w, mK_Γ)),
     # ], S.Πph)
 
-    if S.F0 isa NL_Vertex || S.F0 isa Vertex
-        F0_K2 = MeshFunction(meshes(S.F0.γp.K3, Val(1)), meshes(S.F0.γp.K3, Val(2)), mK_Γ; data_t = eltype(S))
-    elseif S.F0 isa RefVertex
-        F0_K2 = MeshFunction(meshes(S.F0.Fp_p, Val(1)), meshes(S.F0.Fp_p, Val(2)), mK_Γ; data_t = eltype(S))
-    end
     S.SG0pp2 = my_SymmetryGroup([
         Symmetry{3}(w -> sK2pp1( w, mK_Γ)),
         Symmetry{3}(w -> sK2pp2( w, mK_Γ)),
         Symmetry{3}(w -> sK2_ref(w, mK_Γ)),
         Symmetry{3}(w -> sK2_rot(w, mK_Γ)),
-    ], F0_K2)
+    ], S.L0pp)
     S.SG0ph2 = my_SymmetryGroup([
         Symmetry{3}(w -> sK2ph1( w, mK_Γ)),
         Symmetry{3}(w -> sK2ph2( w, mK_Γ)),
         Symmetry{3}(w -> sK2_ref(w, mK_Γ)),
         Symmetry{3}(w -> sK2_rot(w, mK_Γ)),
-    ], F0_K2)
+    ], S.L0pp)
 
     return nothing
 end
