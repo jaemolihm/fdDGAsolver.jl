@@ -28,7 +28,10 @@ function my_SymmetryGroup(
     # Remove a class if any element maps outside the box by any symmetry.
 
     SG = SymmetryGroup(symmetries, f)
-    filter!(class -> class_inbounds(class, symmetries, f), SG.classes)
+
+    # JML: We do not use the modified symmetrization scheme
+
+    # filter!(class -> class_inbounds(class, symmetries, f), SG.classes)
     SG
 end
 
@@ -41,19 +44,21 @@ function my_symmetrize!(
 
     err = zero(real(Q))
 
-    # Store the representative value of f for each class
-    ref_list = [f[class[1][1]] for class in SG.classes]
-    set!(f, 0)
+    # JML: We do not use the modified symmetrization scheme
 
-    for (class, ref) in zip(SG.classes, ref_list)
-        for (idx, op) in class
-            new_val = op(ref)
-            new_err = abs(f[idx] - new_val)
+    # # Store the representative value of f for each class
+    # ref_list = [f[class[1][1]] for class in SG.classes]
+    # set!(f, 0)
 
-            err = max(err, new_err)
-            f[idx] = new_val
-        end
-    end
+    # for (class, ref) in zip(SG.classes, ref_list)
+    #     for (idx, op) in class
+    #         new_val = op(ref)
+    #         new_err = abs(f[idx] - new_val)
+
+    #         err = max(err, new_err)
+    #         f[idx] = new_val
+    #     end
+    # end
 
     return err
 end
