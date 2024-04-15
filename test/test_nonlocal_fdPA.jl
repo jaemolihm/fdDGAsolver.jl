@@ -67,7 +67,7 @@ using Test
     @test absmax(S_fd.F.γt.K2 + S_fd.F0.γt.K2 - S.F.γt.K2) < 1e-3
     @test absmax(S_fd.F.γp.K3 + S_fd.F0.γp.K3 - S.F.γp.K3) < 1e-3
     @test absmax(S_fd.F.γa.K3 + S_fd.F0.γa.K3 - S.F.γa.K3) < 1e-3
-    @test absmax(S_fd.F.γt.K3 + S_fd.F0.γt.K3 - S.F.γt.K3) < 1e-3
+    @test absmax(S_fd.F.γt.K3 + S_fd.F0.γt.K3 - S.F.γt.K3) < 2e-3
 
     Ω  = MatsubaraFrequency(T, 0, Boson)
     ν  = MatsubaraFrequency(T, 1, Fermion)

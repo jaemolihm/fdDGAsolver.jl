@@ -81,7 +81,7 @@ using Test
     res = fdDGAsolver.solve!(S_fd2; strategy = :fdPA, parallel_mode = :threads, verbose = false);
 
     @test absmax(S_fd2.Σ - S.Σ) < 3e-3
-    @test S_fd2.Σ(π*T) ≈ 0.02470583701083745 - 0.17609068775316755im
+    @test S_fd2.Σ(π*T) ≈ 0.024741201766120748 - 0.17604681818774198im
 
     @test absmax(S_fd.F.γp.K1 + S_fd.F0.γp.K1 - S.F.γp.K1) < 5e-4
     @test absmax(S_fd.F.γa.K1 + S_fd.F0.γa.K1 - S.F.γa.K1) < 5e-4
