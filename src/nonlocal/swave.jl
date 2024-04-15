@@ -1,4 +1,19 @@
 # S-wave Brillouin point. When used to evaluate vertex, integrate over the corresponding momentum.
+#
+# When using getindex with an SWaveBrillouinPoint the respective momentum argument is summed over.
+# This is used in the BSE for the s-wave approximation of the vertex (i.e. where the vertex
+# is approximated to be independent of the fermionic momentum).
+#
+# This file implements the basic implementation for MeshFunction types.
+#
+# The Channel and Vertex implements short-circuit evaluation for the SWaveBrillouinPoint,
+# taking into account the channel conversion of the momentum.
+# For example, suppose we want to evaluate the a-channel K1 vertex in the p-channel momentum `(P, k, kSW)`.
+# A brute-force implementation would be `∑_{q} K1(convert_momentum(P, k, q, pCh, aCh)[1]) / N_q`.
+# But, one can do this more efficiently via `∑_{q} K1(k - q) / N_q = K1(kSW)`, which indices
+# the MeshFunction object only a single time, instead of `N_q` times.
+
+
 struct SWaveBrillouinPoint <: AbstractValue; end
 const kSW = SWaveBrillouinPoint()
 
