@@ -11,8 +11,6 @@
 ### TODO
 * Fix disk logging (e.g. per 10 iterations)
 * Fix reading Vertex (Currently done using quick-and-dirty try catch)
-* Optimize NL2 SDE
-* Bubble for NL can be swave only. Update bubbles and BSE's.
 
 
 ### TODO (Comments from Dominik)

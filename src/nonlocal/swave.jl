@@ -22,7 +22,7 @@ MatsubaraFunctions.mesh_index_bc(:: SWaveBrillouinPoint, :: KMesh) = SWaveBrillo
 
 
 function Base.getindex(
-    f  :: NL_MF_K1{Q},
+    f  :: Union{NL_MF_K1{Q}, NL_MF_G{Q}},
     w1 :: Union{MeshPoint, <: AbstractValue, Int, UnitRange, Colon},
        :: SWaveBrillouinPoint,
     )  :: Q where {Q}
