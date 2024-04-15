@@ -31,6 +31,26 @@ struct aCh <: ChannelTag end
 
 # spin components
 #----------------------------------------------------------------------------------------------#
+# We define two spin components: parallel `pSp` and crossed `xSp`.
+# All vertices are stored in the parallel spin component, and the crossed component is computed
+# on the fly using the following crossing symmetry relations.
+# ``Γp{xSp}(Ω, ν, ω) = -Γp{pSp}(Ω, ν, Ω - ω) = -Γp{pSp}(Ω, Ω - ν, ω)``
+# ``Γt{xSp}(Ω, ν, ω) = -Γa{pSp}(Ω, ω, ν)``
+# ``Γa{xSp}(Ω, ν, ω) = -Γt{pSp}(Ω, ω, ν)``
+
+# We also define the density `dSp` component, and use it to simplify some evaluations.
+# The density component is computed on the fly using the relation ``dSp = 2 * pSp + xSp``.
+# Since the t-channel BSE is diagonal in the `xSp` and `dSp` channels but not in the
+# `pSp` channel, we compute the t-channel BSE in `dSp`, and then subtract the `xSp` contribution
+# (which is -1 times the `pSp` term in a channel by crossing symmetry) and divide by 2 to
+# get the `pSp` component.
+
+# The physical spin basis in terms of singlet (S), triplet (T), density (D), and magnetic (M)
+# channels is given by
+# ``S = pSp - xSp``
+# ``T = pSp + xSp``
+# ``D = 2 * pSp + xSp = dSp``
+# ``M = xSp``
 
 """
     abstract type SpinTag end
