@@ -59,6 +59,7 @@ mutable struct ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
     mode::Symbol
 
     # Pre-evaluated vertices. To be used in the BSE of the K3 class
+    # See build_K3_cache.jl for details.
     cache_Γpx :: MF_K3{Q}
     cache_F0p :: MF_K3{Q}
     cache_F0a :: MF_K3{Q}

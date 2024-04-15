@@ -27,6 +27,6 @@
 - [ ] The method loading CTINT reference data, is that still working or is it outdated?
 - [x] in Dyson! Why do we not iterate over MeshPoints but the values? Is the Sigma grid different from the G grid?
 - [ ] Can you remind me of how you ultimately calculate the SDE and maybe document the different contributions?
-- [ ] Comment the K3 cache in a bit more detail please!
+- [x] Comment the K3 cache in a bit more detail please!
 - [ ] When using getindex with an SWaveBrillouinPoint the respective momentum argument is summed over. Where and why do we need that?
 - [ ] Split the three solvers into different branches
