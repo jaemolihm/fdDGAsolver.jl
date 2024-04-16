@@ -31,6 +31,7 @@ module fdDGAsolver
     include("BSE.jl")
     include("build_K3_cache.jl")
     include("solve.jl")
+    include("utility/load_triqs.jl")
 
     include("nonlocal/swave.jl")
     include("nonlocal/symmetries.jl")
@@ -115,6 +116,7 @@ module fdDGAsolver
         parquet_solver_hubbard_parquet_approximation,
         parquet_solver_hubbard_parquet_approximation_NL2,
         SDE!, BSE_K1!, BSE_K2!, BSE_K3!, BSE_L_K2!, BSE_L_K3!, build_K3_cache, iterate_solver!,
-        get_P_mesh, Dyson!, bubbles!
+        get_P_mesh, Dyson!, bubbles!,
+        load_vertex_from_triqs
 
 end
