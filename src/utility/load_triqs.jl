@@ -196,5 +196,5 @@ function load_vertex_from_triqs(prefix, T, U; half_filling = false)
         Γ.F0.Ft_x.data .= real.(Γ.F0.Ft_x.data)
     end
 
-    return Γ
+    return (; G, Σ, Γ, occ)
 end
