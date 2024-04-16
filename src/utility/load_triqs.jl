@@ -23,6 +23,7 @@ function load_vertex_from_triqs(prefix, T, U; half_filling = false)
 
     f = h5open(filename_G, "r")
     occ = h5read(filename_G, "density")
+    G0 = _drop_first_dim(load_triqs_gf(f, "cG0_k_iw"));
     G = _drop_first_dim(load_triqs_gf(f, "cG_k_iw"));
     Σ = _drop_first_dim(load_triqs_gf(f, "cSigma_k_iw"));
     close(f)
@@ -35,8 +36,18 @@ function load_vertex_from_triqs(prefix, T, U; half_filling = false)
     Σ.data .-= U/2
 
     # We factor out -im from G and Σ and store im * G and im * Σ
+    mult!(G0, im)
     mult!(G, im)
     mult!(Σ, im)
+
+
+    # Update G0 to take the chemical potential shift by U/2 into account
+    Σ_const = copy(G0)
+    G0_new = copy(G0)
+    set!(Σ_const, U/2 * im)
+    Dyson!(G0_new, Σ_const, G0)
+    G0 = G0_new
+
 
     #-----------------------------------------------------------------------------#
     # K1 vertex
@@ -168,6 +179,7 @@ function load_vertex_from_triqs(prefix, T, U; half_filling = false)
         # Since we factor out -im from them,, G and Σ are purely real.
         # The vertices are purely real.
         println("Half-filling violation")
+        println("G0    : ", maximum(abs.(imag.(G0.data))))
         println("G     : ", maximum(abs.(imag.(G.data))))
         println("Σ     : ", maximum(abs.(imag.(Σ.data))))
         println("γp.K1 : ", maximum(abs.(imag.(Γ.γp.K1.data))))
@@ -182,8 +194,9 @@ function load_vertex_from_triqs(prefix, T, U; half_filling = false)
         println("Ft_x  : ", maximum(abs.(imag.(Γ.F0.Ft_x.data))))
 
         println("Imposing half-filling...")
-        G.data .= real.(G.data)
-        Σ.data .= real.(Σ.data)
+        G0.data .= real.(G0.data)
+        G.data  .= real.(G.data)
+        Σ.data  .= real.(Σ.data)
         Γ.γp.K1.data .= real.(Γ.γp.K1.data)
         Γ.γt.K1.data .= real.(Γ.γt.K1.data)
         Γ.γa.K1.data .= real.(Γ.γa.K1.data)
@@ -196,5 +209,5 @@ function load_vertex_from_triqs(prefix, T, U; half_filling = false)
         Γ.F0.Ft_x.data .= real.(Γ.F0.Ft_x.data)
     end
 
-    return (; G, Σ, Γ, occ)
+    return (; G0, G, Σ, Γ, occ)
 end
