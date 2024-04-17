@@ -29,3 +29,13 @@ function Dyson!(
 
     return nothing
 end
+
+function compute_occupation(
+    G :: MF_G
+) :: Float64
+    return 0.5 + imag(sum(G.data)) * temperature(meshes(G, Val(1)))
+end
+
+function compute_occupation(G :: NL_MF_G)
+    return 0.5 + imag(sum(G.data)) * temperature(meshes(G, Val(1))) / length(meshes(G, Val(2)))
+end

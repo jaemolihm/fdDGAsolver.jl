@@ -357,9 +357,3 @@ function self_energy_sanity_check(Σ)
     end
     passed
 end
-
-function compute_occupation(
-    G :: MF_G
-) :: Float64
-    return 0.5 + imag(sum(G.data)) * temperature(meshes(G, Val(1)))
-end

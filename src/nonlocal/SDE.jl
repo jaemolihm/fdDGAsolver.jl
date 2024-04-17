@@ -418,7 +418,3 @@ function self_energy_sanity_check(Σ :: NL_MF_G)
     end
     passed
 end
-
-function compute_occupation(G :: NL_MF_G)
-    return 0.5 + imag(sum(G.data)) * temperature(meshes(G, Val(1))) / length(meshes(G, Val(2)))
-end
