@@ -90,7 +90,7 @@ function fixed_point_preconditioned!(
 
     # Precondition output
     res = Krylov.dqgmres(mfRGLinearMap(S), R;
-        atol = 1e-5, rtol = 1e-5, itmax = 400,
+        atol = 1e-8, rtol = 1e-8, itmax = 400,
         memory = 400, verbose = 0, history = true);
 
     if !res[2].solved
@@ -257,11 +257,39 @@ function solve_using_mfRG_mix_G!(
     occ_target = nothing,
     hubbard_params = nothing,
     mixing_G_init = 1.0,
+    iter_restart = 0,
+    tol = 1e-4,
+    auto_restart = false,
     )
+
+    if auto_restart && filename_log !== nothing
+        iter = findlast(i -> isfile("$filename_log.iter$i.h5"), 1:100)
+        if iter !== nothing
+            iter_restart = iter
+        end
+    end
 
     mixing_G = mixing_G_init
 
-    iter = 0
+    if iter_restart !== 0
+        # Restart from file
+        filename = "$filename_log.iter$iter_restart.h5"
+        mpi_ismain() && println("Restarting from $filename")
+        f = h5open(filename, "r")
+        set!(S.G,  load_mesh_function(f, "G"))
+        set!(S.Σ,  load_mesh_function(f, "Σ"))
+        set!(S.G0, load_mesh_function(f, "G0"))
+        set!(S.Σ0, load_mesh_function(f, "Σ0"))
+        set!(S.Π0pp, load_mesh_function(f, "Π0pp"))
+        set!(S.Π0ph, load_mesh_function(f, "Π0ph"))
+        set!(S.Πpp, load_mesh_function(f, "Πpp"))
+        set!(S.Πph, load_mesh_function(f, "Πph"))
+        set!(S.F,  fdDGAsolver.load_vertex(NL2_Vertex, f, "F"))
+        set!(S.F0, fdDGAsolver.load_vertex(NL2_Vertex, f, "F0"))
+        close(f)
+    end
+
+    iter = iter_restart
 
     for iter_ in 1:maxiter
         iter += 1
@@ -286,8 +314,8 @@ function solve_using_mfRG_mix_G!(
         @time res = nlsolve((R, x) -> fixed_point_preconditioned!(R, x, S; kwargs_solver_vertex...), flatten(S.F),
             method = :anderson,
             iterations = 200,
-            ftol = 1e-4,
-            beta = 0.85,
+            ftol = tol,
+            beta = 1.0,
             m = 100,
             show_trace = mpi_ismain() && verbose,
         );
@@ -348,7 +376,7 @@ function solve_using_mfRG_mix_G!(
         if mpi_ismain()
             println("Self-energy error: $Σ_err")
 
-            if Σ_err < 1e-4
+            if Σ_err < tol
                 break
             end
         end

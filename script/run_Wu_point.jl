@@ -9,9 +9,18 @@ using MatsubaraFunctions: mesh_index
 using fdDGAsolver: numP_Γ, k0, kSW
 using fdDGAsolver: sK1pp, sK2pp1, sK2pp2, sK3pp1, sK3pp2, sK3pp3, my_SymmetryGroup, sK1ph, sK2ph1, sK2ph2, sK3ph1, sK3ph2, sK3ph3
 
-function solve(nmax, nq, nl_method; filename_log = nothing)
+"""
+- `nmax` : Frequency box size
+- `nq` : Momentum grid size
+- `nl_method` : 1 for s-wave, 2 for K2(k,q)
+- `filename_log` : Prefix of the file name. Files `filename_log.iter#.h5` will be created
+                   for every self-energy iteration.
+- `auto_restart` : If true, restart from the last log file.
+"""
+function solve(nmax, nq, nl_method; filename_log = nothing, auto_restart = true)
     mpi_ismain() && println("Solve Wu point, nmax = $nmax, nq = $nq, NL $nl_method")
 
+    # --------------------------------------------------------------------------------
     # System parameters
     T = 0.2
     U = 5.6
@@ -22,10 +31,12 @@ function solve(nmax, nq, nl_method; filename_log = nothing)
     k1 = 2pi * SVector(1., 0.)
     k2 = 2pi * SVector(0., 1.)
 
+    # --------------------------------------------------------------------------------
     # Load impurity vertex
     prefix = "/home/ucl/modl/jmlihm/MFjl/data/beta5.0_t-1.0_U5.6_mu2.1800201007694464_numc1_numk255"
     data_triqs = load_vertex_from_triqs(prefix, T, U; half_filling = false)
 
+    # --------------------------------------------------------------------------------
     # Symmetrize impurity vertex
     Γ = data_triqs.Γ
     # particle-particle channel
@@ -48,6 +59,7 @@ function solve(nmax, nq, nl_method; filename_log = nothing)
     SGph3(Γ.F0.Ft_p)
     SGph3(Γ.F0.Ft_x)
 
+    # --------------------------------------------------------------------------------
     # Solver parameters
     nG  = 4nmax
     nK1 = 4nmax
@@ -57,6 +69,7 @@ function solve(nmax, nq, nl_method; filename_log = nothing)
     mK_G = BrillouinZoneMesh(BrillouinZone(48, k1, k2))
     mK_Γ = BrillouinZoneMesh(BrillouinZone(nq, k1, k2))
 
+    # --------------------------------------------------------------------------------
 
     # Set reference Green function and self-energy
     mG = MatsubaraMesh(T, nG, Fermion)
@@ -70,6 +83,7 @@ function solve(nmax, nq, nl_method; filename_log = nothing)
         view(Σ0, ν, :) .= data_triqs.Σ(value(ν))
     end
 
+    # --------------------------------------------------------------------------------
     # Sanity check: impurity Dyson equation
     G_from_Dyson = copy(Gbare)
     Dyson!(G_from_Dyson, Σ0, Gbare)
@@ -79,7 +93,8 @@ function solve(nmax, nq, nl_method; filename_log = nothing)
     occ_target = compute_occupation(G_from_Dyson)
     mpi_ismain() && @info "occ_G_TRIQS - occ_G_Dyson = ", compute_occupation(data_triqs.G) - compute_occupation(G_from_Dyson)
 
-
+    # --------------------------------------------------------------------------------
+    # Initialize ParquetSolver
     if nl_method == 1
         F0 = NL_Vertex(data_triqs.Γ, T, nK1, nK2, nK3, mK_Γ)
         S = NL_ParquetSolver(nK1, nK2, nK3, mK_Γ, Gbare, copy(G0), copy(Σ0), F0; mode = :hybrid)
@@ -91,8 +106,10 @@ function solve(nmax, nq, nl_method; filename_log = nothing)
     init_sym_grp!(S)
     mpi_ismain() && @info "size of S = $(Base.summarysize(S) / 1e9) GB"
 
+    # --------------------------------------------------------------------------------
+    # Run mfRG solver
 
-    fdDGAsolver.solve_using_mfRG_mix_G!(S; filename_log, maxiter = 200, occ_target, hubbard_params = (; t1, t2), mixing_G_init = 0.5)
+    fdDGAsolver.solve_using_mfRG_mix_G!(S; filename_log, maxiter = 200, occ_target, hubbard_params = (; t1, t2), mixing_G_init = 0.2, tol = 2e-4, auto_restart)
 
 
     return S
@@ -102,6 +119,7 @@ nmax = parse(Int, ARGS[1])
 nq   = parse(Int, ARGS[2])
 nl_method = parse(Int, ARGS[3])
 
-filename_log = "/globalscratch/ucl/modl/jmlihm/temp/Wu.mix_G.NL$nl_method.nmax$nmax.nq$nq"
+# filename_log = "/globalscratch/ucl/modl/jmlihm/temp/Wu.mix_G.NL$nl_method.nmax$nmax.nq$nq"
+filename_log = nothing
 
 S = solve(nmax, nq, nl_method; filename_log);
