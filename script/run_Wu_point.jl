@@ -9,6 +9,13 @@ using MatsubaraFunctions: mesh_index
 using fdDGAsolver: numP_Γ, k0, kSW
 using fdDGAsolver: sK1pp, sK2pp1, sK2pp2, sK3pp1, sK3pp2, sK3pp3, my_SymmetryGroup, sK1ph, sK2ph1, sK2ph2, sK3ph1, sK3ph2, sK3ph3
 
+# JML note
+# `julia -t 8 jun_Wu_point.jl 6 6 2` takes a few minutes per nlsolve iteration.
+# It involves ~200 mfRG iterations and a single fdDGammaA iteration.
+# To directly call these functions, use the following.
+# @time fdDGAsolver.mfRGLinearMap(S) * flatten(S.F); # mfRG iteration
+# @time iterate_solver!(S; strategy = :fdPA, update_Σ = false); # fdDGammaA iteration
+
 """
 - `nmax` : Frequency box size
 - `nq` : Momentum grid size
