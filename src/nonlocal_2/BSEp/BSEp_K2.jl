@@ -80,3 +80,46 @@ function BSE_K2!(
 
     return nothing
 end
+
+
+
+function BSE_K2_mfRG!(
+    S :: NL2_ParquetSolver{Q},
+      :: Type{pCh}
+    ) :: Nothing where {Q}
+
+    # model the diagram
+    @inline function diagram(wtpl)
+
+        Ω, ν, P, k = wtpl
+        val     = zero(Q)
+        Π0slice = view(S.Π0pp, Ω, :, P, :)
+
+        for iq in axes(Π0slice, 2)
+            q = value(meshes(S.Π0pp, Val(4))[iq])
+
+            F0view = fixed_momentum_view(S.F0, P,     k,  q, pCh)
+            FLview = fixed_momentum_view(S.FL, P, P - q, k0, pCh)
+
+            for iω in axes(Π0slice, 1)
+                ω = value(meshes(S.Π0pp, Val(2))[iω])
+
+                # vertices
+                Fl  = F0view(Ω,     ν,    ω, pCh, pSp) - F0view(Ω, νInf, ω, pCh, pSp)
+                FLr = FLview(Ω, Ω - ω, νInf, pCh, pSp)
+
+                # 1ℓ and central part
+                val += Fl * Π0slice[iω, iq] * FLr
+            end
+        end
+
+        return temperature(S) * val / numP_Γ(S)
+    end
+
+    # compute K2
+    S.SGpp[2](S.Fbuff.γp.K2, InitFunction{4, Q}(diagram); mode = S.mode)
+
+    add!(S.Fbuff.γp.K2, S.FL.γp.K2)
+
+    return nothing
+end

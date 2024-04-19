@@ -39,3 +39,19 @@ end
 function compute_occupation(G :: NL_MF_G)
     return 0.5 + imag(sum(G.data)) * temperature(meshes(G, Val(1))) / length(meshes(G, Val(2)))
 end
+
+
+# Compute chemical potential of the Hubbard model that gives the given the occupation
+function compute_hubbard_chemical_potential(occ_target, Σ, hubbard_params)
+    G_tmp = copy(Σ)
+
+    function occupation(μ)
+        Gbare = hubbard_bare_Green(meshes(Σ)...; μ, hubbard_params...)
+        Dyson!(G_tmp, Σ, Gbare)
+        compute_occupation(G_tmp)
+    end
+
+    μ = find_zero(μ -> occupation(μ) - occ_target, (-4 * abs(hubbard_params.t1), 4 * abs(hubbard_params.t1)))
+
+    return μ
+end

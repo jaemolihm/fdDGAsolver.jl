@@ -65,3 +65,40 @@ function BSE_K2!(
 
     return nothing
 end
+
+
+
+# Note: K2 contributions to right part always vanishes
+function BSE_K2_mfRG!(
+    S :: ParquetSolver{Q},
+      :: Type{aCh}
+    ) :: Nothing where {Q}
+
+    # model the diagram
+    @inline function diagram(wtpl)
+
+        Ω, ν    = wtpl
+        val     = zero(Q)
+        Π0slice = view(S.Π0ph, Ω, :)
+
+        for i in eachindex(Π0slice)
+            ω = value(meshes(S.Π0ph, Val(2))[i])
+
+            # vertices
+            Fl  = S.F0(Ω, ν, ω, aCh, pSp) - S.F0(Ω, νInf, ω, aCh, pSp)
+            FLr = S.FL(Ω, ω, νInf, aCh, pSp)
+
+            # 1ℓ and central part
+            val += Fl * Π0slice[i] * FLr
+        end
+
+        return temperature(S) * val
+    end
+
+    # compute K2
+    S.SGph[2](S.Fbuff.γa.K2, InitFunction{2, Q}(diagram); mode = S.mode)
+
+    add!(S.Fbuff.γa.K2, S.FL.γa.K2)
+
+    return nothing
+end

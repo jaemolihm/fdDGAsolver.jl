@@ -76,3 +76,45 @@ function BSE_K2!(
 
     return nothing
 end
+
+
+
+function BSE_K2_mfRG!(
+    S :: NL_ParquetSolver{Q},
+      :: Type{tCh}
+    ) :: Nothing where {Q}
+
+    # model the diagram
+    @inline function diagram(wtpl)
+
+        Ω, ν, P = wtpl
+        val     = zero(Q)
+        Π0slice = view(S.Π0ph, Ω, :, P)
+
+        for i in eachindex(Π0slice)
+            ω = value(meshes(S.Π0ph, Val(2))[i])
+
+            # vertices
+            Fl  = S.F0(Ω, ν,    ω, P, kSW, kSW, tCh, dSp) - S.F0(Ω, νInf, ω, P, kSW, kSW, tCh, dSp)
+            FLr = S.FL(Ω, ω, νInf, P, kSW, kSW, tCh, dSp)
+
+            # 1ℓ and central part
+            val -= Fl * Π0slice[i] * FLr
+        end
+
+        return temperature(S) * val
+    end
+
+    # compute K2
+    S.SGph[2](S.Fbuff.γt.K2, InitFunction{3, Q}(diagram); mode = S.mode)
+
+    mult_add!(S.Fbuff.γt.K2, S.FL.γt.K2, 2)
+    mult_add!(S.Fbuff.γt.K2, S.FL.γa.K2, -1)
+
+    # Currently S.Fbuff.γt.K2 has γtd = 2 γtp + γtx = 2 γtp - γax
+    # We want to store γtp = (γtd + γax) / 2
+    add!(S.Fbuff.γt.K2, S.Fbuff.γa.K2)
+    S.Fbuff.γt.K2.data ./= 2
+
+    return nothing
+end

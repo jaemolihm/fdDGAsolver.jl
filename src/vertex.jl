@@ -411,7 +411,11 @@ function load_vertex(
         try
             F0 = load_vertex(Vertex, file, label * "/F0")
         catch
-            F0 = load_vertex(NL_Vertex, file, label * "/F0")
+            try
+                F0 = load_vertex(NL_Vertex, file, label * "/F0")
+            catch
+                F0 = load_vertex(NL2_Vertex, file, label * "/F0")
+            end
         end
     end
     γp = load_channel(channel_type(T), file, label * "/γp")

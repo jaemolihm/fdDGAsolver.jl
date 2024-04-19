@@ -297,10 +297,14 @@ function MatsubaraFunctions.save!(
     MatsubaraFunctions.save!(f, "G0", S.G0)
     MatsubaraFunctions.save!(f, "Σ0", S.Σ0)
     MatsubaraFunctions.save!(f, "F0", S.F0)
+    MatsubaraFunctions.save!(f, "Π0pp", S.Π0pp)
+    MatsubaraFunctions.save!(f, "Π0ph", S.Π0ph)
 
     MatsubaraFunctions.save!(f, "G", S.G)
     MatsubaraFunctions.save!(f, "Σ", S.Σ)
     MatsubaraFunctions.save!(f, "F", S.F)
+    MatsubaraFunctions.save!(f, "Πpp", S.Πpp)
+    MatsubaraFunctions.save!(f, "Πph", S.Πph)
 
     return nothing
 end

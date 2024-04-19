@@ -33,3 +33,38 @@ function BSE_K1!(
 
     return nothing
 end
+
+
+# Note: K1 contributions to left and right part always vanish
+function BSE_K1_mfRG!(
+    S :: NL2_ParquetSolver{Q},
+      :: Type{aCh}
+    ) :: Nothing where {Q}
+
+    # model the diagram
+    @inline function diagram(wtpl)
+
+        Ω, P    = wtpl
+        val     = zero(Q)
+        Π0slice = view(S.Π0ph, Ω, :, P, :)
+
+        for i in eachindex(Π0slice)
+            ω = value(meshes(S.Π0ph, Val(2))[i.I[1]])
+            q = value(meshes(S.Π0ph, Val(4))[i.I[2]])
+
+            # vertices
+            Fl  = S.F0( Ω, νInf, ω, P, k0,  q, aCh, pSp)
+            FLr = S.FL(Ω, ω, νInf, P,  q, k0, aCh, pSp)
+
+            # 1ℓ and central part
+            val += Fl * Π0slice[i] * FLr
+        end
+
+        return temperature(S) * val / numP_Γ(S)
+    end
+
+    # compute K1
+    S.SGph[1](S.Fbuff.γa.K1, InitFunction{2, Q}(diagram); mode = S.mode)
+
+    return nothing
+end

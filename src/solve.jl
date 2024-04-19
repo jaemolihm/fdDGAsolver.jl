@@ -49,29 +49,11 @@ function iterate_solver!(S :: AbstractSolver;
     # Symmetrize F (symmetry can be broken during reduction)
     my_symmetrize!(S)
 
-    # update Σ
     if update_Σ
-
-        if strategy === :scPA
-            SDE!(S)
-        elseif strategy === :fdPA
-            # Σ = SDE(ΔΓ, Π, G)
-            SDE!(S; include_U² = false, include_Hartree = false)
-            #   + SDE(Γ₀, Π, G)
-            add!(S.Σ, SDE!(copy(S.Σ), S.G, S.Πpp, S.Πph, S.L0pp, S.L0ph, S.F0, S.SGΣ, S.SG0pp2, S.SG0ph2; S.mode))
-            #   - SDE(Γ₀, Π₀, G₀)
-            mult_add!(S.Σ, SDE!(copy(S.Σ), S.G0, S.Π0pp, S.Π0ph, S.L0pp, S.L0ph, S.F0, S.SGΣ, S.SG0pp2, S.SG0ph2; S.mode), -1)
-            #   + Σ₀
-            add!(S.Σ, S.Σ0)
-
-            # # Using K12
-            # SDE_using_K12!(S)
-            # add!(S.Σ, SDE_using_K12!(copy(S.Σ), S.G - S.G0, S.F0, S.SGΣ; S.mode, include_Hartree = false))
-            # add!(S.Σ, SDE_using_K12!(copy(S.Σ), S.G0, S.F0, S.SGΣ; S.mode, include_Hartree = false))
-        end
+        # update self-energy
+        SDE!(S; strategy)
 
         self_energy_sanity_check(S.Σ)
-
     end
 
     return nothing

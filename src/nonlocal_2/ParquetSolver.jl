@@ -114,13 +114,9 @@ mutable struct NL2_ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
 
         # Vertices for the SDE
         Lpp = copy(F.γp.K2)
-        Lph = copy(Lpp)
-        if F0 isa AbstractVertex
-            L0pp = MeshFunction(meshes(F0.γp.K3, Val(1)), meshes(F0.γp.K3, Val(2)), mK_Γ, mK_Γ; data_t = Q)
-        elseif F0 isa RefVertex
-            L0pp = MeshFunction(meshes(F0.Fp_p, Val(1)), meshes(F0.Fp_p, Val(2)), mK_Γ, mK_Γ; data_t = Q)
-        end
-        L0ph = copy(L0pp)
+        Lph  = copy(Lpp)
+        L0pp = copy(Lpp)
+        L0ph = copy(Lpp)
 
         # symmetry groups
         SGΣ = SymmetryGroup(Σ)
