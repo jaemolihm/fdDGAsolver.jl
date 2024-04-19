@@ -104,22 +104,22 @@ function BSE_K2_mfRG!(
 
         Ω, ν, P, k = wtpl
         val     = zero(Q)
-        Π0slice = view(S.Π0ph, Ω, :, P, :)
+        Π0slice = MeshFunction((meshes(S.Π0ph, Val(2)), meshes(S.Π0ph, Val(4))), view(S.Π0ph, Ω, :, P, :))
 
-        for iq in axes(Π0slice, 2)
-            q = value(meshes(S.Π0ph, Val(4))[iq])
+        for iq in eachindex(meshes(S.Fbuff.γa.K2, Val(4)))
+            q = value(meshes(S.Fbuff.γa.K2, Val(4))[iq])
             F0view = fixed_momentum_view(S.F0, P, k,  q, tCh)
             FLview = fixed_momentum_view(S.FL, P, q, k0, tCh)
 
-            for iω in axes(Π0slice, 1)
-                ω = value(meshes(S.Π0ph, Val(2))[iω])
+            for iω in eachindex(meshes(S.Fbuff.γp.K2, Val(2)))
+                ω = value(meshes(S.Fbuff.γp.K2, Val(2))[iω])
 
                 # vertices
                 Fl  = F0view(Ω, ν,    ω, tCh, dSp) - F0view(Ω, νInf, ω, tCh, dSp)
                 FLr = FLview(Ω, ω, νInf, tCh, dSp)
 
                 # 1ℓ and central part
-                val -= Fl * Π0slice[iω, iq] * FLr
+                val -= Fl * Π0slice(ω, q) * FLr
             end
         end
 

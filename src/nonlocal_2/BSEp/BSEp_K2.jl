@@ -93,23 +93,22 @@ function BSE_K2_mfRG!(
 
         Ω, ν, P, k = wtpl
         val     = zero(Q)
-        Π0slice = view(S.Π0pp, Ω, :, P, :)
+        Π0slice = MeshFunction((meshes(S.Π0pp, Val(2)), meshes(S.Π0pp, Val(4))), view(S.Π0pp, Ω, :, P, :))
 
-        for iq in axes(Π0slice, 2)
-            q = value(meshes(S.Π0pp, Val(4))[iq])
-
+        for iq in eachindex(meshes(S.Fbuff.γp.K2, Val(4)))
+            q = value(meshes(S.Fbuff.γp.K2, Val(4))[iq])
             F0view = fixed_momentum_view(S.F0, P,     k,  q, pCh)
             FLview = fixed_momentum_view(S.FL, P, P - q, k0, pCh)
 
-            for iω in axes(Π0slice, 1)
-                ω = value(meshes(S.Π0pp, Val(2))[iω])
+            for iω in eachindex(meshes(S.Fbuff.γp.K2, Val(2)))
+                ω = value(meshes(S.Fbuff.γp.K2, Val(2))[iω])
 
                 # vertices
-                Fl  = F0view(Ω,     ν,    ω, pCh, pSp) - F0view(Ω, νInf, ω, pCh, pSp)
-                FLr = FLview(Ω, Ω - ω, νInf, pCh, pSp)
+                Fl  = F0view(Ω, ν, Ω - ω, pCh, pSp) - F0view(Ω, νInf, Ω - ω, pCh, pSp)
+                FLr = FLview(Ω, ω,  νInf, pCh, pSp)
 
                 # 1ℓ and central part
-                val += Fl * Π0slice[iω, iq] * FLr
+                val += Fl * Π0slice(Ω - ω, q) * FLr
             end
         end
 

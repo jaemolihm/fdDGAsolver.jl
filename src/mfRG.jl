@@ -285,7 +285,7 @@ function solve_using_mfRG_mix_G!(
         kwargs_solver_vertex = (; update_Σ = false, strategy = :fdPA)
         @time res = nlsolve((R, x) -> fixed_point_preconditioned!(R, x, S; kwargs_solver_vertex...), flatten(S.F),
             method = :anderson,
-            iterations = 150,
+            iterations = 200,
             ftol = 1e-4,
             beta = 0.85,
             m = 100,
@@ -302,7 +302,7 @@ function solve_using_mfRG_mix_G!(
             continue
         else
             # If the calculation converged, increate mixing.
-            mixing_G = min(1.0, mixing_G * 1.1)
+            mixing_G = min(1.0, mixing_G * 1.2)
             mpi_ismain() && println("Calculation converged, increase mixing_G to $mixing_G")
         end
         unflatten!(S.F, res.zero);
