@@ -23,7 +23,7 @@ using fdDGAsolver: numP_Γ, k0, kSW
                    for every self-energy iteration.
 - `auto_restart` : If true, restart from the last log file.
 """
-function solve(nmax, nq, nl_method; filename_log = nothing, auto_restart = true)
+function solve(nmax, nq, nl_method; filename_log = nothing, auto_restart = true, tol = 1e-3)
     mpi_ismain() && println("Solve Wu point, nmax = $nmax, nq = $nq, NL $nl_method")
 
     # --------------------------------------------------------------------------------
@@ -43,8 +43,8 @@ function solve(nmax, nq, nl_method; filename_log = nothing, auto_restart = true)
     # Solver parameters
     nG  = 4nmax
     nK1 = 4nmax
-    nK2 = (nmax + 1, nmax)
-    nK3 = (nmax + 1, nmax)
+    nK2 = (nmax, nmax)
+    nK3 = (nmax, nmax)
 
     mK_G = BrillouinZoneMesh(BrillouinZone(48, k1, k2))
     mK_Γ = BrillouinZoneMesh(BrillouinZone(nq, k1, k2))
@@ -89,7 +89,7 @@ function solve(nmax, nq, nl_method; filename_log = nothing, auto_restart = true)
     # --------------------------------------------------------------------------------
     # Run mfRG solver
 
-    fdDGAsolver.solve_using_mfRG_mix_G!(S; filename_log, maxiter = 200, occ_target, hubbard_params = (; t1, t2), mixing_G_init = 0.2, tol = 2e-4, auto_restart)
+    fdDGAsolver.solve_using_mfRG!(S; filename_log, maxiter = 200, occ_target, hubbard_params = (; t1, t2), mixing_init = 0.2, tol, auto_restart)
 
 
     return S
@@ -99,7 +99,6 @@ nmax = parse(Int, ARGS[1])
 nq   = parse(Int, ARGS[2])
 nl_method = parse(Int, ARGS[3])
 
-# filename_log = "/globalscratch/ucl/modl/jmlihm/temp/Wu.mix_G.NL$nl_method.nmax$nmax.nq$nq"
-filename_log = nothing
+filename_log = "/globalscratch/ucl/modl/jmlihm/temp/Wu.mix_bubble.NL$nl_method.nmax$nmax.nq$nq"
 
 S = solve(nmax, nq, nl_method; filename_log);

@@ -3,10 +3,6 @@ MPI.Init()
 using fdDGAsolver
 using MatsubaraFunctions
 using StaticArrays
-using LinearAlgebra
-using HDF5
-using MatsubaraFunctions: mesh_index
-using fdDGAsolver: numP_Γ, k0, kSW
 
 function run_benchmark(nmax, nq)
     # System parameters
@@ -23,8 +19,8 @@ function run_benchmark(nmax, nq)
 
     nG  = 4nmax
     nK1 = 4nmax
-    nK2 = (nmax + 1, nmax)
-    nK3 = (nmax + 1, nmax)
+    nK2 = (nmax, nmax)
+    nK3 = (nmax, nmax)
 
     mK_G = BrillouinZoneMesh(BrillouinZone(48, k1, k2))
     mK_Γ = BrillouinZoneMesh(BrillouinZone(nq, k1, k2))
@@ -61,11 +57,22 @@ function run_benchmark(nmax, nq)
     mpi_barrier()
 
     mpi_ismain() && println(" === mfRGLinearMap ===")
-    a = mfRGLinearMap(S)
-    x = flatten(S.F)
-    @time a * x
-    @time a * x
-    @time a * x
+    a = fdDGAsolver.mfRGLinearMap(S);
+    x = flatten(S.F);
+    @time a * x;
+    @time a * x;
+    @time a * x;
+
+    mpi_barrier()
+
+    mpi_ismain() && println(" === solve_using_mfRG! ===")
+    F0 = NL2_Vertex(data_triqs.Γ, T, nK1, nK2, nK3, mK_Γ)
+    S = NL2_ParquetSolver(nK1, nK2, nK3, mK_Γ, Gbare, copy(G0), copy(Σ0), F0; mode = :hybrid)
+    init_sym_grp!(S)
+    occ_target = compute_occupation(S.G)
+    @time fdDGAsolver.solve_using_mfRG!(S; filename_log = nothing, maxiter = 1, occ_target, hubbard_params = (; t1, t2), mixing_init = 0.2, tol=100.0);
+
+    return nothing
 end
 
-run_benchmark(6, 6)
+run_benchmark(4, 8);
