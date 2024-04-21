@@ -95,78 +95,70 @@ end
 
 
 function build_K3_cache_mfRG!(
-    S :: NL2_ParquetSolver{Q}
+    S :: NL2_ParquetSolver{Q},
+    is_first_iteration :: Bool,
     ) where {Q}
+
+    # If `is_first_iteration = true`, compute F0 and Γ.
+    # If `is_first_iteration = false`, compute Γ.
 
     # The case (3) `cache_F*` is now computed with the reference vertex, not the target vertex.
 
-    set!(S.cache_Γpx, 0)
-    set!(S.cache_F0p, 0)
-    set!(S.cache_F0a, 0)
-    set!(S.cache_F0t, 0)
-    set!(S.cache_Γpp, 0)
-    set!(S.cache_Γa,  0)
-    set!(S.cache_Γt,  0)
-    set!(S.cache_Fp,  0)
-    set!(S.cache_Fa,  0)
-    set!(S.cache_Ft,  0)
-
     # Vertices multiplied by bubbles from the left
-
-    Threads.@threads for i in mpi_split(1 : length(S.cache_Γpx.data))
-        Ω, ω, νp, P = value.(MatsubaraFunctions.to_meshes(S.cache_Γpx, i))
-
-        S.cache_Γpx[i] = S.F( Ω, ω, νp, P, kSW, kSW, pCh, xSp; F0=false, γp=false)
-
-        # S.cache_F0p[i] = ( S.F0(Ω, ω,   νp, P, kSW, kSW, pCh, xSp)
-        #                  - S.F0(Ω, ω, νInf, P, kSW, kSW, pCh, xSp) )
-        # S.cache_F0a[i] = ( S.F0(Ω, ω,   νp, P, kSW, kSW, aCh, pSp)
-        #                  - S.F0(Ω, ω, νInf, P, kSW, kSW, aCh, pSp) )
-        # S.cache_F0t[i] = ( S.F0(Ω, ω,   νp, P, kSW, kSW, tCh, pSp)
-        #                  - S.F0(Ω, ω, νInf, P, kSW, kSW, tCh, pSp) )
-
-        # Convert from pSp (parallel spin component) to dSp (density component)
-        # using the relation dSp = 2 * pSp + xSp = 2 * pSp - pSp(a) (crossing symmetry)
-        S.cache_F0t[i] = 2 * S.cache_F0t[i] - S.cache_F0a[i]
+    @inline function diagram_Γpx(wtpl)
+        Ω, ω, νp, P = wtpl
+        return S.F(Ω, ω, νp, P, kSW, kSW, pCh, xSp; F0=false, γp=false)
     end
-
-    mpi_allreduce!(S.cache_Γpx)
-    mpi_allreduce!(S.cache_F0p)
-    mpi_allreduce!(S.cache_F0a)
-    mpi_allreduce!(S.cache_F0t)
+    S.SGpp[3](S.cache_Γpx, InitFunction{4, Q}(diagram_Γpx); mode = S.mode)
 
 
     # Vertices multiplied by bubbles from the right
+    @inline function diagram_Γpp(wtpl)
+        Ω, ν, ω, P = wtpl
+        return S.F(Ω, ν, ω, P, kSW, kSW, pCh, pSp; F0=false, γp=false)
+    end
+    @inline function diagram_Γa(wtpl)
+        Ω, ν, ω, P = wtpl
+        return S.F(Ω, ν, ω, P, kSW, kSW, aCh, pSp; F0=false, γa=false)
+    end
+    @inline function diagram_Γt(wtpl)
+        Ω, ν, ω, P = wtpl
+        return S.F(Ω, ν, ω, P, kSW, kSW, tCh, pSp; F0=false, γt=false)
+    end
 
-    Threads.@threads for i in mpi_split(1 : length(S.cache_Γpp.data))
-        Ω, ν, ω, P = value.(MatsubaraFunctions.to_meshes(S.cache_Γpp, i))
+    S.SGpp[3](S.cache_Γpp, InitFunction{4, Q}(diagram_Γpp); mode = S.mode)
+    S.SGph[3](S.cache_Γa,  InitFunction{4, Q}(diagram_Γa); mode = S.mode)
+    S.SGph[3](S.cache_Γt,  InitFunction{4, Q}(diagram_Γt); mode = S.mode)
 
-        # r-irreducible vertex in each channel r = p, a, t
-        S.cache_Γpp[i] = S.F(Ω, ν, ω, P, kSW, kSW, pCh, pSp; F0=false, γp=false)
-        S.cache_Γa[i]  = S.F(Ω, ν, ω, P, kSW, kSW, aCh, pSp; F0=false, γa=false)
-        S.cache_Γt[i]  = S.F(Ω, ν, ω, P, kSW, kSW, tCh, pSp; F0=false, γt=false)
+    # Convert from pSp (parallel spin component) to dSp (density component)
+    # using the relation dSp = 2 * pSp + xSp = 2 * pSp - pSp(a) (crossing symmetry)
+    @. S.cache_Γt.data = S.cache_Γt.data * 2 - S.cache_Γa.data
 
-        # Total vertex in each channel. We compute the reducible part and add the
-        # irreducible part computed above
-        S.cache_Fp[i]  = ( S.F0(Ω,    ν, ω, P, kSW, kSW, pCh, pSp)
-                         - S.F0(Ω, νInf, ω, P, kSW, kSW, pCh, pSp) )
-        S.cache_Fa[i]  = ( S.F0(Ω,    ν, ω, P, kSW, kSW, aCh, pSp)
-                         - S.F0(Ω, νInf, ω, P, kSW, kSW, aCh, pSp) )
-        S.cache_Ft[i]  = ( S.F0(Ω,    ν, ω, P, kSW, kSW, tCh, pSp)
-                         - S.F0(Ω, νInf, ω, P, kSW, kSW, tCh, pSp) )
+
+    if is_first_iteration
+        # Reference vertex. Needs to be cached only in the first mfRG iteration.
+
+        @inline function diagram_F0p(wtpl)
+            Ω, ν, ω, P = wtpl
+            return S.F0(Ω, ν, ω, P, kSW, kSW, pCh, pSp) - S.F0(Ω, νInf, ω, P, kSW, kSW, pCh, pSp)
+        end
+        @inline function diagram_F0a(wtpl)
+            Ω, ν, ω, P = wtpl
+            return S.F0(Ω, ν, ω, P, kSW, kSW, aCh, pSp) - S.F0(Ω, νInf, ω, P, kSW, kSW, aCh, pSp)
+        end
+        @inline function diagram_F0t(wtpl)
+            Ω, ν, ω, P = wtpl
+            return S.F0(Ω, ν, ω, P, kSW, kSW, tCh, pSp) - S.F0(Ω, νInf, ω, P, kSW, kSW, tCh, pSp)
+        end
+
+        S.SGpp[3](S.cache_Fp, InitFunction{4, Q}(diagram_F0p); mode = S.mode)
+        S.SGph[3](S.cache_Fa, InitFunction{4, Q}(diagram_F0a); mode = S.mode)
+        S.SGph[3](S.cache_Ft, InitFunction{4, Q}(diagram_F0t); mode = S.mode)
 
         # Convert from pSp (parallel spin component) to dSp (density component)
         # using the relation dSp = 2 * pSp + xSp = 2 * pSp - pSp(a) (crossing symmetry)
-        S.cache_Γt[i] = S.cache_Γt[i] * 2 - S.cache_Γa[i]
-        S.cache_Ft[i] = S.cache_Ft[i] * 2 - S.cache_Fa[i]
+        @. S.cache_Ft.data = S.cache_Ft.data * 2 - S.cache_Fa.data
     end
-
-    mpi_allreduce!(S.cache_Γpp)
-    mpi_allreduce!(S.cache_Γa)
-    mpi_allreduce!(S.cache_Γt)
-    mpi_allreduce!(S.cache_Fp)
-    mpi_allreduce!(S.cache_Fa)
-    mpi_allreduce!(S.cache_Ft)
 
     return nothing
 end

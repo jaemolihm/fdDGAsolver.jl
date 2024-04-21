@@ -91,7 +91,7 @@ mutable struct NL2_ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
 
         # precompute bubbles for reference system
         mΠΩ = MatsubaraMesh(temperature(F0), nK1, Boson)
-        mΠν = MatsubaraMesh(temperature(F0), 2 * nK1, Fermion)
+        mΠν = MatsubaraMesh(temperature(F0), nK1, Fermion)
         Π0pp = MeshFunction(mΠΩ, mΠν, mK_Γ, mK_Γ; data_t=Q)
         Π0ph = copy(Π0pp)
 
@@ -142,19 +142,16 @@ mutable struct NL2_ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
         @assert meshes(Gbare) == meshes(G0) == meshes(Σ0) == meshes(Σ) == meshes(Σ)
 
         # Pre-evaluated caches for the BSE of the K3 class
-        # The vertices are contracted with the bubble to the right or to the left.
-        # The fermionic frequencies for the contracted side uses the frequency mesh of the
-        # bubble, which is larger than that of the K3 vertex.
-        cache_Γpx = MeshFunction(meshes(F.γp.K3, Val(1)), mΠν, meshes(F.γp.K3, Val(3)), mK_Γ; data_t = Q)
-        cache_F0p = MeshFunction(meshes(F.γp.K3, Val(1)), mΠν, meshes(F.γp.K3, Val(3)), mK_Γ; data_t = Q)
-        cache_F0a = MeshFunction(meshes(F.γp.K3, Val(1)), mΠν, meshes(F.γp.K3, Val(3)), mK_Γ; data_t = Q)
-        cache_F0t = MeshFunction(meshes(F.γp.K3, Val(1)), mΠν, meshes(F.γp.K3, Val(3)), mK_Γ; data_t = Q)
-        cache_Γpp = MeshFunction(meshes(F.γp.K3, Val(1)), meshes(F.γp.K3, Val(2)), mΠν, mK_Γ; data_t = Q)
-        cache_Γa  = MeshFunction(meshes(F.γp.K3, Val(1)), meshes(F.γp.K3, Val(2)), mΠν, mK_Γ; data_t = Q)
-        cache_Γt  = MeshFunction(meshes(F.γp.K3, Val(1)), meshes(F.γp.K3, Val(2)), mΠν, mK_Γ; data_t = Q)
-        cache_Fp  = MeshFunction(meshes(F.γp.K3, Val(1)), meshes(F.γp.K3, Val(2)), mΠν, mK_Γ; data_t = Q)
-        cache_Fa  = MeshFunction(meshes(F.γp.K3, Val(1)), meshes(F.γp.K3, Val(2)), mΠν, mK_Γ; data_t = Q)
-        cache_Ft  = MeshFunction(meshes(F.γp.K3, Val(1)), meshes(F.γp.K3, Val(2)), mΠν, mK_Γ; data_t = Q)
+        cache_Γpx = copy(F.γp.K3)
+        cache_F0p = copy(F.γp.K3)
+        cache_F0a = copy(F.γp.K3)
+        cache_F0t = copy(F.γp.K3)
+        cache_Γpp = copy(F.γp.K3)
+        cache_Γa  = copy(F.γp.K3)
+        cache_Γt  = copy(F.γp.K3)
+        cache_Fp  = copy(F.γp.K3)
+        cache_Fa  = copy(F.γp.K3)
+        cache_Ft  = copy(F.γp.K3)
 
         return new{Q, RefVT}(Gbare, G0, Π0pp, Π0ph, Σ0, F0, G, Πpp, Πph, Σ, F, Fbuff, copy(Fbuff),
         Lpp, Lph, L0pp, L0ph,

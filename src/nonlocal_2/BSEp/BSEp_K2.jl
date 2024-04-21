@@ -8,22 +8,22 @@ function BSE_L_K2!(
 
         Ω, ν, P, k = wtpl
         val     = zero(Q)
-        Π0slice = view(S.Π0pp, Ω, :, P, :)
+        Π0slice = MeshFunction((meshes(S.Π0pp, Val(2)), meshes(S.Π0pp, Val(4))), view(S.Π0pp, Ω, :, P, :))
 
-        for iq in axes(Π0slice, 2)
-            q = value(meshes(S.Π0pp, Val(4))[iq])
+        for iq in eachindex(meshes(S.FL.γp.K2, Val(4)))
+            q = value(meshes(S.FL.γp.K2, Val(4))[iq])
 
             Fview  = fixed_momentum_view(S.F,  P,     k,  q, pCh)
             F0view = fixed_momentum_view(S.F0, P, P - q, k0, pCh)
 
-            for iω in axes(Π0slice, 1)
-                ω = value(meshes(S.Π0pp, Val(2))[iω])
+            for iω in eachindex(meshes(S.FL.γp.K2, Val(2)))
+                ω = value(meshes(S.FL.γp.K2, Val(2))[iω])
 
                 # Vertices
                 Γp  = Fview( Ω,     ν,    ω, pCh, pSp; F0 = false, γp = false)
                 F0p = F0view(Ω, Ω - ω, νInf, pCh, pSp)
 
-                val += Γp * Π0slice[iω, iq] * F0p
+                val += Γp * Π0slice[ω, q] * F0p
             end
         end
 
