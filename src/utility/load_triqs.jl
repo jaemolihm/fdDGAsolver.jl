@@ -11,7 +11,7 @@ function _drop_first_dim(f)
     MeshFunction(f.meshes[2:end], dropdims(f.data, dims=1))
 end
 
-function load_vertex_from_triqs(prefix, T, U; half_filling = false)
+function parse_triqs_data(prefix, T, U; params, half_filling = false, symmetrize = true, filename_output = nothing)
 
     filename_G = "$(prefix)_DCA.h5"
     filename_chi = "$(prefix)_chi3_fromDCA.h5"
@@ -209,5 +209,58 @@ function load_vertex_from_triqs(prefix, T, U; half_filling = false)
         Γ.F0.Ft_x.data .= real.(Γ.F0.Ft_x.data)
     end
 
+    if symmetrize
+        println("Imposing symmetries...")
+
+        # particle-particle channel
+        SGpp1 = my_SymmetryGroup([Symmetry{1}(sK1pp)], Γ.γp.K1)
+        SGpp2 = my_SymmetryGroup([Symmetry{2}(sK2pp1), Symmetry{2}(sK2pp2)], Γ.γp.K2)
+        SGpp3 = my_SymmetryGroup([Symmetry{3}(sK3pp1), Symmetry{3}(sK3pp2), Symmetry{3}(sK3pp3)], Γ.F0.Fp_p)
+
+        # particle-hole channels
+        SGph1 = my_SymmetryGroup([Symmetry{1}(sK1ph)], Γ.γt.K1)
+        SGph2 = my_SymmetryGroup([Symmetry{2}(sK2ph1), Symmetry{2}(sK2ph2)], Γ.γt.K2)
+        SGph3 = my_SymmetryGroup([Symmetry{3}(sK3ph1), Symmetry{3}(sK3ph2), Symmetry{3}(sK3ph3)], Γ.F0.Ft_p)
+
+        println("symmetrization errors :")
+        @info SGpp1(Γ.γp.K1)
+        @info SGpp2(Γ.γp.K2)
+        @info SGph1(Γ.γt.K1)
+        @info SGph1(Γ.γa.K1)
+        @info SGph2(Γ.γt.K2)
+        @info SGph2(Γ.γa.K2)
+        @info SGpp3(Γ.F0.Fp_p)
+        @info SGpp3(Γ.F0.Fp_x)
+        @info SGph3(Γ.F0.Ft_p)
+        @info SGph3(Γ.F0.Ft_x)
+    end
+
+    if filename_output !== nothing
+        f = h5open(filename_output, "w")
+        save!(f, "G", G)
+        save!(f, "G0", G0)
+        save!(f, "Σ", Σ)
+        save!(f, "Γ", Γ)
+        f["occ"] = occ
+        f["params/T"] = T
+        f["params/U"] = U
+        for key in keys(params)
+            f["params/$key"] = getproperty(params, key)
+        end
+        close(f)
+    end
+
     return (; G0, G, Σ, Γ, occ)
+end
+
+
+function load_triqs_data(filename)
+    f = h5open(filename, "r")
+    G = load_mesh_function(f, "G")
+    G0 = load_mesh_function(f, "G0")
+    Σ = load_mesh_function(f, "Σ")
+    Γ = fdDGAsolver.load_vertex(Vertex, f, "Γ")
+    occ = read(f, "occ")
+    close(f)
+    (; G, G0, Σ, Γ, occ)
 end

@@ -122,6 +122,6 @@ module fdDGAsolver
         parquet_solver_hubbard_parquet_approximation_NL2,
         SDE!, BSE_K1!, BSE_K2!, BSE_K3!, BSE_L_K2!, BSE_L_K3!, build_K3_cache, iterate_solver!,
         get_P_mesh, Dyson!, bubbles!,
-        load_vertex_from_triqs, compute_hubbard_chemical_potential
+        load_triqs_data, compute_hubbard_chemical_potential
 
 end

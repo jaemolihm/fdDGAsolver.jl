@@ -7,7 +7,6 @@ using LinearAlgebra
 using HDF5
 using MatsubaraFunctions: mesh_index
 using fdDGAsolver: numP_Γ, k0, kSW
-using fdDGAsolver: sK1pp, sK2pp1, sK2pp2, sK3pp1, sK3pp2, sK3pp3, my_SymmetryGroup, sK1ph, sK2ph1, sK2ph2, sK3ph1, sK3ph2, sK3ph3
 
 # JML note
 # `julia -t 8 jun_Wu_point.jl 6 6 2` takes a few minutes per nlsolve iteration.
@@ -38,33 +37,7 @@ function solve(nmax, nq, nl_method; filename_log = nothing, auto_restart = true)
     k1 = 2pi * SVector(1., 0.)
     k2 = 2pi * SVector(0., 1.)
 
-    # --------------------------------------------------------------------------------
-    # Load impurity vertex
-    prefix = "/home/ucl/modl/jmlihm/MFjl/data/beta5.0_t-1.0_U5.6_mu2.1800201007694464_numc1_numk255"
-    data_triqs = load_vertex_from_triqs(prefix, T, U; half_filling = false)
-
-    # --------------------------------------------------------------------------------
-    # Symmetrize impurity vertex
-    Γ = data_triqs.Γ
-    # particle-particle channel
-    SGpp1 = my_SymmetryGroup([Symmetry{1}(sK1pp)], Γ.γp.K1)
-    SGpp2 = my_SymmetryGroup([Symmetry{2}(sK2pp1), Symmetry{2}(sK2pp2)], Γ.γp.K2)
-    SGpp3 = my_SymmetryGroup([Symmetry{3}(sK3pp1), Symmetry{3}(sK3pp2), Symmetry{3}(sK3pp3)], Γ.F0.Fp_p)
-    # particle-hole channels
-    SGph1 = my_SymmetryGroup([Symmetry{1}(sK1ph)], Γ.γt.K1)
-    SGph2 = my_SymmetryGroup([Symmetry{2}(sK2ph1), Symmetry{2}(sK2ph2)], Γ.γt.K2)
-    SGph3 = my_SymmetryGroup([Symmetry{3}(sK3ph1), Symmetry{3}(sK3ph2), Symmetry{3}(sK3ph3)], Γ.F0.Ft_p)
-
-    SGpp1(Γ.γp.K1)
-    SGpp2(Γ.γp.K2)
-    SGph1(Γ.γt.K1)
-    SGph1(Γ.γa.K1)
-    SGph2(Γ.γt.K2)
-    SGph2(Γ.γa.K2)
-    SGpp3(Γ.F0.Fp_p)
-    SGpp3(Γ.F0.Fp_x)
-    SGph3(Γ.F0.Ft_p)
-    SGph3(Γ.F0.Ft_x)
+    data_triqs = load_triqs_data("/home/ucl/modl/jmlihm/MFjl/fdDGAsolver.jl/data/Wu_point.h5")
 
     # --------------------------------------------------------------------------------
     # Solver parameters
