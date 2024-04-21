@@ -95,7 +95,7 @@ end
 
 
 function build_K3_cache_mfRG!(
-    S :: NL2_ParquetSolver{Q},
+    S :: Union{NL_ParquetSolver{Q}, NL2_ParquetSolver{Q}},
     is_first_iteration :: Bool,
     ) where {Q}
 

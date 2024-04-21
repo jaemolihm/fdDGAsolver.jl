@@ -8,16 +8,16 @@ function BSE_L_K2!(
 
         Ω, ν, P = wtpl
         val     = zero(Q)
-        Π0slice = view(S.Π0pp, Ω, :, P)
+        Π0slice = MeshFunction((meshes(S.Π0pp, Val(2)),), view(S.Π0pp, Ω, :, P))
 
-        for i in eachindex(Π0slice)
-            ω = value(meshes(S.Π0pp, Val(2))[i])
+        for iω in eachindex(meshes(S.FL.γp.K2, Val(2)))
+            ω = value(meshes(S.FL.γp.K2, Val(2))[iω])
 
             # Vertices
-            Γp  = S.F( Ω,     ν,    ω, P, kSW, kSW, pCh, pSp; F0 = false, γp = false)
-            F0p = S.F0(Ω, Ω - ω, νInf, P, kSW, kSW, pCh, pSp)
+            Γp  = S.F( Ω, ν, Ω - ω, P, kSW, kSW, pCh, pSp; F0 = false, γp = false)
+            F0p = S.F0(Ω, ω,  νInf, P, kSW, kSW, pCh, pSp)
 
-            val += Γp * Π0slice[i] * F0p
+            val += Γp * Π0slice[ω] * F0p
         end
 
         return temperature(S) * val
@@ -77,17 +77,17 @@ function BSE_K2_mfRG!(
 
         Ω, ν, P = wtpl
         val     = zero(Q)
-        Π0slice = view(S.Π0pp, Ω, :, P)
+        Π0slice = MeshFunction((meshes(S.Π0pp, Val(2)),), view(S.Π0pp, Ω, :, P))
 
-        for i in eachindex(Π0slice)
-            ω = value(meshes(S.Π0pp, Val(2))[i])
+        for iω in eachindex(meshes(S.FL.γp.K2, Val(2)))
+            ω = value(meshes(S.FL.γp.K2, Val(2))[iω])
 
             # vertices
-            Fl  = S.F0(Ω,     ν,    ω, P, kSW, kSW, pCh, pSp) - S.F0(Ω, νInf, ω, P, kSW, kSW, pCh, pSp)
-            FLr = S.FL(Ω, Ω - ω, νInf, P, kSW, kSW, pCh, pSp)
+            Fl  = S.F0(Ω, ν, Ω - ω, P, kSW, kSW, pCh, pSp) - S.F0(Ω, νInf, Ω - ω, P, kSW, kSW, pCh, pSp)
+            FLr = S.FL(Ω, ω,  νInf, P, kSW, kSW, pCh, pSp)
 
             # 1ℓ and central part
-            val += Fl * Π0slice[i] * FLr
+            val += Fl * Π0slice[ω] * FLr
         end
 
         return temperature(S) * val

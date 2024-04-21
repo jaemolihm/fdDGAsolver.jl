@@ -103,8 +103,6 @@ function BSE_K3_mfRG!(
             # central part
             if is_inbounds(ω, meshes(S.FL.γt.K3, Val(2)))
                 val -= Π0 * Fslice[i] * (2 * S.FL.γt.K3[Ω, ω, νp, P] - S.FL.γa.K3[Ω, ω, νp, P])
-            elseif is_inbounds(ω, meshes(S.FL.γp.K2, Val(2)))
-                val -= Π0 * Fslice[i] * (2 * S.FL.γt.K2(Ω, ω, P, kSW) - S.FL.γa.K2(Ω, ω, P, kSW))
             end
         end
 

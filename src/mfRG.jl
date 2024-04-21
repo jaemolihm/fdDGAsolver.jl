@@ -92,8 +92,8 @@ function iterate_solver_self_energy!(S;
 
     if occ_target !== nothing
         # Update chemical potential to fix the occupation
-        mpi_ismain() && println("Current occupation $(compute_occupation(S.G)), target $occ_target")
         μ = compute_hubbard_chemical_potential(occ_target, S.Σ, hubbard_params)
+        mpi_ismain() && println("Updated μ = $μ")
         set!(S.Gbare, hubbard_bare_Green(meshes(S.Gbare)...; μ, hubbard_params...))
     end
 
