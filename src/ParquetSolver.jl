@@ -294,6 +294,8 @@ function MatsubaraFunctions.save!(
     S::AbstractSolver
 )::Nothing
 
+    MatsubaraFunctions.save!(f, "Gbare", S.Gbare)
+
     MatsubaraFunctions.save!(f, "G0", S.G0)
     MatsubaraFunctions.save!(f, "Σ0", S.Σ0)
     MatsubaraFunctions.save!(f, "F0", S.F0)
