@@ -13,11 +13,10 @@ function LinearMaps._unsafe_mul!(y, A::mfRGLinearMap, x::AbstractVector)
 
     unflatten!(S.F, x)
 
-    # Takes ~30% of the time
     build_K3_cache_mfRG!(S, A.is_first_iteration)
     A.is_first_iteration = false
 
-    # Takes ~30% of the time
+    # Takes ~40% of the time
     BSE_L_K2!(S, pCh)
     BSE_L_K2!(S, aCh)
     BSE_L_K2!(S, tCh)
@@ -32,7 +31,7 @@ function LinearMaps._unsafe_mul!(y, A::mfRGLinearMap, x::AbstractVector)
     BSE_K1_mfRG!(S, aCh)
     BSE_K1_mfRG!(S, tCh)
 
-    # Takes ~30% of the time
+    # Takes ~60% of the time
     BSE_K2_mfRG!(S, pCh)
     BSE_K2_mfRG!(S, aCh)
     BSE_K2_mfRG!(S, tCh)
