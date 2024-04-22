@@ -14,7 +14,7 @@ function BSE_L_K2!(
             q = value(meshes(S.FL.γp.K2, Val(4))[iq])
 
             Fview  = fixed_momentum_view(S.F,  P,     k,  q, pCh)
-            F0view = fixed_momentum_view(S.F0, P, P - q, k0, pCh)
+            F0view = fixed_momentum_view(S.F0, P, fold_back(P - q, meshes(S.FL.γp.K2, Val(4))), k0, pCh)
 
             for iω in eachindex(meshes(S.FL.γp.K2, Val(2)))
                 ω = value(meshes(S.FL.γp.K2, Val(2))[iω])
@@ -54,8 +54,8 @@ function BSE_K2!(
             q = value(meshes(S.Π0pp, Val(4))[iq])
 
             Fview  = fixed_momentum_view(S.F,  P,     k,  q, pCh)
-            F0view = fixed_momentum_view(S.F0, P, P - q, k0, pCh)
-            FLview = fixed_momentum_view(S.FL, P, P - q, k0, pCh)
+            F0view = fixed_momentum_view(S.F0, P, fold_back(P - q, meshes(S.FL.γp.K2, Val(4))), k0, pCh)
+            FLview = fixed_momentum_view(S.FL, P, fold_back(P - q, meshes(S.FL.γp.K2, Val(4))), k0, pCh)
 
             for iω in axes(Π0slice, 1)
                 ω = value(meshes(S.Π0pp, Val(2))[iω])
@@ -98,7 +98,7 @@ function BSE_K2_mfRG!(
         for iq in eachindex(meshes(S.Fbuff.γp.K2, Val(4)))
             q = value(meshes(S.Fbuff.γp.K2, Val(4))[iq])
             F0view = fixed_momentum_view(S.F0, P,     k,  q, pCh)
-            FLview = fixed_momentum_view(S.FL, P, P - q, k0, pCh)
+            FLview = fixed_momentum_view(S.FL, P, fold_back(P - q, meshes(S.FL.γp.K2, Val(4))), k0, pCh)
 
             for iω in eachindex(meshes(S.Fbuff.γp.K2, Val(2)))
                 ω = value(meshes(S.Fbuff.γp.K2, Val(2))[iω])

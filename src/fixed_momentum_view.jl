@@ -47,12 +47,12 @@ end
     k :: BrillouinPoint,
     q :: BrillouinPoint,
     )
-    iP = MatsubaraFunctions.mesh_index_bc(P, get_P_mesh(γ))
+    #iP = MatsubaraFunctions.mesh_index_bc(P, get_P_mesh(γ))
 
-    K1  = MeshFunction(γ.K1.meshes[1:1], view(γ.K1, :, iP))
-    K2  = MeshFunction(γ.K2.meshes[1:2], view(γ.K2, :, :, iP))
-    K2p = MeshFunction(γ.K2.meshes[1:2], view(γ.K2, :, :, iP))
-    K3  = MeshFunction(γ.K3.meshes[1:3], view(γ.K3, :, :, :, iP))
+    K1  = MeshFunction(γ.K1.meshes[1:1], view(γ.K1, :, P))
+    K2  = MeshFunction(γ.K2.meshes[1:2], view(γ.K2, :, :, P))
+    K2p = MeshFunction(γ.K2.meshes[1:2], view(γ.K2, :, :, P))
+    K3  = MeshFunction(γ.K3.meshes[1:3], view(γ.K3, :, :, :, P))
     ChannelViewX2X(K1, K2, K2p, K3)
 end
 
@@ -63,14 +63,16 @@ end
     k :: BrillouinPoint,
     q :: BrillouinPoint,
     )
+    #==
     iP = MatsubaraFunctions.mesh_index_bc(P, get_P_mesh(γ))
     ik = MatsubaraFunctions.mesh_index_bc(k, get_P_mesh(γ))
     iq = MatsubaraFunctions.mesh_index_bc(q, get_P_mesh(γ))
+    ==#
 
-    K1  = MeshFunction(γ.K1.meshes[1:1], view(γ.K1, :, iP))
-    K2  = MeshFunction(γ.K2.meshes[1:2], view(γ.K2, :, :, iP, ik))
-    K2p = MeshFunction(γ.K2.meshes[1:2], view(γ.K2, :, :, iP, iq))
-    K3  = MeshFunction(γ.K3.meshes[1:3], view(γ.K3, :, :, :, iP))
+    K1  = MeshFunction(γ.K1.meshes[1:1], view(γ.K1, :, P))
+    K2  = MeshFunction(γ.K2.meshes[1:2], view(γ.K2, :, :, P, k))
+    K2p = MeshFunction(γ.K2.meshes[1:2], view(γ.K2, :, :, P, q))
+    K3  = MeshFunction(γ.K3.meshes[1:3], view(γ.K3, :, :, :, P))
     ChannelViewX2X(K1, K2, K2p, K3)
 end
 
@@ -94,10 +96,11 @@ end
     ) where {Ch <: ChannelTag}
 
     F0 = fixed_momentum_view(F.F0, P, k, kp, Ch)
+    mk = meshes(F.γp.K1, Val(2))
 
-    ks_p = convert_momentum(P, k, kp, Ch, pCh)
-    ks_t = convert_momentum(P, k, kp, Ch, tCh)
-    ks_a = convert_momentum(P, k, kp, Ch, aCh)
+    ks_p = convert_momentum_fold(P, k, kp, mk, Ch, pCh)
+    ks_t = convert_momentum_fold(P, k, kp, mk, Ch, tCh)
+    ks_a = convert_momentum_fold(P, k, kp, mk, Ch, aCh)
 
     γpp = fixed_momentum_view(F.γp, ks_p...)
     γtp = fixed_momentum_view(F.γt, ks_t...)
@@ -105,17 +108,17 @@ end
 
     # γpx, γtx, and γax stores vertices with crossing applied to the momentum argument.
     if Ch === pCh
-        γpx = fixed_momentum_view(F.γp, convert_momentum(P, k, P - kp, pCh, pCh)...)
-        γtx = fixed_momentum_view(F.γt, convert_momentum(P, k, P - kp, pCh, tCh)...)
-        γax = fixed_momentum_view(F.γa, convert_momentum(P, k, P - kp, pCh, aCh)...)
+        γpx = fixed_momentum_view(F.γp, convert_momentum_fold(P, k, fold_back(P - kp, mk), mk, pCh, pCh)...)
+        γtx = fixed_momentum_view(F.γt, convert_momentum_fold(P, k, fold_back(P - kp, mk), mk, pCh, tCh)...)
+        γax = fixed_momentum_view(F.γa, convert_momentum_fold(P, k, fold_back(P - kp, mk), mk, pCh, aCh)...)
     elseif Ch === tCh
-        γpx = fixed_momentum_view(F.γp, convert_momentum(P, kp, k, aCh, pCh)...)
-        γtx = fixed_momentum_view(F.γt, convert_momentum(P, kp, k, aCh, tCh)...)
-        γax = fixed_momentum_view(F.γa, convert_momentum(P, kp, k, aCh, aCh)...)
+        γpx = fixed_momentum_view(F.γp, convert_momentum_fold(P, kp, k, mk, aCh, pCh)...)
+        γtx = fixed_momentum_view(F.γt, convert_momentum_fold(P, kp, k, mk, aCh, tCh)...)
+        γax = fixed_momentum_view(F.γa, convert_momentum_fold(P, kp, k, mk, aCh, aCh)...)
     elseif Ch === aCh
-        γpx = fixed_momentum_view(F.γp, convert_momentum(P, kp, k, tCh, pCh)...)
-        γtx = fixed_momentum_view(F.γt, convert_momentum(P, kp, k, tCh, tCh)...)
-        γax = fixed_momentum_view(F.γa, convert_momentum(P, kp, k, tCh, aCh)...)
+        γpx = fixed_momentum_view(F.γp, convert_momentum_fold(P, kp, k, mk, tCh, pCh)...)
+        γtx = fixed_momentum_view(F.γt, convert_momentum_fold(P, kp, k, mk, tCh, tCh)...)
+        γax = fixed_momentum_view(F.γa, convert_momentum_fold(P, kp, k, mk, tCh, aCh)...)
     end
 
     VertexViewX2X(F0, γpp, γtp, γap, γpx, γtx, γax)

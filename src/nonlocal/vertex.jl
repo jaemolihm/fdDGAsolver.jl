@@ -83,6 +83,7 @@ end
     )  :: Q where {Q, Ch <: ChannelTag}
 
     val = zero(Q)
+    mk  = meshes(F.γp.K1, Val(2))
 
     if F0
         val += F.F0(Ω, ν, νp, P, k, kp, Ch, pSp)
