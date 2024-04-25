@@ -114,6 +114,19 @@ function MatsubaraFunctions.add!(
     return nothing
 end
 
+function MatsubaraFunctions.mult_add!(
+    F1 :: AbstractVertex,
+    F2 :: AbstractVertex,
+    val :: Number
+    )  :: Nothing
+
+    mult_add!(F1.γp, F2.γp, val)
+    mult_add!(F1.γt, F2.γt, val)
+    mult_add!(F1.γa, F2.γa, val)
+
+    return nothing
+end
+
 # maximum absolute value
 function MatsubaraFunctions.absmax(
     F :: AbstractVertex

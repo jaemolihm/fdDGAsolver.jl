@@ -127,14 +127,14 @@ function SDE_channel_L_ph!(
 end
 
 
-function SDE!(
+function SDE_compute!(
     Σ     :: NL_MF_G{Q},
     G     :: NL_MF_G{Q},
     Πpp   :: NL_MF_Π{Q},
     Πph   :: NL_MF_Π{Q},
     Lpp   :: NL_MF_K2{Q},
     Lph   :: NL_MF_K2{Q},
-    F     :: Union{NL_Vertex{Q}, Vertex{Q}, RefVertex{Q}},
+    F,#     :: Union{NL_Vertex{Q}, Vertex{Q}, RefVertex{Q}},
     SGΣ   :: SymmetryGroup,
     SGpp2 :: SymmetryGroup,
     SGph2 :: SymmetryGroup,
@@ -150,6 +150,7 @@ function SDE!(
     SDE_channel_L_ph!(Lph, Πph, F, SGph2; mode)
 
     meshK_G = meshes(G, Val(2))
+    T = temperature(meshes(G, Val(1)))
 
     if use_real_space
         # Real-space evaluation
@@ -217,7 +218,7 @@ function SDE!(
 
         end
 
-        Σ_data_R .*= temperature(F)
+        Σ_data_R .*= T
 
         Σ.data .= reshape(bfft(Σ_data_R, (2, 3)), :, LΣ^2)
 
@@ -263,7 +264,7 @@ function SDE!(
 
             end
 
-            return temperature(F) * val / length(meshes(Πpp, Val(3)))
+            return T * val / length(meshes(Πpp, Val(3)))
         end
 
         # compute Σ

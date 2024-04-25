@@ -2,12 +2,13 @@
 
 function SDE!(S :: AbstractSolver; strategy = :scPA, include_U² = true, include_Hartree = true)
     if strategy == :scPA
-        SDE!(S.Σ, S; include_U², include_Hartree)
+        # Σ = SDE(ΔΓ, Π, G) + SDE(Γ₀, Π, G)
+        SDE!(S.Σ, S.F, S.G, S.Πpp, S.Πph, S; include_U², include_Hartree)
     elseif strategy == :fdPA
-        # Σ = SDE(ΔΓ, Π, G)
-        SDE!(S; include_U² = false, include_Hartree = false)
-        #   + SDE(Γ₀, Π, G) - SDE(Γ₀, Π₀, G₀)
-        SDE_fdPA!(S.Σ, S.F0, S; include_U², include_Hartree)
+        # Σ = SDE(ΔΓ + Γ₀, Π, G)
+        SDE!(S.Σ, S.F, S.G, S.Πpp, S.Πph, S; include_U², include_Hartree)
+        #   - SDE(Γ₀, Π₀, G₀)
+        mult_add!(S.Σ, SDE!(copy(S.Σ), S.F0, S.G0, S.Π0pp, S.Π0ph, S; include_U², include_Hartree), -1)
         #   + Σ₀
         add!(S.Σ, S.Σ0)
 
@@ -20,40 +21,38 @@ function SDE!(S :: AbstractSolver; strategy = :scPA, include_U² = true, include
     end
 end
 
-function SDE_fdPA!(Σ, F0, S; include_U² = true, include_Hartree = true)
-    # Apply finite-difference SDE for the reference vertex F0 and all of its reference
-    # vertices F0.F0, F0.F0.F0, ... recursively.
-    # Compute ΔΣ_G = SDE[Γ₀, G, Π] - SDE[Γ₀, G₀, Π₀]
+function SDE!(Σ, F, G, Πpp, Πph, S; include_U² = true, include_Hartree = true)
+    # Apply SDE for F and all of its reference vertices F.F0, F.F0.F0, ... recursively.
 
     # Current vertex
-    if F0 isa RefVertex
+    if F isa RefVertex
         # Since the RefVertex contribution to SDE in a, p, t channels are all redundant,
         # divide by 3 to get the correct result.
-        mult_add!(Σ, SDE!(copy(Σ), S.G,  S.Πpp,  S.Πph,  S.L0pp, S.L0ph, F0, S.SGΣ, S.SG0pp2, S.SG0ph2; S.mode, include_U², include_Hartree), +1/3)
-        mult_add!(Σ, SDE!(copy(Σ), S.G0, S.Π0pp, S.Π0ph, S.L0pp, S.L0ph, F0, S.SGΣ, S.SG0pp2, S.SG0ph2; S.mode, include_U², include_Hartree), -1/3)
-    elseif S.F0 isa AbstractVertex
-        mult_add!(Σ, SDE!(copy(Σ), S.G,  S.Πpp,  S.Πph,  S.L0pp, S.L0ph, F0, S.SGΣ, S.SG0pp2, S.SG0ph2; S.mode, include_U², include_Hartree), +1)
-        mult_add!(Σ, SDE!(copy(Σ), S.G0, S.Π0pp, S.Π0ph, S.L0pp, S.L0ph, F0, S.SGΣ, S.SG0pp2, S.SG0ph2; S.mode, include_U², include_Hartree), -1)
+        mult_add!(Σ, SDE_compute!(copy(Σ), G, Πpp, Πph, S.L0pp, S.L0ph, F, S.SGΣ, S.SG0pp2, S.SG0ph2; S.mode, include_U², include_Hartree), +1/3)
+    elseif F isa AbstractVertex
+        mult_add!(Σ, SDE_compute!(copy(Σ), G, Πpp, Πph, S.L0pp, S.L0ph, F, S.SGΣ, S.SG0pp2, S.SG0ph2; S.mode, include_U², include_Hartree), +1)
     else
         error("Wrong type of vertex")
     end
 
-    if F0 isa AbstractVertex
+    if F isa AbstractVertex
         # RefVertex of the current vertex
-        SDE_fdPA!(Σ, F0.F0, S; include_U² = false, include_Hartree = false)
+        # Set include_U² and include_Hartree to false because it is already computed.
+        SDE!(Σ, F.F0, G, Πpp, Πph, S; include_U² = false, include_Hartree = false)
     end
 
     return Σ
 end
 
-function SDE!(Σ, S :: AbstractSolver; include_U² = true, include_Hartree = true)
-    SDE!(Σ, S.G, S.Πpp, S.Πph, S.Lpp, S.Lph, S.F, S.SGΣ, S.SGpp[2], S.SGph[2]; S.mode, include_U², include_Hartree)
-    return Σ
-end
 
-function SDE(S :: AbstractSolver; include_U² = true, include_Hartree = true)
-    SDE!(copy(S.Σ), S; include_U², include_Hartree)
-end
+# function SDE!(Σ, S :: AbstractSolver; include_U² = true, include_Hartree = true)
+#     SDE_compute!(Σ, S.G, S.Πpp, S.Πph, S.Lpp, S.Lph, S.F, S.SGΣ, S.SGpp[2], S.SGph[2]; S.mode, include_U², include_Hartree)
+#     return Σ
+# end
+
+# function SDE(S :: AbstractSolver; include_U² = true, include_Hartree = true)
+#     SDE!(copy(S.Σ), S; include_U², include_Hartree)
+# end
 
 function SDE_U2(S :: AbstractSolver)
     SDE_U2_using_G(S)
@@ -201,7 +200,7 @@ function SDE_channel_L_ph!(
     return nothing
 end
 
-function SDE!(
+function SDE_compute!(
     Σ     :: MF_G{Q},
     G     :: MF_G{Q},
     Πpp   :: MF_Π{Q},

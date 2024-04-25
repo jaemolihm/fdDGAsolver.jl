@@ -10,6 +10,7 @@ module fdDGAsolver
         using Polyester
         using HDF5
         using NLsolve
+        using LinearAlgebra
         using StaticArrays
         using FFTW
         using Roots
@@ -141,6 +142,10 @@ module fdDGAsolver
         S = NL2_ParquetSolver(nK1, nK2, nK3, mK_Γ, copy(Gbare), copy(G0), copy(Σ0), F0; mode = :hybrid)
         init_sym_grp!(S)
         solve_using_mfRG!(S; maxiter = 1, occ_target, hubbard_params = (; t1, t2), tol = 1e3, verbose=false);
+
+        Σ_corr = copy(S.Σ0)
+        mult_add!(Σ_corr, SDE!(copy(Σ_corr), S.F0, S.G0, S.Π0pp, S.Π0ph, S; include_U² = true, include_Hartree = true), -1)
+        solve_using_mfRG_v2!(S; maxiter = 1, occ_target, hubbard_params = (; t1, t2), tol = 1e3, verbose=false, Σ_corr);
     end
 
     export
@@ -150,6 +155,7 @@ module fdDGAsolver
         Channel,
         RefVertex,
         Vertex,
+        AbstractSolver,
         NL_Channel, NL_Vertex,
         NL2_Channel, NL2_Vertex,
         compute_occupation,

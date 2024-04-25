@@ -122,6 +122,19 @@ function MatsubaraFunctions.add!(
     return nothing
 end
 
+function MatsubaraFunctions.mult_add!(
+    γ1 :: AbstractReducibleVertex,
+    γ2 :: AbstractReducibleVertex,
+    val :: Number,
+    )  :: Nothing
+
+    mult_add!(γ1.K1, γ2.K1, val)
+    mult_add!(γ1.K2, γ2.K2, val)
+    mult_add!(γ1.K3, γ2.K3, val)
+
+    return nothing
+end
+
 # length of channel
 function Base.length(
     γ :: AbstractReducibleVertex

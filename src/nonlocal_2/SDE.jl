@@ -135,7 +135,7 @@ function SDE_channel_L_ph!(
 end
 
 
-function SDE!(
+function SDE_compute!(
     Σ     :: NL_MF_G{Q},
     G     :: NL_MF_G{Q},
     Πpp   :: NL2_MF_Π{Q},
@@ -156,6 +156,8 @@ function SDE!(
 
     SDE_channel_L_pp!(Lpp, Πpp, F, SGpp2; mode)
     SDE_channel_L_ph!(Lph, Πph, F, SGph2; mode)
+
+    T = temperature(meshes(G, Val(1)))
 
     if use_real_space
         # Real-space evaluation
@@ -232,7 +234,7 @@ function SDE!(
             end
         end
 
-        Σ_data_R .*= temperature(meshes(G, Val(1)))
+        Σ_data_R .*= T
 
         Σ.data .= reshape(bfft(Σ_data_R, (2, 3)), :, LΣ^2)
 
@@ -277,7 +279,7 @@ function SDE!(
 
             end
 
-            return temperature(F) * val / length(meshes(Lpp, 3))
+            return T * val / length(meshes(Lpp, 3))
         end
 
         # compute Σ

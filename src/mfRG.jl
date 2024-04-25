@@ -69,9 +69,9 @@ function fixed_point_preconditioned!(
     R .-= x
 
     # Precondition output
-    res = Krylov.dqgmres(mfRGLinearMap(S), R;
-        atol = 1e-8, rtol = 1e-8, itmax = 400,
-        memory = 400, verbose = 0, history = true);
+    res = Krylov.dqgmres(mfRGLinearMap(S), .-R;
+        atol = 1e-6, rtol = 1e-6, itmax = 400,
+        memory = 200, verbose = 0, history = true);
 
     if !res[2].solved
         @warn "Krylov solver did not converge after $(res[2].niter) iterations, residual $(res[2].residuals[end])."
@@ -202,10 +202,10 @@ function solve_using_mfRG!(
         kwargs_solver_vertex = (; update_Σ = false, strategy = :fdPA)
         @time res = nlsolve((R, x) -> fixed_point_preconditioned!(R, x, S; kwargs_solver_vertex...), flatten(S.F),
             method = :anderson,
-            iterations = 200,
+            iterations = 100,
             ftol = tol,
             beta = 0.85,
-            m = 100,
+            m = 50,
             show_trace = mpi_ismain() && verbose,
         );
 

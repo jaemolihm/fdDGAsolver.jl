@@ -52,6 +52,18 @@ struct aCh <: ChannelTag end
 # ``D = 2 * pSp + xSp = dSp``
 # ``M = xSp``
 
+# pCh, pSp =  1/2 * (pCh, S) + 1/2 * (pCh, T)
+# aCh, pSp = -1   * (tCh, M)
+# tCh, pSp =  1/2 * (tCh, D) - 1/2 * (tCh, M)
+
+# pCh, xSp = -1/2 * (pCh, S) + 1/2 * (pCh, T)
+# aCh, xSp = -1/2 * (tCh, D) + 1/2 * (tCh, M)
+# tCh, xSp = (tCh, M)
+
+# pCh, dSp =  1/2 * (pCh, S) + 3/2 * (pCh, T)
+# aCh, dSp = -1/2 * (tCh, D) - 3/2 * (tCh, M)
+# tCh, dSp = (tCh, D)
+
 """
     abstract type SpinTag end
 
@@ -122,10 +134,12 @@ const NL2_MF_K3{Q} = MeshFunction{5, Q, Tuple{BMesh, FMesh, FMesh, KMesh, KMesh}
 struct InfiniteMatsubaraFrequency end
 const νInf = InfiniteMatsubaraFrequency()
 
-Base.:+(::MatsubaraFrequency{Boson}, ::InfiniteMatsubaraFrequency) = InfiniteMatsubaraFrequency()
-Base.:-(::MatsubaraFrequency{Boson}, ::InfiniteMatsubaraFrequency) = InfiniteMatsubaraFrequency()
-Base.:+(::InfiniteMatsubaraFrequency, ::MatsubaraFrequency{Boson}) = InfiniteMatsubaraFrequency()
-Base.:-(::InfiniteMatsubaraFrequency, ::MatsubaraFrequency{Boson}) = InfiniteMatsubaraFrequency()
+Base.:+(::MatsubaraFrequency, ::InfiniteMatsubaraFrequency) = InfiniteMatsubaraFrequency()
+Base.:-(::MatsubaraFrequency, ::InfiniteMatsubaraFrequency) = InfiniteMatsubaraFrequency()
+Base.:+(::InfiniteMatsubaraFrequency, ::MatsubaraFrequency) = InfiniteMatsubaraFrequency()
+Base.:-(::InfiniteMatsubaraFrequency, ::MatsubaraFrequency) = InfiniteMatsubaraFrequency()
+Base.:+(::InfiniteMatsubaraFrequency, ::InfiniteMatsubaraFrequency) = InfiniteMatsubaraFrequency()
+Base.:-(::InfiniteMatsubaraFrequency, ::InfiniteMatsubaraFrequency) = InfiniteMatsubaraFrequency()
 
 MatsubaraFunctions.is_inbounds(::InfiniteMatsubaraFrequency, ::Mesh) = false
 

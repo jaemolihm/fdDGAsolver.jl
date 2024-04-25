@@ -54,7 +54,7 @@ function numP(
     F :: AbstractNonlocalVertex
     ) :: Int64
 
-    return numP(F.γp)
+    return length(get_P_mesh(F))
 end
 
 # copy

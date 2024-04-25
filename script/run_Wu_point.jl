@@ -70,7 +70,7 @@ function solve(nmax, nq, nl_method; filename_log = nothing, auto_restart = true,
     νs = value.(data_triqs.G.meshes[1])
     mpi_ismain() && @info "G_TRIQS - G_Dyson = ", norm(data_triqs.G.(νs) .- G_from_Dyson.(νs, Ref(kSW)))
 
-    occ_target = compute_occupation(G_from_Dyson)
+    occ_target = data_triqs.occ
     mpi_ismain() && @info "occ_G_TRIQS - occ_G_Dyson = ", compute_occupation(data_triqs.G) - compute_occupation(G_from_Dyson)
 
     # --------------------------------------------------------------------------------
