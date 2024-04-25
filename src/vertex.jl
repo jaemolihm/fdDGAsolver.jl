@@ -427,7 +427,11 @@ function load_vertex(
             try
                 F0 = load_vertex(NL_Vertex, file, label * "/F0")
             catch
-                F0 = load_vertex(NL2_Vertex, file, label * "/F0")
+                try
+                    F0 = load_vertex(NL2_Vertex, file, label * "/F0")
+                catch
+                    F0 = load_vertex(NL2_MBEVertex, file, label * "/F0")
+                end
             end
         end
     end

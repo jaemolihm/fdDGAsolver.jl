@@ -1,4 +1,4 @@
-__precompile__(true)
+__precompile__(false)
 module fdDGAsolver
 
     using PrecompileTools
@@ -63,6 +63,8 @@ module fdDGAsolver
     include("fixed_momentum_view.jl")
 
     include("mfRG.jl")
+
+    include("nonlocal_2/mbe.jl")
 
 
     @compile_workload begin

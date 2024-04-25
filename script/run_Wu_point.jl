@@ -89,7 +89,17 @@ function solve(nmax, nq, nl_method; filename_log = nothing, auto_restart = true,
     # --------------------------------------------------------------------------------
     # Run mfRG solver
 
-    fdDGAsolver.solve_using_mfRG!(S; filename_log, maxiter = 200, occ_target, hubbard_params = (; t1, t2), mixing_init = 0.2, tol, auto_restart)
+    # fdDGAsolver.solve_using_mfRG!(S; filename_log, maxiter = 200, occ_target, hubbard_params = (; t1, t2), mixing_init = 0.2, tol, auto_restart)
+
+
+    # v2 solver
+
+    Σ_corr = copy(S.Σ)
+    set!(Σ_corr, 0)
+    fdDGAsolver.SDE_fdPA_no_corr!(Σ_corr, S.F0, S.G0, S.Π0pp, S.Π0ph, S; include_U² = true, include_Hartree = true)
+    Σ_corr = S.Σ0 - Σ_corr;
+
+    fdDGAsolver.solve_using_mfRG_v2!(S; filename_log, maxiter = 200, occ_target, hubbard_params = (; t1, t2), mixing_init = 0.2, tol, auto_restart, Σ_corr)
 
 
     return S
@@ -99,6 +109,7 @@ nmax = parse(Int, ARGS[1])
 nq   = parse(Int, ARGS[2])
 nl_method = parse(Int, ARGS[3])
 
-filename_log = "/globalscratch/ucl/modl/jmlihm/temp/Wu.mix_bubble.NL$nl_method.nmax$nmax.nq$nq"
+# filename_log = "/globalscratch/ucl/modl/jmlihm/temp/Wu.mix_bubble.NL$nl_method.nmax$nmax.nq$nq"
+filename_log = "/globalscratch/ucl/modl/jmlihm/temp/Wu.mix_bubble.v2.NL$nl_method.nmax$nmax.nq$nq"
 
 S = solve(nmax, nq, nl_method; filename_log);

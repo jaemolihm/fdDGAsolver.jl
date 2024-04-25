@@ -129,9 +129,11 @@ mutable struct NL2_ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
         if F0 isa NL2_Vertex
             F0_K2 = F0.γp.K2
         elseif F0 isa NL_Vertex || F0 isa Vertex
-            F0_K2 = MeshFunction(meshes(F0.γp.K3, Val(1)), meshes(F0.γp.K3, Val(2)), mK_Γ, mK_Γ; data_t = Q)
+            F0_K2 = MeshFunction(meshes(F0.γp.K2, Val(1)), meshes(F0.γp.K2, Val(2)), mK_Γ, mK_Γ; data_t = Q)
         elseif F0 isa RefVertex
             F0_K2 = MeshFunction(meshes(F0.Fp_p, Val(1)), meshes(F0.Fp_p, Val(2)), mK_Γ, mK_Γ; data_t = Q)
+        elseif F0 isa NL2_MBEVertex
+            F0_K2 = MeshFunction(meshes(F0.∇P.λ, Val(1)), meshes(F0.∇P.λ, Val(2)), mK_Γ, mK_Γ; data_t = Q)
         else
             throw(ArgumentError("F0 must be a AbstractVertex or RefVertex, not $(typeof(F0))"))
         end

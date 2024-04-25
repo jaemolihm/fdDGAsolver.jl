@@ -3,9 +3,11 @@
 function SDE!(S :: AbstractSolver; strategy = :scPA, include_U² = true, include_Hartree = true)
     if strategy == :scPA
         # Σ = SDE(ΔΓ, Π, G) + SDE(Γ₀, Π, G)
+        set!(S.Σ, 0)
         SDE!(S.Σ, S.F, S.G, S.Πpp, S.Πph, S; include_U², include_Hartree)
     elseif strategy == :fdPA
         # Σ = SDE(ΔΓ + Γ₀, Π, G)
+        set!(S.Σ, 0)
         SDE!(S.Σ, S.F, S.G, S.Πpp, S.Πph, S; include_U², include_Hartree)
         #   - SDE(Γ₀, Π₀, G₀)
         mult_add!(S.Σ, SDE!(copy(S.Σ), S.F0, S.G0, S.Π0pp, S.Π0ph, S; include_U², include_Hartree), -1)
@@ -25,20 +27,18 @@ function SDE!(Σ, F, G, Πpp, Πph, S; include_U² = true, include_Hartree = tru
     # Apply SDE for F and all of its reference vertices F.F0, F.F0.F0, ... recursively.
 
     # Current vertex
-    if F isa RefVertex
-        # Since the RefVertex contribution to SDE in a, p, t channels are all redundant,
-        # divide by 3 to get the correct result.
-        mult_add!(Σ, SDE_compute!(copy(Σ), G, Πpp, Πph, S.L0pp, S.L0ph, F, S.SGΣ, S.SG0pp2, S.SG0ph2; S.mode, include_U², include_Hartree), +1/3)
-    elseif F isa AbstractVertex
-        mult_add!(Σ, SDE_compute!(copy(Σ), G, Πpp, Πph, S.L0pp, S.L0ph, F, S.SGΣ, S.SG0pp2, S.SG0ph2; S.mode, include_U², include_Hartree), +1)
-    else
-        error("Wrong type of vertex")
-    end
-
     if F isa AbstractVertex
+        add!(Σ, SDE_compute!(copy(Σ), G, Πpp, Πph, S.L0pp, S.L0ph, F, S.SGΣ, S.SG0pp2, S.SG0ph2; S.mode, include_U², include_Hartree))
+
         # RefVertex of the current vertex
         # Set include_U² and include_Hartree to false because it is already computed.
         SDE!(Σ, F.F0, G, Πpp, Πph, S; include_U² = false, include_Hartree = false)
+    elseif F isa RefVertex
+        # Since the RefVertex contribution to SDE in a, p, t channels are all redundant,
+        # divide by 3 to get the correct result.
+        mult_add!(Σ, SDE_compute!(copy(Σ), G, Πpp, Πph, S.L0pp, S.L0ph, F, S.SGΣ, S.SG0pp2, S.SG0ph2; S.mode, include_U², include_Hartree), 1/3)
+    else
+        error("Wrong type of vertex")
     end
 
     return Σ
