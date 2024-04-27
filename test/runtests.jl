@@ -23,4 +23,6 @@ println("nthreads = $(Threads.nthreads())")
     include("test_nonlocal_2_solver.jl")
     include("test_nonlocal_2_fdPA.jl")
     include("test_fixed_momentum_view.jl")
+
+    include("test_boson_exchange_local.jl")
 end

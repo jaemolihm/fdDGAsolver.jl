@@ -2,7 +2,7 @@ abstract type AbstractSolver{Q}; end
 
 Base.eltype(::Type{<: AbstractSolver{Q}}) where {Q} = Q
 
-mutable struct ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
+mutable struct ParquetSolver{Q, VT, RefVT} <: AbstractSolver{Q}
     # Bare Green function
     Gbare :: MF_G{Q}
 
@@ -26,7 +26,7 @@ mutable struct ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
     Σ::MF_G{Q}
 
     # channel-decomposed two-particle vertex for target system
-    F::Vertex{Q, RefVT}
+    F::VT
 
     # channel-decomposed two-particle vertex buffer
     Fbuff::Vertex{Q, RefVertex{Q}}
@@ -79,16 +79,17 @@ mutable struct ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
 
     # constructor
     function ParquetSolver(
-        nK1::Int64,
-        nK2::NTuple{2,Int64},
-        nK3::NTuple{2,Int64},
-        Gbare::MF_G{Q},
-        G0::MF_G{Q},
-        Σ0::MF_G{Q},
-        F0::RefVT,
+        nK1   :: Int64,
+        nK2   :: NTuple{2,Int64},
+        nK3   :: NTuple{2,Int64},
+        Gbare :: MF_G{Q},
+        G0    :: MF_G{Q},
+        Σ0    :: MF_G{Q},
+        F0    :: RefVT,
+              :: Type{VT} = Vertex,
         ;
         mode::Symbol = :serial,
-    ) where {Q, RefVT}
+    ) where {Q, VT, RefVT}
 
         T = MatsubaraFunctions.temperature(meshes(G0, Val(1)))
 
@@ -112,7 +113,7 @@ mutable struct ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
         bubbles!(Πpp, Πph, G)
 
         # channel-decomposed two-particle vertex
-        F = Vertex(F0, T, nK1, nK2, nK3)
+        F = VT(F0, T, nK1, nK2, nK3)
         Fbuff = Vertex(RefVertex(T, 0.0, Q), T, nK1, nK2, nK3)
 
         # Vertices for the SDE
@@ -133,7 +134,7 @@ mutable struct ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
         SGphL = SymmetryGroup[SymmetryGroup(F.γp.K1), SymmetryGroup(F.γp.K2), SymmetryGroup(F.γp.K3)]
 
         # Symmetry group of F0, needed for the BSE of the reference vertex in SDE for fdPA
-        if F0 isa Vertex
+        if F0 isa AbstractVertex
             SG0pp2 = SymmetryGroup(F0.γp.K2)
             SG0ph2 = SymmetryGroup(F0.γp.K2)
         elseif F0 isa RefVertex
@@ -159,7 +160,7 @@ mutable struct ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
         cache_Fa  = copy(F.γp.K3)
         cache_Ft  = copy(F.γp.K3)
 
-        return new{Q, RefVT}(Gbare, G0, Π0pp, Π0ph, Σ0, F0, G, Πpp, Πph, Σ, F, Fbuff, copy(Fbuff),
+        return new{Q, typeof(F), RefVT}(Gbare, G0, Π0pp, Π0ph, Σ0, F0, G, Πpp, Πph, Σ, F, Fbuff, copy(Fbuff),
         Lpp, Lph, L0pp, L0ph,
         SGΣ, SGpp, SGph, SGppL, SGphL, SG0pp2, SG0ph2, mode, cache_Γpx, cache_F0p, cache_F0a,
         cache_F0t, cache_Γpp, cache_Γa, cache_Γt, cache_Fp, cache_Fa, cache_Ft) :: ParquetSolver{Q}
@@ -184,7 +185,8 @@ function parquet_solver_siam_parquet_approximation(
     nK3::NTuple{2,Int64},
     :: Type{Q} = ComplexF64,
     ;
-    mode::Symbol = :serial,
+    mode::Symbol = :threads,
+    VT = Vertex,
     e,
     Δ,
     D,
@@ -204,7 +206,7 @@ function parquet_solver_siam_parquet_approximation(
     set!(G0, 0)
     set!(Σ0, 0)
 
-    ParquetSolver(nK1, nK2, nK3, Gbare, G0, Σ0, F0; mode)
+    ParquetSolver(nK1, nK2, nK3, Gbare, G0, Σ0, F0, VT; mode)
 end
 
 # symmetry group initialization

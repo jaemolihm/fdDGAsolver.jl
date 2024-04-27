@@ -245,7 +245,8 @@ function solve_using_mfRG!(
         bubbles_real_space!(S.Πpp, S.Πph, S.G)
 
         # Update self-energy
-        SDE!(S; strategy = :fdPA)
+        # SDE!(S; strategy = :fdPA)
+        SDE!(S; strategy = :scPA)
         Σ_err = absmax(S.Σ - S.Σ0) / mixing
 
 

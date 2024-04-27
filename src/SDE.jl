@@ -71,7 +71,7 @@ end
 function SDE_channel_L_pp!(
     Lpp   :: MF_K2{Q},
     Πpp   :: MF_Π{Q},
-    F     :: Vertex{Q},
+    F     :: AbstractVertex{Q},
     SGpp2 :: SymmetryGroup
     ;
     mode  :: Symbol,
@@ -87,7 +87,9 @@ function SDE_channel_L_pp!(
         for i in eachindex(Πslice)
             ω = value(meshes(Πpp, Val(2))[i])
 
-            val += bare_vertex(F) * Πslice[i] * F.γp(Ω, Ω - ω, ν)
+            # val += bare_vertex(F) * Πslice[i] * F.γp(Ω, Ω - ω, ν)
+            val += bare_vertex(F) * Πslice[i] * (
+                F(Ω, Ω - ω, ν, pCh, pSp; γp = true, F0 = false, γa = false, γt = false) )
         end
 
         return temperature(F) * val
@@ -102,7 +104,7 @@ end
 function SDE_channel_L_ph!(
     Lph   :: MF_K2{Q},
     Πph   :: MF_Π{Q},
-    F     :: Vertex{Q},
+    F     :: AbstractVertex{Q},
     SGph2 :: SymmetryGroup
     ;
     mode  :: Symbol,
@@ -118,7 +120,10 @@ function SDE_channel_L_ph!(
         for i in eachindex(Πslice)
             ω = value(meshes(Πph, Val(2))[i])
 
-            val += bare_vertex(F) * Πslice[i] * (F.γt(Ω, ν, ω) + F.γa(Ω, ν, ω))
+            # val += bare_vertex(F) * Πslice[i] * (F.γt(Ω, ν, ω) + F.γa(Ω, ν, ω))
+            val += bare_vertex(F) * Πslice[i] * (
+                F(Ω, ν, ω, aCh, pSp; γa = true, F0 = false, γp = false, γt = false)
+              + F(Ω, ν, ω, tCh, pSp; γt = true, F0 = false, γp = false, γa = false) )
         end
 
         return temperature(F) * val
@@ -202,7 +207,7 @@ function SDE_compute!(
     Πph   :: MF_Π{Q},
     Lpp   :: MF_K2{Q},
     Lph   :: MF_K2{Q},
-    F     :: Union{Vertex{Q}, RefVertex{Q}},
+    F     :: Union{AbstractVertex{Q}, RefVertex{Q}},
     SGΣ   :: SymmetryGroup,
     SGpp2 :: SymmetryGroup,
     SGph2 :: SymmetryGroup,

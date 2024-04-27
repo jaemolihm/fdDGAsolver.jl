@@ -66,6 +66,8 @@ module fdDGAsolver
 
     include("nonlocal_2/mbe.jl")
 
+    include("boson_exchange.jl")
+
 
     @compile_workload begin
         MPI.Init()
