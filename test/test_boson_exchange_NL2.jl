@@ -7,7 +7,7 @@ using Test
 @testset "NL2_MBEVertex" begin
     using MPI
     MPI.Init()
-    using fdDGAsolver: NL2_MBEVertex, k0
+    using fdDGAsolver: NL2_MBEVertex, k0, get_reducible_vertex
 
     T = 0.5
     U = 2.0
@@ -69,4 +69,65 @@ using Test
     close(file)
 
     rm(testfile; force=true)
+
+
+    # Test conversion between asymptotic and MBE vertices
+    F = NL2_Vertex(RefVertex(T, U), T, numK1, numK2, numK3, mK)
+    unflatten!(F, rand(ComplexF64, length(F)))
+
+    F_mbe = asymptotic_to_mbe(F)
+
+    Ω = MatsubaraFrequency(T, 0, Boson)
+    ν = MatsubaraFrequency(T, -2, Fermion)
+    ω = MatsubaraFrequency(T, 1, Fermion)
+    P = BrillouinPoint(0, 1)
+    k = BrillouinPoint(2, 1)
+    q = BrillouinPoint(-1, 1)
+
+    for Ch in (aCh, pCh, tCh), Sp in (pSp, dSp, xSp)
+        # Asymptotic and MBE vertices equal only for the s wave component
+        γa = Ch === aCh
+        γp = Ch === pCh
+        γt = Ch === tCh
+        @test F_mbe(Ω, ν, ω, P, kSW, kSW, Ch, Sp; γa, γp, γt) ≈ F(Ω, ν, ω, P, kSW, kSW, Ch, Sp; γa, γp, γt)
+    end
+
+    F_new = mbe_to_asymptotic(F_mbe)
+    @test flatten(F) ≈ flatten(F_new)
+
+
+    # Swave evaluation for NL2_MBEVertex
+    F = fdDGAsolver.NL2_MBEVertex(RefVertex(T, 2.), T, 10, (4, 3), (2, 1), mK)
+    unflatten!(F, rand(ComplexF64, length(F)))
+
+    ν0 = MatsubaraFrequency(T, 2, Fermion)
+    ω0 = MatsubaraFrequency(T, -1, Fermion)
+    for P_ in [mK[1], mK[8]], k_ in [mK[1], mK[4]], ν in [ν0, νInf], ω in [ω0, νInf]
+        P = value(P_)
+        k = value(k_)
+
+        for Ch in (aCh, pCh, tCh), Sp in (pSp, xSp, dSp)
+            for (γa, γp, γt, F0) in [
+                (true, true, true, true),
+                (true, false, false, false),
+                (false, true, false, false),
+                (false, false, true, false),
+                (false, false, false, true),
+            ]
+                val1 = mapreduce(+, mK) do q
+                    F(Ω, ν, ω, P, value(q), k, Ch, Sp; γa, γp, γt, F0)
+                end / length(mK)
+                val2 = mapreduce(+, mK) do q
+                    F(Ω, ν, ω, P, k, value(q), Ch, Sp; γa, γp, γt, F0)
+                end / length(mK)
+                val3 = mapreduce(+, Iterators.product(mK, mK)) do (k, q)
+                    F(Ω, ν, ω, P, value(k), value(q), Ch, Sp; γa, γp, γt, F0)
+                end / length(mK)^2
+
+                @test F(Ω, ν, ω, P, kSW, k,   Ch, Sp; γa, γp, γt, F0) ≈ val1
+                @test F(Ω, ν, ω, P, k,   kSW, Ch, Sp; γa, γp, γt, F0) ≈ val2
+                @test F(Ω, ν, ω, P, kSW, kSW, Ch, Sp; γa, γp, γt, F0) ≈ val3
+            end
+        end
+    end
 end;

@@ -347,13 +347,94 @@ function (F::AbstractMBEVertex{Q})(
 end
 
 
-@inline function (F :: AbstractMBEVertex{Q})(
+function (F::AbstractMBEVertex{Q})(
     Ω  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     P  :: BrillouinPoint,
     k  :: BrillouinPoint,
+    kp :: SWaveBrillouinPoint,
+       :: Type{Ch},
+       :: Type{Sp},
+    ;
+    F0 :: Bool = true,
+    γp :: Bool = true,
+    γt :: Bool = true,
+    γa :: Bool = true,
+    )  :: Q where {Q, Ch <: ChannelTag, Sp <: pSp}
+
+    val = zero(Q)
+
+    mK = get_P_mesh(F)
+
+    for q in mK
+        val += F(Ω, ν, νp, P, k, value(q), Ch, Sp; F0, γp, γt, γa)
+    end
+
+    return val / length(mK)
+end
+
+function (F::AbstractMBEVertex{Q})(
+    Ω  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    P  :: BrillouinPoint,
+    k  :: SWaveBrillouinPoint,
     kp :: BrillouinPoint,
+       :: Type{Ch},
+       :: Type{Sp},
+    ;
+    F0 :: Bool = true,
+    γp :: Bool = true,
+    γt :: Bool = true,
+    γa :: Bool = true,
+    )  :: Q where {Q, Ch <: ChannelTag, Sp <: pSp}
+
+    val = zero(Q)
+
+    mK = get_P_mesh(F)
+
+    for q in mK
+        val += F(Ω, ν, νp, P, value(q), kp, Ch, Sp; F0, γp, γt, γa)
+    end
+
+    return val / length(mK)
+end
+
+function (F::AbstractMBEVertex{Q})(
+    Ω  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    P  :: BrillouinPoint,
+    k  :: SWaveBrillouinPoint,
+    kp :: SWaveBrillouinPoint,
+       :: Type{Ch},
+       :: Type{Sp},
+    ;
+    F0 :: Bool = true,
+    γp :: Bool = true,
+    γt :: Bool = true,
+    γa :: Bool = true,
+    )  :: Q where {Q, Ch <: ChannelTag, Sp <: pSp}
+
+    val = zero(Q)
+
+    mK = get_P_mesh(F)
+
+    for qp in mK, q in mK
+        val += F(Ω, ν, νp, P, value(q), value(qp), Ch, Sp; F0, γp, γt, γa)
+    end
+
+    return val / length(mK)^2
+end
+
+@inline function (F :: AbstractMBEVertex{Q})(
+    Ω  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    P  :: Union{BrillouinPoint, SWaveBrillouinPoint},
+    k  :: Union{BrillouinPoint, SWaveBrillouinPoint},
+    kp :: Union{BrillouinPoint, SWaveBrillouinPoint},
        :: Type{Ch},
        :: Type{xSp}
     ;
@@ -385,9 +466,9 @@ end
     Ω  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
-    P  :: BrillouinPoint,
-    k  :: BrillouinPoint,
-    kp :: BrillouinPoint,
+    P  :: Union{BrillouinPoint, SWaveBrillouinPoint},
+    k  :: Union{BrillouinPoint, SWaveBrillouinPoint},
+    kp :: Union{BrillouinPoint, SWaveBrillouinPoint},
        :: Type{Ch},
        :: Type{dSp}
     ;
@@ -400,6 +481,7 @@ end
     return ( 2 * F(Ω, ν, νp, P, k, kp, Ch, pSp; F0, γp, γt, γa)
                + F(Ω, ν, νp, P, k, kp, Ch, xSp; F0, γp, γt, γa) )
 end
+
 
 function Base.:copy(
     F :: MBEVertex{Q}
@@ -595,4 +677,62 @@ function Base.:copy(
     ) :: NL2_MBEVertex{Q} where {Q}
 
     return NL2_MBEVertex(copy(F.F0), copy(F.γp), copy(F.γt), copy(F.γa))
+end
+
+function get_P_mesh(
+    F :: NL2_MBEVertex
+    ) :: KMesh
+
+    return get_P_mesh(F.γp)
+end
+
+function numP(
+    F :: NL2_MBEVertex
+    ) :: Int64
+
+    return length(get_P_mesh(F))
+end
+
+
+function asymptotic_to_mbe(F :: NL2_Vertex)
+    F_mbe = NL2_MBEVertex(copy(F.F0), copy(F.γp), copy(F.γt), copy(F.γa))
+
+    # Subtract SBE contribution from K3
+    U = bare_vertex(F_mbe)
+    for Ch in (aCh, pCh, tCh)
+        γ = get_reducible_vertex(F_mbe, Ch)
+
+        for i in eachindex(γ.K3.data)
+            Ω, ν, ω, P = value.(to_meshes(γ.K3, i))
+            K1 = γ.K1(Ω, P)
+            K2 = γ.K2(Ω, ν, P, kSW)
+            K2p = γ.K2(Ω, ω, P, kSW)
+            ∇ = F_mbe(Ω, ν, ω, P, kSW, kSW, Ch, pSp; γp = (Ch === pCh), γt = (Ch === tCh), γa = (Ch === aCh)) - γ.K3(Ω, ν, ω, P)
+            γ.K3.data[i] -= ∇ - (U + K1 + K2 + K2p)
+        end
+    end
+
+    return F_mbe
+end
+
+
+function mbe_to_asymptotic(F_mbe :: NL2_MBEVertex)
+    F = NL2_Vertex(copy(F_mbe.F0), copy(F_mbe.γp), copy(F_mbe.γt), copy(F_mbe.γa))
+
+    # Subtract SBE contribution from K3
+    U = bare_vertex(F)
+    for Ch in (aCh, pCh, tCh)
+        γ = get_reducible_vertex(F, Ch)
+
+        for i in eachindex(γ.K3.data)
+            Ω, ν, ω, P = value.(to_meshes(γ.K3, i))
+            K1 = γ.K1(Ω, P)
+            K2 = γ.K2(Ω, ν, P, kSW)
+            K2p = γ.K2(Ω, ω, P, kSW)
+            K123 = F_mbe(Ω, ν, ω, P, kSW, kSW, Ch, pSp; γp = (Ch === pCh), γt = (Ch === tCh), γa = (Ch === aCh))
+            γ.K3.data[i] = K123 - (U + K1 + K2 + K2p)
+        end
+    end
+
+    return F
 end

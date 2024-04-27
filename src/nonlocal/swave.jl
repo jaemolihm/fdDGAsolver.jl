@@ -20,6 +20,14 @@ const kSW = SWaveBrillouinPoint()
 MatsubaraFunctions.fold_back(:: SWaveBrillouinPoint, :: KMesh) = SWaveBrillouinPoint()
 MatsubaraFunctions.mesh_index_bc(:: SWaveBrillouinPoint, :: KMesh) = SWaveBrillouinPoint()
 
+Base.:+(::BrillouinPoint, ::SWaveBrillouinPoint) = SWaveBrillouinPoint()
+Base.:-(::BrillouinPoint, ::SWaveBrillouinPoint) = SWaveBrillouinPoint()
+Base.:+(::SWaveBrillouinPoint, ::BrillouinPoint) = SWaveBrillouinPoint()
+Base.:-(::SWaveBrillouinPoint, ::BrillouinPoint) = SWaveBrillouinPoint()
+Base.:+(::SWaveBrillouinPoint, ::SWaveBrillouinPoint) = SWaveBrillouinPoint()
+Base.:-(::SWaveBrillouinPoint, ::SWaveBrillouinPoint) = SWaveBrillouinPoint()
+
+
 
 function Base.getindex(
     f  :: Union{NL_MF_K1{Q}, NL_MF_G{Q}},
