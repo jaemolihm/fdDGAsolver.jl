@@ -2,16 +2,17 @@
 
 function SDE!(S :: AbstractSolver; strategy = :scPA, include_U² = true, include_Hartree = true)
     if strategy == :scPA
-        # Σ = SDE(ΔΓ, Π, G) + SDE(Γ₀, Π, G)
+        # Σ = SDE(ΔΓ + Γ₀, Π, G)
         set!(S.Σ, 0)
-        SDE!(S.Σ, S.F, S.G, S.Πpp, S.Πph, S; include_U², include_Hartree)
+        SDE!(S.Σ, S.G, S.Πpp, S.Πph, S.Lpp, S.Lph, S.F, S.SGΣ, S.SGpp[2], S.SGph[2]; include_U², include_Hartree, S.mode)
+
     elseif strategy == :fdPA
         # Σ = SDE(ΔΓ + Γ₀, Π, G)
         set!(S.Σ, 0)
-        SDE!(S.Σ, S.F, S.G, S.Πpp, S.Πph, S; include_U², include_Hartree)
+        SDE!(S.Σ, S.G, S.Πpp, S.Πph, S.Lpp, S.Lph, S.F, S.SGΣ, S.SGpp[2], S.SGph[2]; include_U², include_Hartree, S.mode)
         #   - SDE(Γ₀, Π₀, G₀)
-        mult_add!(S.Σ, SDE!(copy(S.Σ), S.F0, S.G0, S.Π0pp, S.Π0ph, S; include_U², include_Hartree), -1)
-        #   + Σ₀
+        mult_add!(S.Σ, SDE!(copy(S.Σ)*0, S.G0, S.Π0pp, S.Π0ph, S.L0pp, S.L0ph, S.F0, S.SGΣ, S.SG0pp2, S.SG0ph2; include_U², include_Hartree, S.mode), -1)
+        # #   + Σ₀
         add!(S.Σ, S.Σ0)
 
         # # Using K12
@@ -23,22 +24,16 @@ function SDE!(S :: AbstractSolver; strategy = :scPA, include_U² = true, include
     end
 end
 
-function SDE!(Σ, F, G, Πpp, Πph, S; include_U² = true, include_Hartree = true)
+function SDE!(Σ, G, Πpp, Πph, Lpp, Lph, F, SGΣ, SGpp, SGph; include_U² = true, include_Hartree = true, mode)
     # Apply SDE for F and all of its reference vertices F.F0, F.F0.F0, ... recursively.
 
     # Current vertex
-    if F isa AbstractVertex
-        add!(Σ, SDE_compute!(copy(Σ), G, Πpp, Πph, S.L0pp, S.L0ph, F, S.SGΣ, S.SG0pp2, S.SG0ph2; S.mode, include_U², include_Hartree))
+    add!(Σ, SDE_compute!(copy(Σ), G, Πpp, Πph, Lpp, Lph, F, SGΣ, SGpp, SGph; mode, include_U², include_Hartree))
 
+    if F isa AbstractVertex
         # RefVertex of the current vertex
         # Set include_U² and include_Hartree to false because it is already computed.
-        SDE!(Σ, F.F0, G, Πpp, Πph, S; include_U² = false, include_Hartree = false)
-    elseif F isa RefVertex
-        # Since the RefVertex contribution to SDE in a, p, t channels are all redundant,
-        # divide by 3 to get the correct result.
-        mult_add!(Σ, SDE_compute!(copy(Σ), G, Πpp, Πph, S.L0pp, S.L0ph, F, S.SGΣ, S.SG0pp2, S.SG0ph2; S.mode, include_U², include_Hartree), 1/3)
-    else
-        error("Wrong type of vertex")
+        SDE!(Σ, G, Πpp, Πph, Lpp, Lph, F.F0, SGΣ, SGpp, SGph; include_U² = false, include_Hartree = false, mode)
     end
 
     return Σ

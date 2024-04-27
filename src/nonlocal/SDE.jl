@@ -271,6 +271,12 @@ function SDE_compute!(
         SGΣ(Σ, InitFunction{2, Q}(diagram); mode)
     end
 
+    if F isa RefVertex
+        # If F is a RefVertex, a, p, and t channel contributions are all equivalent and
+        # counted three times. We divide by 3 to get the correct result.
+        Σ.data .*= 1/3
+    end
+
 
     if include_U²
         Σ_U² = SDE_U2_using_G(Σ, G, SGΣ, bare_vertex(F); mode)

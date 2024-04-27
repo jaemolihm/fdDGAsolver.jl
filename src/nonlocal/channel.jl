@@ -228,7 +228,7 @@ end
 
 # Evaluation of local vertices with auxiliary momentum arguments
 @inline function (γ :: Union{Channel{Q}, RefVertex{Q}, Vertex{Q}})(
-    Ω  :: MatsubaraFrequency,
+    Ω  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     P  :: Union{BrillouinPoint, SWaveBrillouinPoint},
@@ -243,7 +243,7 @@ end
 end
 
 @inline function (γ :: Union{Channel{Q}, RefVertex{Q}, Vertex{Q}})(
-    Ω  :: MatsubaraFrequency,
+    Ω  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     P  :: Union{BrillouinPoint, SWaveBrillouinPoint},

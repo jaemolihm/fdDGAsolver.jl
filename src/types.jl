@@ -53,15 +53,15 @@ struct aCh <: ChannelTag end
 # ``M = xSp``
 
 # pCh, pSp =  1/2 * (pCh, S) + 1/2 * (pCh, T)
-# aCh, pSp = -1   * (tCh, M)
-# tCh, pSp =  1/2 * (tCh, D) - 1/2 * (tCh, M)
-
 # pCh, xSp = -1/2 * (pCh, S) + 1/2 * (pCh, T)
-# aCh, xSp = -1/2 * (tCh, D) + 1/2 * (tCh, M)
-# tCh, xSp = (tCh, M)
-
 # pCh, dSp =  1/2 * (pCh, S) + 3/2 * (pCh, T)
+
+# aCh, pSp = -1   * (tCh, M)
+# aCh, xSp = -1/2 * (tCh, D) + 1/2 * (tCh, M)
 # aCh, dSp = -1/2 * (tCh, D) - 3/2 * (tCh, M)
+
+# tCh, pSp =  1/2 * (tCh, D) - 1/2 * (tCh, M)
+# tCh, xSp = (tCh, M)
 # tCh, dSp = (tCh, D)
 
 """
@@ -131,7 +131,7 @@ const NL2_MF_K3{Q} = MeshFunction{5, Q, Tuple{BMesh, FMesh, FMesh, KMesh, KMesh}
 # struct to describe high-frequency limit
 #----------------------------------------------------------------------------------------------#
 
-struct InfiniteMatsubaraFrequency end
+struct InfiniteMatsubaraFrequency <: AbstractValue end
 const νInf = InfiniteMatsubaraFrequency()
 
 Base.:+(::MatsubaraFrequency, ::InfiniteMatsubaraFrequency) = InfiniteMatsubaraFrequency()
@@ -142,6 +142,7 @@ Base.:+(::InfiniteMatsubaraFrequency, ::InfiniteMatsubaraFrequency) = InfiniteMa
 Base.:-(::InfiniteMatsubaraFrequency, ::InfiniteMatsubaraFrequency) = InfiniteMatsubaraFrequency()
 
 MatsubaraFunctions.is_inbounds(::InfiniteMatsubaraFrequency, ::Mesh) = false
+MatsubaraFunctions.is_inbounds_bc(::InfiniteMatsubaraFrequency, ::Mesh) = false
 
 # origin of the Brillouin zone
 #----------------------------------------------------------------------------------------------#

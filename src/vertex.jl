@@ -39,7 +39,7 @@ channel_type(::Type{Vertex}) = Channel
 
 Base.eltype(::Type{<: Vertex{Q}}) where {Q} = Q
 
-function Base.show(io::IO, Γ::Vertex{Q}) where {Q}
+function Base.show(io::IO, Γ::AbstractVertex{Q}) where {Q}
     print(io, "$(nameof(typeof(Γ))){$Q}, U = $(Γ.F0.U), T = $(temperature(Γ))\n")
     print(io, "F0 : $(Γ.F0)\n")
     print(io, "K1 : $(numK1(Γ))\n")
@@ -358,7 +358,8 @@ end
 
 
 @inline bare_vertex(F :: AbstractVertex) =  bare_vertex(F.F0)
-@inline bare_vertex(F :: AbstractVertex, :: Type{Ch}, :: Type{Sp}) where {Ch <: ChannelTag, Sp <: SpinTag} = bare_vertex(F.F0, Ch, Sp)
+@inline bare_vertex(F :: AbstractVertex, :: Type{Sp}) where {Sp <: SpinTag} = bare_vertex(F.F0, Sp)
+@inline bare_vertex(F :: AbstractVertex, :: Type{Ch}, :: Type{Sp}) where {Ch <: ChannelTag, Sp <: SpinTag} = bare_vertex(F, Sp)  # TODO: remove
 
 # # build full vertex in given frequency convention and spin component
 # function mk_vertex(

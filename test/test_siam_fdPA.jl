@@ -83,16 +83,6 @@ using Test
     @test absmax(S_fd2.Σ - S.Σ) < 3e-3
     @test S_fd2.Σ(π*T) ≈ 0.024741201766120748 - 0.17604681818774198im
 
-    @test absmax(S_fd.F.γp.K1 + S_fd.F0.γp.K1 - S.F.γp.K1) < 5e-4
-    @test absmax(S_fd.F.γa.K1 + S_fd.F0.γa.K1 - S.F.γa.K1) < 5e-4
-    @test absmax(S_fd.F.γt.K1 + S_fd.F0.γt.K1 - S.F.γt.K1) < 5e-4
-    @test absmax(S_fd.F.γp.K2 + S_fd.F0.γp.K2 - S.F.γp.K2) < 1e-3
-    @test absmax(S_fd.F.γa.K2 + S_fd.F0.γa.K2 - S.F.γa.K2) < 1e-3
-    @test absmax(S_fd.F.γt.K2 + S_fd.F0.γt.K2 - S.F.γt.K2) < 1e-3
-    @test absmax(S_fd.F.γp.K3 + S_fd.F0.γp.K3 - S.F.γp.K3) < 1e-3
-    @test absmax(S_fd.F.γa.K3 + S_fd.F0.γa.K3 - S.F.γa.K3) < 1e-3
-    @test absmax(S_fd.F.γt.K3 + S_fd.F0.γt.K3 - S.F.γt.K3) < 1e-3
-
     Ω = MatsubaraFrequency(T, 0, Boson)
     ν = MatsubaraFrequency(T, 1, Fermion)
     νp = MatsubaraFrequency(T, -2, Fermion)

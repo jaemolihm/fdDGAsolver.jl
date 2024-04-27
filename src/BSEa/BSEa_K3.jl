@@ -8,12 +8,14 @@ function BSE_L_K3!(
 
         Ω, ν, νp = wtpl
         val      = zero(Q)
-        Π0slice  = view(S.Π0ph, Ω, :)
         Γslice   = view(S.cache_Γa, Ω, ν, :)
         F0slice  = view(S.cache_F0a, Ω, :, νp)
 
         for i in eachindex(Γslice)
-            val += Γslice[i] * Π0slice[i] * F0slice[i]
+            ω = value(meshes(S.cache_Γa, Val(3))[i])
+            Π0 = S.Π0ph[Ω, ω]
+
+            val += Γslice[i] * Π0 * F0slice[i]
         end
 
         return temperature(S) * val
@@ -50,8 +52,6 @@ function BSE_K3!(
             # central part
             if is_inbounds(ω, meshes(S.FL.γa.K3, Val(2)))
                 val += Fslice[i] * Π * S.FL.γa.K3[Ω, ω, νp]
-            elseif is_inbounds(ω, meshes(S.FL.γa.K2, Val(2)))
-                val += Fslice[i] * Π * S.FL.γa.K2[Ω, ω]
             end
         end
 
@@ -91,8 +91,6 @@ function BSE_K3_mfRG!(
             # central part
             if is_inbounds(ω, meshes(S.FL.γa.K3, Val(2)))
                 val += Fslice[i] * Π0 * S.FL.γa.K3[Ω, ω, νp]
-            elseif is_inbounds(ω, meshes(S.FL.γa.K2, Val(2)))
-                val += Fslice[i] * Π0 * S.FL.γa.K2[Ω, ω]
             end
         end
 

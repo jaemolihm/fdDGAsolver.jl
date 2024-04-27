@@ -647,6 +647,29 @@ function Base.:copy(
     return NL2_MBEVertex(copy(F.F0), copy(F.∇P), copy(F.∇D), copy(F.∇M))
 end
 
+function MatsubaraFunctions.set!(
+    F :: NL2_MBEChannel,
+    val :: Number,
+    ) :: Nothing
+
+    set!(F.η, val)
+    set!(F.λ, val)
+    set!(F.M, val)
+
+    return nothing
+end
+
+function MatsubaraFunctions.set!(
+    F :: NL2_MBEVertex,
+    val :: Number,
+    ) :: Nothing
+
+    set!(F.∇P, val)
+    set!(F.∇D, val)
+    set!(F.∇M, val)
+
+    return nothing
+end
 
 
 function MatsubaraFunctions.set!(

@@ -197,15 +197,10 @@ end
 end
 
 @inline bare_vertex(F :: RefVertex) =  F.U
-@inline bare_vertex(F :: RefVertex, :: Type{pCh}, :: Type{pSp}) =  F.U
-@inline bare_vertex(F :: RefVertex, :: Type{tCh}, :: Type{pSp}) =  F.U
-@inline bare_vertex(F :: RefVertex, :: Type{aCh}, :: Type{pSp}) =  F.U
-@inline bare_vertex(F :: RefVertex, :: Type{pCh}, :: Type{xSp}) = -F.U
-@inline bare_vertex(F :: RefVertex, :: Type{tCh}, :: Type{xSp}) = -F.U
-@inline bare_vertex(F :: RefVertex, :: Type{aCh}, :: Type{xSp}) = -F.U
-@inline bare_vertex(F :: RefVertex{Q}, :: Type{pCh}, :: Type{dSp}) where {Q} = F.U
-@inline bare_vertex(F :: RefVertex{Q}, :: Type{tCh}, :: Type{dSp}) where {Q} = F.U
-@inline bare_vertex(F :: RefVertex{Q}, :: Type{aCh}, :: Type{dSp}) where {Q} = F.U
+@inline bare_vertex(F :: RefVertex, :: Type{pSp}) =  F.U
+@inline bare_vertex(F :: RefVertex, :: Type{xSp}) = -F.U
+@inline bare_vertex(F :: RefVertex, :: Type{dSp}) =  F.U
+@inline bare_vertex(F :: RefVertex, :: Type{Ch}, :: Type{Sp}) where {Ch <: ChannelTag, Sp <: SpinTag} = bare_vertex(F, Sp)   # TODO: remove
 
 # save to HDF5
 function MatsubaraFunctions.save!(

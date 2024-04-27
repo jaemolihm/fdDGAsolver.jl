@@ -167,7 +167,7 @@ mutable struct ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
 end
 
 
-function Base.show(io::IO, S::ParquetSolver{Q}) where {Q}
+function Base.show(io::IO, S::AbstractSolver{Q}) where {Q}
     print(io, "$(nameof(typeof(S))){$Q}, U = $(real(bare_vertex(S.F0, aCh, pSp))), T = $(temperature(S))\n")
     print(io, "F0 K3 : $(numK3(S.F0))\n")
     print(io, "F  K1 : $(numK1(S.F))\n")
