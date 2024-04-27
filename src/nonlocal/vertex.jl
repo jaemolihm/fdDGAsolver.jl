@@ -161,60 +161,27 @@ end
     P  :: BrillouinPoint,
     k  :: Union{BrillouinPoint, SWaveBrillouinPoint},
     kp :: Union{BrillouinPoint, SWaveBrillouinPoint},
-       :: Type{pCh},
+       :: Type{Ch},
        :: Type{xSp}
     ;
     F0 :: Bool = true,
     γp :: Bool = true,
     γt :: Bool = true,
     γa :: Bool = true
-    )  :: Q where {Q}
+    )  :: Q where {Q, Ch <: ChannelTag}
 
-    if kp isa SWaveBrillouinPoint
-        Pmkp = SWaveBrillouinPoint()
+    if Ch === pCh
+        return -F(Ω, ν, Ω - νp, P, k, P - kp, pCh, pSp; F0 = F0, γp = γp, γt = γa, γa = γt)
+
+    elseif Ch === tCh
+        return -F(Ω, ν, νp, P, k, kp, aCh, pSp; F0 = F0, γp = γp, γt = γa, γa = γt)
+
+    elseif Ch === aCh
+        return -F(Ω, ν, νp, P, k, kp, tCh, pSp; F0 = F0, γp = γp, γt = γa, γa = γt)
+
     else
-        Pmkp = P - kp
+        throw(ArgumentError("Invalid channel $Ch"))
     end
-
-    return -F(Ω, ν, Ω - νp, P, k, Pmkp, pCh, pSp; F0 = F0, γp = γp, γt = γa, γa = γt)
-end
-
-@inline function (F :: AbstractNonlocalVertex{Q})(
-    Ω  :: MatsubaraFrequency,
-    ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
-    νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
-    P  :: BrillouinPoint,
-    k  :: Union{BrillouinPoint, SWaveBrillouinPoint},
-    kp :: Union{BrillouinPoint, SWaveBrillouinPoint},
-       :: Type{tCh},
-       :: Type{xSp}
-    ;
-    F0 :: Bool = true,
-    γp :: Bool = true,
-    γt :: Bool = true,
-    γa :: Bool = true
-    )  :: Q where {Q}
-
-    return -F(Ω, νp, ν, P, kp, k, aCh, pSp; F0 = F0, γp = γp, γt = γa, γa = γt)
-end
-
-@inline function (F :: AbstractNonlocalVertex{Q})(
-    Ω  :: MatsubaraFrequency,
-    ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
-    νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
-    P  :: BrillouinPoint,
-    k  :: Union{BrillouinPoint, SWaveBrillouinPoint},
-    kp :: Union{BrillouinPoint, SWaveBrillouinPoint},
-       :: Type{aCh},
-       :: Type{xSp}
-    ;
-    F0 :: Bool = true,
-    γp :: Bool = true,
-    γt :: Bool = true,
-    γa :: Bool = true
-    )  :: Q where {Q}
-
-    return -F(Ω, νp, ν, P, kp, k, tCh, pSp; F0 = F0, γp = γp, γt = γa, γa = γt)
 end
 
 # evaluators for density spin component

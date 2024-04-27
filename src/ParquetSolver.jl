@@ -88,7 +88,7 @@ mutable struct ParquetSolver{Q, VT, RefVT} <: AbstractSolver{Q}
         F0    :: RefVT,
               :: Type{VT} = Vertex,
         ;
-        mode::Symbol = :serial,
+        mode::Symbol = :threads,
     ) where {Q, VT, RefVT}
 
         T = MatsubaraFunctions.temperature(meshes(G0, Val(1)))
@@ -119,12 +119,8 @@ mutable struct ParquetSolver{Q, VT, RefVT} <: AbstractSolver{Q}
         # Vertices for the SDE
         Lpp = copy(F.γp.K2)
         Lph = copy(Lpp)
-        if F0 isa AbstractVertex
-            L0pp = copy(F0.γp.K2)
-        elseif F0 isa RefVertex
-            L0pp = MeshFunction(meshes(F0.Fp_p, Val(1)), meshes(F0.Fp_p, Val(2)); data_t = Q)
-        end
-        L0ph = copy(L0pp)
+        L0pp = copy(Lpp)
+        L0ph = copy(Lpp)
 
         # symmetry groups
         SGΣ = SymmetryGroup(Σ)
@@ -134,16 +130,8 @@ mutable struct ParquetSolver{Q, VT, RefVT} <: AbstractSolver{Q}
         SGphL = SymmetryGroup[SymmetryGroup(F.γp.K1), SymmetryGroup(F.γp.K2), SymmetryGroup(F.γp.K3)]
 
         # Symmetry group of F0, needed for the BSE of the reference vertex in SDE for fdPA
-        if F0 isa AbstractVertex
-            SG0pp2 = SymmetryGroup(F0.γp.K2)
-            SG0ph2 = SymmetryGroup(F0.γp.K2)
-        elseif F0 isa RefVertex
-            F0_K2 = MeshFunction(meshes(F0.Fp_p, Val(1)), meshes(F0.Fp_p, Val(2)); data_t = Q)
-            SG0pp2 = SymmetryGroup(F0_K2)
-            SG0ph2 = SymmetryGroup(F0_K2)
-        else
-            throw(ArgumentError("F0 must be a Vertex or RefVertex, not $(typeof(F0))"))
-        end
+        SG0pp2 = SymmetryGroup(L0pp)
+        SG0ph2 = SymmetryGroup(L0ph)
 
         # Check consistency of meshes
         @assert meshes(Gbare) == meshes(G0) == meshes(Σ0) == meshes(Σ) == meshes(Σ)

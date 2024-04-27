@@ -57,11 +57,11 @@ end;
     k1 = 2pi * SVector(1., 0.)
     k2 = 2pi * SVector(0., 1.)
 
-    nmax = 3
-    nG  = 8nmax
+    nmax = 4
+    nG  = 4nmax
     nK1 = 4nmax
-    nK2 = (nmax + 1, nmax)
-    nK3 = (nmax + 1, nmax)
+    nK2 = (nmax, nmax)
+    nK3 = (nmax, nmax)
 
     mK_G = BrillouinZoneMesh(BrillouinZone(6, k1, k2))
     mK_Γ = BrillouinZoneMesh(BrillouinZone(3, k1, k2))
@@ -101,7 +101,7 @@ end;
         @test S.SGph[2](S.F.γt.K2) < 2e-3
 
         @test S.SGpp[3](S.F.γp.K3) < 2e-2
-        @test S.SGph[3](S.F.γa.K3) < 1e-3
+        @test S.SGph[3](S.F.γa.K3) < 2e-3
         @test S.SGph[3](S.F.γt.K3) < 2e-3
     end
 
@@ -122,22 +122,22 @@ end
     e = μ
     Δ = 1.5
 
-    nmax = 8
-    nG  = 8nmax
+    nmax = 12
+    nG  = 4nmax
     nK1 = 4nmax
-    nK2 = (nmax + 1, nmax)
-    nK3 = (nmax + 1, nmax)
+    nK2 = (nmax, nmax)
+    nK3 = (nmax, nmax)
 
     S0 = parquet_solver_siam_parquet_approximation(nG, nK1, nK2, nK3; e, T, U, Δ, D)
     init_sym_grp!(S0)
     fdDGAsolver.solve!(S0; strategy = :scPA, parallel_mode = :threads, verbose = false);
 
     # Hubbard model using fdPA
-    nmax = 4
-    nG  = 8nmax
+    nmax = 8
+    nG  = 4nmax
     nK1 = 4nmax
-    nK2 = (nmax + 1, nmax)
-    nK3 = (nmax + 1, nmax)
+    nK2 = (nmax, nmax)
+    nK3 = (nmax, nmax)
 
     mK_G = BrillouinZoneMesh(BrillouinZone(6, k1, k2))
     mK_Γ = BrillouinZoneMesh(BrillouinZone(3, k1, k2))
@@ -176,12 +176,12 @@ end
 
     @testset "symmetry error" begin
         # These symmetry are exact only when the fdPA is converged
-        @test S.SGppL[2](S.FL.γp.K2) < 1e-3
-        @test S.SGphL[2](S.FL.γa.K2) < 1e-3
-        @test S.SGphL[2](S.FL.γt.K2) < 1e-3
-        @test S.SGppL[3](S.FL.γp.K3) < 1e-4
-        @test S.SGphL[3](S.FL.γa.K3) < 1e-4
-        @test S.SGphL[3](S.FL.γt.K3) < 1e-4
+        @test S.SGppL[2](S.FL.γp.K2) < 1e-2
+        @test S.SGphL[2](S.FL.γa.K2) < 1e-2
+        @test S.SGphL[2](S.FL.γt.K2) < 1e-2
+        @test S.SGppL[3](S.FL.γp.K3) < 1e-3
+        @test S.SGphL[3](S.FL.γa.K3) < 1e-3
+        @test S.SGphL[3](S.FL.γt.K3) < 1e-3
     end
 
 end

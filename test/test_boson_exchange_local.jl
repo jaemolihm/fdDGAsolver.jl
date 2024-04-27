@@ -12,8 +12,8 @@ using Test
     T = 0.5
     U = 2.0
     numK1 = 10
-    numK2 = (5, 5)
-    numK3 = (3, 3)
+    numK2 = (7, 7)
+    numK3 = (5, 5)
 
     Ω = MatsubaraFrequency(T, 0, Boson)
     ν = MatsubaraFrequency(T, 0, Fermion)
@@ -69,8 +69,8 @@ using Test
     unflatten!(F, rand(ComplexF64, length(F)))
 
     F_mbe = asymptotic_to_mbe(F)
-    Ω = MatsubaraFrequency(T, 0, Boson)
-    ν = MatsubaraFrequency(T, 0, Fermion)
+    Ω = MatsubaraFrequency(T, -1, Boson)
+    ν = MatsubaraFrequency(T, -1, Fermion)
     ω = MatsubaraFrequency(T, 1, Fermion)
     for Ch in (aCh, pCh, tCh), Sp in (pSp, dSp, xSp)
         @test F_mbe(Ω, ν, ω, Ch, Sp) ≈ F(Ω, ν, ω, Ch, Sp)
@@ -87,7 +87,6 @@ end
 @testset "SIAM parquet MBE" begin
     using MPI
     MPI.Init()
-    using fdDGAsolver: MBEVertex
 
     T = 0.1
     U = 1.0
@@ -101,14 +100,11 @@ end
     nK2 = (nmax, nmax)
     nK3 = (nmax, nmax)
 
-    Q = ComplexF64
-    # Q = Float64
-
-    S1 = parquet_solver_siam_parquet_approximation(nG, nK1, nK2, nK3, Q; e, T, D, Δ, U, VT = MBEVertex)
+    S1 = parquet_solver_siam_parquet_approximation(nG, nK1, nK2, nK3; e, T, D, Δ, U, VT = MBEVertex)
     init_sym_grp!(S1)
     fdDGAsolver.solve!(S1; strategy = :scPA, tol = 1e-5, verbose = false);
 
-    S2 = parquet_solver_siam_parquet_approximation(nG, nK1, nK2, nK3, Q; e, T, D, Δ, U)
+    S2 = parquet_solver_siam_parquet_approximation(nG, nK1, nK2, nK3; e, T, D, Δ, U)
     init_sym_grp!(S2)
     fdDGAsolver.solve!(S2; strategy = :scPA, tol = 1e-5, verbose = false);
 
@@ -197,7 +193,7 @@ end
 
 
     # fdPA with different box sizes for the vertex
-    nmax = 8
+    nmax = 9
     nK1 = 8nmax
     nK2 = (nmax, nmax)
     nK3 = (nmax, nmax)

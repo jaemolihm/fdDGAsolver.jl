@@ -1,4 +1,4 @@
-mutable struct NL2_ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
+mutable struct NL2_ParquetSolver{Q, VT, RefVT} <: AbstractSolver{Q}
     # Bare Green function
     Gbare :: NL_MF_G{Q}
 
@@ -22,7 +22,7 @@ mutable struct NL2_ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
     Σ::NL_MF_G{Q}
 
     # channel-decomposed two-particle vertex for target system
-    F::NL2_Vertex{Q, RefVT}
+    F::VT
 
     # channel-decomposed two-particle vertex buffer
     Fbuff::NL2_Vertex{Q, RefVertex{Q}}
@@ -83,9 +83,10 @@ mutable struct NL2_ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
         G0    :: NL_MF_G{Q},
         Σ0    :: NL_MF_G{Q},
         F0    :: RefVT,
+              :: Type{VT} = NL2_Vertex,
         ;
-        mode::Symbol = :serial,
-    ) where {Q, RefVT}
+        mode::Symbol = :threads,
+    ) where {Q, VT, RefVT}
 
         T = MatsubaraFunctions.temperature(meshes(G0, Val(1)))
 
@@ -109,7 +110,7 @@ mutable struct NL2_ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
         bubbles_real_space!(Πpp, Πph, G)
 
         # channel-decomposed two-particle vertex
-        F = NL2_Vertex(F0, T, nK1, nK2, nK3, mK_Γ)
+        F = VT(F0, T, nK1, nK2, nK3, mK_Γ)
         Fbuff = NL2_Vertex(RefVertex(T, 0.0, Q), T, nK1, nK2, nK3, mK_Γ)
 
         # Vertices for the SDE
@@ -126,19 +127,8 @@ mutable struct NL2_ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
         SGphL = SymmetryGroup[SymmetryGroup(F.γp.K1), SymmetryGroup(F.γp.K2), SymmetryGroup(F.γp.K3)]
 
         # Symmetry group of F0, needed for the BSE of the reference vertex in SDE for fdPA
-        if F0 isa NL2_Vertex
-            F0_K2 = F0.γp.K2
-        elseif F0 isa NL_Vertex || F0 isa Vertex
-            F0_K2 = MeshFunction(meshes(F0.γp.K2, Val(1)), meshes(F0.γp.K2, Val(2)), mK_Γ, mK_Γ; data_t = Q)
-        elseif F0 isa RefVertex
-            F0_K2 = MeshFunction(meshes(F0.Fp_p, Val(1)), meshes(F0.Fp_p, Val(2)), mK_Γ, mK_Γ; data_t = Q)
-        elseif F0 isa NL2_MBEVertex
-            F0_K2 = MeshFunction(meshes(F0.∇P.λ, Val(1)), meshes(F0.∇P.λ, Val(2)), mK_Γ, mK_Γ; data_t = Q)
-        else
-            throw(ArgumentError("F0 must be a AbstractVertex or RefVertex, not $(typeof(F0))"))
-        end
-        SG0pp2 = SymmetryGroup(F0_K2)
-        SG0ph2 = SymmetryGroup(F0_K2)
+        SG0pp2 = SymmetryGroup(L0pp)
+        SG0ph2 = SymmetryGroup(L0ph)
 
         # Check consistency of meshes
         @assert meshes(Gbare) == meshes(G0) == meshes(Σ0) == meshes(Σ) == meshes(Σ)
@@ -155,7 +145,7 @@ mutable struct NL2_ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
         cache_Fa  = copy(F.γp.K3)
         cache_Ft  = copy(F.γp.K3)
 
-        return new{Q, RefVT}(Gbare, G0, Π0pp, Π0ph, Σ0, F0, G, Πpp, Πph, Σ, F, Fbuff, copy(Fbuff),
+        return new{Q, typeof(F), RefVT}(Gbare, G0, Π0pp, Π0ph, Σ0, F0, G, Πpp, Πph, Σ, F, Fbuff, copy(Fbuff),
         Lpp, Lph, L0pp, L0ph,
         SGΣ, SGpp, SGph, SGppL, SGphL, SG0pp2, SG0ph2, mode, cache_Γpx, cache_F0p, cache_F0a,
         cache_F0t, cache_Γpp, cache_Γa, cache_Γt, cache_Fp, cache_Fa, cache_Ft) :: NL2_ParquetSolver{Q}
@@ -182,7 +172,8 @@ function parquet_solver_hubbard_parquet_approximation_NL2(
     mK_Γ :: KMesh,
     :: Type{Q} = ComplexF64,
     ;
-    mode::Symbol = :serial,
+    mode::Symbol = :threads,
+    VT = NL2_Vertex,
     T,
     U,
     μ, t1, t2 = 0, t3 = 0,
@@ -200,7 +191,7 @@ function parquet_solver_hubbard_parquet_approximation_NL2(
     set!(G0, 0)
     set!(Σ0, 0)
 
-    NL2_ParquetSolver(nK1, nK2, nK3, mK_Γ, Gbare, G0, Σ0, F0; mode)
+    NL2_ParquetSolver(nK1, nK2, nK3, mK_Γ, Gbare, G0, Σ0, F0, VT; mode)
 end
 
 

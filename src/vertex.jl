@@ -40,7 +40,7 @@ channel_type(::Type{Vertex}) = Channel
 Base.eltype(::Type{<: Vertex{Q}}) where {Q} = Q
 
 function Base.show(io::IO, Γ::AbstractVertex{Q}) where {Q}
-    print(io, "$(nameof(typeof(Γ))){$Q}, U = $(Γ.F0.U), T = $(temperature(Γ))\n")
+    print(io, "$(nameof(typeof(Γ))){$Q}, U = $(bare_vertex(Γ)), T = $(temperature(Γ))\n")
     print(io, "F0 : $(Γ.F0)\n")
     print(io, "K1 : $(numK1(Γ))\n")
     print(io, "K2 : $(numK2(Γ))\n")
@@ -289,48 +289,27 @@ end
     Ω  :: MatsubaraFrequency,
     ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
-       :: Type{pCh},
+       :: Type{Ch},
        :: Type{xSp}
     ;
     F0 :: Bool = true,
     γp :: Bool = true,
     γt :: Bool = true,
     γa :: Bool = true
-    )  :: Q where {Q}
+    )  :: Q where {Q, Ch <: ChannelTag}
 
-    return -F(Ω, ν, Ω - νp, pCh, pSp; F0 = F0, γp = γp, γt = γa, γa = γt)
-end
+    if Ch === pCh
+        return -F(Ω, ν, Ω - νp, pCh, pSp; F0 = F0, γp = γp, γt = γa, γa = γt)
 
-@inline function (F :: Vertex{Q})(
-    Ω  :: MatsubaraFrequency,
-    ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
-    νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
-       :: Type{tCh},
-       :: Type{xSp}
-    ;
-    F0 :: Bool = true,
-    γp :: Bool = true,
-    γt :: Bool = true,
-    γa :: Bool = true
-    )  :: Q where {Q}
+    elseif Ch === tCh
+        return -F(Ω, ν, νp, aCh, pSp; F0 = F0, γp = γp, γt = γa, γa = γt)
 
-    return -F(Ω, νp, ν, aCh, pSp; F0 = F0, γp = γp, γt = γa, γa = γt)
-end
+    elseif Ch === aCh
+        return -F(Ω, ν, νp, tCh, pSp; F0 = F0, γp = γp, γt = γa, γa = γt)
 
-@inline function (F :: Vertex{Q})(
-    Ω  :: MatsubaraFrequency,
-    ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
-    νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
-       :: Type{aCh},
-       :: Type{xSp}
-    ;
-    F0 :: Bool = true,
-    γp :: Bool = true,
-    γt :: Bool = true,
-    γa :: Bool = true
-    )  :: Q where {Q}
-
-    return -F(Ω, νp, ν, tCh, pSp; F0 = F0, γp = γp, γt = γa, γa = γt)
+    else
+        throw(ArgumentError("Invalid channel $Ch"))
+    end
 end
 
 # evaluators for density spin component

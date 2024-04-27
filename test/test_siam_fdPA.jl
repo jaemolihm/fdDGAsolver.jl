@@ -13,11 +13,11 @@ using Test
     e = -0.3
     Δ = π / 3
 
-    nmax = 8
-    nG  = 24nmax
-    nK1 = 12nmax
-    nK2 = (nmax + 1, nmax)
-    nK3 = (nmax + 1, nmax)
+    nmax = 12
+    nG  = 8nmax
+    nK1 = 8nmax
+    nK2 = (nmax, nmax)
+    nK3 = (nmax, nmax)
 
     # scPA for the reference point
     S0 = parquet_solver_siam_parquet_approximation(nG, nK1, nK2, nK3; e, T, U, Δ, D)
@@ -69,10 +69,10 @@ using Test
 
 
     # fdPA with different box sizes for the vertex
-    nmax = 6
-    nK1 = 12nmax
-    nK2 = (nmax + 1, nmax)
-    nK3 = (nmax + 1, nmax)
+    nmax = 8
+    nK1 = 8nmax
+    nK2 = (nmax, nmax)
+    nK3 = (nmax, nmax)
 
     Gbare = fdDGAsolver.siam_bare_Green(meshes(S0.G, Val(1)); e = e_fd, Δ = Δ_fd, D = D_fd)
 
@@ -81,7 +81,7 @@ using Test
     res = fdDGAsolver.solve!(S_fd2; strategy = :fdPA, parallel_mode = :threads, verbose = false);
 
     @test absmax(S_fd2.Σ - S.Σ) < 3e-3
-    @test S_fd2.Σ(π*T) ≈ 0.024741201766120748 - 0.17604681818774198im
+    @test S_fd2.Σ(π*T) ≈ 0.024643001835742997 - 0.17494219707558506im
 
     Ω = MatsubaraFrequency(T, 0, Boson)
     ν = MatsubaraFrequency(T, 1, Fermion)

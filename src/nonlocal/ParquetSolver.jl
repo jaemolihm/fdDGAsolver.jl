@@ -126,15 +126,8 @@ mutable struct NL_ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
         SGphL = SymmetryGroup[SymmetryGroup(F.γp.K1), SymmetryGroup(F.γp.K2), SymmetryGroup(F.γp.K3)]
 
         # Symmetry group of F0, needed for the BSE of the reference vertex in SDE for fdPA
-        if F0 isa NL_Vertex || F0 isa Vertex
-            F0_K2 = MeshFunction(meshes(F0.γp.K3, Val(1)), meshes(F0.γp.K3, Val(2)), mK_Γ; data_t = Q)
-        elseif F0 isa RefVertex
-            F0_K2 = MeshFunction(meshes(F0.Fp_p, Val(1)), meshes(F0.Fp_p, Val(2)), mK_Γ; data_t = Q)
-        else
-            throw(ArgumentError("F0 must be a AbstractVertex or RefVertex, not $(typeof(F0))"))
-        end
-        SG0pp2 = SymmetryGroup(F0_K2)
-        SG0ph2 = SymmetryGroup(F0_K2)
+        SG0pp2 = SymmetryGroup(L0pp)
+        SG0ph2 = SymmetryGroup(L0ph)
 
         # Check consistency of meshes
         @assert meshes(Gbare) == meshes(G0) == meshes(Σ0) == meshes(Σ) == meshes(Σ)

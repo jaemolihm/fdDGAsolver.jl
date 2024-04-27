@@ -40,6 +40,14 @@ struct VertexViewX2X{Q, VT, CT} <: AbstractVertex{Q}
     end
 end
 
+function MatsubaraFunctions.temperature(F :: VertexViewX2X) :: Float64
+    return MatsubaraFunctions.temperature(F.γpp)
+end
+
+numK1(F :: VertexViewX2X) :: Int64 = numK1(F.γpp)
+numK2(F :: VertexViewX2X) :: NTuple{2, Int64} = numK2(F.γpp)
+numK3(F :: VertexViewX2X) :: NTuple{2, Int64} = numK3(F.γpp)
+
 
 @inline function fixed_momentum_view(
     γ :: NL_Channel,

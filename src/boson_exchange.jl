@@ -35,10 +35,15 @@ K3 class
 """
 struct K3Cl <: ClassTag end
 
+_crossing(::Type{K1Cl}) = K1Cl
+_crossing(::Type{K2Cl}) = K2pCl
+_crossing(::Type{K2pCl}) = K2Cl
+_crossing(::Type{K3Cl}) = K3Cl
+
 
 # Evaluation for the given asymptotic class
 
-@inline function (γ :: fdDGAsolver.Channel{Q})(
+@inline function (γ :: Channel{Q})(
     Ω  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
@@ -56,6 +61,56 @@ struct K3Cl <: ClassTag end
 
     elseif Cl === K2pCl
         return γ.K2(Ω, νp)
+
+    elseif Cl === K3Cl
+        return γ.K3(Ω, ν, νp)
+
+    else
+        throw(ArgumentError("Invalid class tag $Cl"))
+    end
+
+end
+
+@inline function (γ :: Channel{Q})(
+    Ω  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+       :: Type{Cl},
+    )  :: Q where {Q, Cl <: ClassTag}
+
+    if Cl === K1Cl
+        return γ.K1(Ω)
+
+    elseif Cl === K2Cl
+        return γ.K2(Ω, ν)
+
+    elseif Cl === K2pCl
+        return γ.K2(Ω, νp)
+
+    elseif Cl === K3Cl
+        return γ.K3(Ω, ν, νp)
+
+    else
+        throw(ArgumentError("Invalid class tag $Cl"))
+    end
+
+end
+
+@inline function (γ :: ChannelViewX2X{Q})(
+    Ω  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+       :: Type{Cl},
+    )  :: Q where {Q, Cl <: ClassTag}
+
+    if Cl === K1Cl
+        return γ.K1(Ω)
+
+    elseif Cl === K2Cl
+        return γ.K2(Ω, ν)
+
+    elseif Cl === K2pCl
+        return γ.K2p(Ω, νp)
 
     elseif Cl === K3Cl
         return γ.K3(Ω, ν, νp)
@@ -256,7 +311,7 @@ end
     return val
 end
 
-function (F::MBEVertex{Q, 0})(
+function (F::MBEVertex{Q})(
     Ω  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
@@ -302,7 +357,6 @@ function (F::AbstractMBEVertex{Q})(
         K2  = F(ωs..., ks..., pCh, K2Cl)
         K2p = F(ωs..., ks..., pCh, K2pCl)
         K3  = F(ωs..., ks..., pCh, K3Cl)
-
         val += K1 + K2 + K2p + K2 * K2p / (U + K1) + K3
     end
 
@@ -318,7 +372,7 @@ function (F::AbstractMBEVertex{Q})(
         K2  = - F(ωs..., ks..., aCh, K2Cl)
         K2p = - F(ωs..., ks..., aCh, K2pCl)
         K3  = - F(ωs..., ks..., aCh, K3Cl)
-        val += - (K1 + K2 + K2p + K2 * K2p / (-U + K1) + K3) / 2
+        val -= (K1 + K2 + K2p + K2 * K2p / (-U + K1) + K3) / 2
 
         # Density channel
         K1  = 2 * F(ωs..., ks..., tCh, K1Cl)  + K1
@@ -347,87 +401,6 @@ function (F::AbstractMBEVertex{Q})(
 end
 
 
-function (F::AbstractMBEVertex{Q})(
-    Ω  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
-    ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
-    νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
-    P  :: BrillouinPoint,
-    k  :: BrillouinPoint,
-    kp :: SWaveBrillouinPoint,
-       :: Type{Ch},
-       :: Type{Sp},
-    ;
-    F0 :: Bool = true,
-    γp :: Bool = true,
-    γt :: Bool = true,
-    γa :: Bool = true,
-    )  :: Q where {Q, Ch <: ChannelTag, Sp <: pSp}
-
-    val = zero(Q)
-
-    mK = get_P_mesh(F)
-
-    for q in mK
-        val += F(Ω, ν, νp, P, k, value(q), Ch, Sp; F0, γp, γt, γa)
-    end
-
-    return val / length(mK)
-end
-
-function (F::AbstractMBEVertex{Q})(
-    Ω  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
-    ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
-    νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
-    P  :: BrillouinPoint,
-    k  :: SWaveBrillouinPoint,
-    kp :: BrillouinPoint,
-       :: Type{Ch},
-       :: Type{Sp},
-    ;
-    F0 :: Bool = true,
-    γp :: Bool = true,
-    γt :: Bool = true,
-    γa :: Bool = true,
-    )  :: Q where {Q, Ch <: ChannelTag, Sp <: pSp}
-
-    val = zero(Q)
-
-    mK = get_P_mesh(F)
-
-    for q in mK
-        val += F(Ω, ν, νp, P, value(q), kp, Ch, Sp; F0, γp, γt, γa)
-    end
-
-    return val / length(mK)
-end
-
-function (F::AbstractMBEVertex{Q})(
-    Ω  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
-    ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
-    νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
-    P  :: BrillouinPoint,
-    k  :: SWaveBrillouinPoint,
-    kp :: SWaveBrillouinPoint,
-       :: Type{Ch},
-       :: Type{Sp},
-    ;
-    F0 :: Bool = true,
-    γp :: Bool = true,
-    γt :: Bool = true,
-    γa :: Bool = true,
-    )  :: Q where {Q, Ch <: ChannelTag, Sp <: pSp}
-
-    val = zero(Q)
-
-    mK = get_P_mesh(F)
-
-    for qp in mK, q in mK
-        val += F(Ω, ν, νp, P, value(q), value(qp), Ch, Sp; F0, γp, γt, γa)
-    end
-
-    return val / length(mK)^2
-end
-
 @inline function (F :: AbstractMBEVertex{Q})(
     Ω  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
@@ -450,10 +423,10 @@ end
         return -F(Ω, ν, Ω - νp, P, k, P - kp, pCh, pSp; F0, γp, γt = γa, γa = γt)
 
     elseif Ch === tCh
-        return -F(Ω, νp, ν, P, kp, k, aCh, pSp; F0, γp, γt = γa, γa = γt)
+        return -F(Ω, ν, νp, P, k, kp, aCh, pSp; F0, γp, γt = γa, γa = γt)
 
     elseif Ch === aCh
-        return -F(Ω, νp, ν, P, kp, k, tCh, pSp; F0, γp, γt = γa, γa = γt)
+        return -F(Ω, ν, νp, P, k, kp, tCh, pSp; F0, γp, γt = γa, γa = γt)
 
     else
         throw(ArgumentError("Invalid channel tag $Ch"))
@@ -481,6 +454,90 @@ end
     return ( 2 * F(Ω, ν, νp, P, k, kp, Ch, pSp; F0, γp, γt, γa)
                + F(Ω, ν, νp, P, k, kp, Ch, xSp; F0, γp, γt, γa) )
 end
+
+
+
+function (F::AbstractMBEVertex{Q})(
+    Ω  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    P  :: BrillouinPoint,
+    k  :: BrillouinPoint,
+    kp :: SWaveBrillouinPoint,
+       :: Type{Ch},
+       :: Type{pSp},
+    ;
+    F0 :: Bool = true,
+    γp :: Bool = true,
+    γt :: Bool = true,
+    γa :: Bool = true,
+    )  :: Q where {Q, Ch <: ChannelTag}
+
+    val = zero(Q)
+
+    mK = get_P_mesh(F)
+
+    for q in mK
+        val += F(Ω, ν, νp, P, k, value(q), Ch, pSp; F0, γp, γt, γa)
+    end
+
+    return val / length(mK)
+end
+
+function (F::AbstractMBEVertex{Q})(
+    Ω  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    P  :: BrillouinPoint,
+    k  :: SWaveBrillouinPoint,
+    kp :: BrillouinPoint,
+       :: Type{Ch},
+       :: Type{pSp},
+    ;
+    F0 :: Bool = true,
+    γp :: Bool = true,
+    γt :: Bool = true,
+    γa :: Bool = true,
+    )  :: Q where {Q, Ch <: ChannelTag}
+
+    val = zero(Q)
+
+    mK = get_P_mesh(F)
+
+    for q in mK
+        val += F(Ω, ν, νp, P, value(q), kp, Ch, pSp; F0, γp, γt, γa)
+    end
+
+    return val / length(mK)
+end
+
+function (F::AbstractMBEVertex{Q})(
+    Ω  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    P  :: BrillouinPoint,
+    k  :: SWaveBrillouinPoint,
+    kp :: SWaveBrillouinPoint,
+       :: Type{Ch},
+       :: Type{pSp},
+    ;
+    F0 :: Bool = true,
+    γp :: Bool = true,
+    γt :: Bool = true,
+    γa :: Bool = true,
+    )  :: Q where {Q, Ch <: ChannelTag}
+
+    val = zero(Q)
+
+    mK = get_P_mesh(F)
+
+    for qp in mK, q in mK
+        val += F(Ω, ν, νp, P, value(q), value(qp), Ch, pSp; F0, γp, γt, γa)
+    end
+
+    return val / length(mK)^2
+end
+
 
 
 function Base.:copy(
@@ -735,4 +792,363 @@ function mbe_to_asymptotic(F_mbe :: NL2_MBEVertex)
     end
 
     return F
+end
+
+
+
+struct MBEVertexViewX2X{Q, VT, CT} <: AbstractVertex{Q}
+    F0  :: VT
+    γpp :: CT
+    γtp :: CT
+    γatp :: CT
+    γaap :: CT
+    γpx :: CT
+    γtx :: CT
+    γatx :: CT
+    γaax :: CT
+
+    function MBEVertexViewX2X(
+        F0  :: VT,
+        γpp :: CT,
+        γtp :: CT,
+        γatp :: CT,
+        γaap :: CT,
+        γpx :: CT,
+        γtx :: CT,
+        γatx :: CT,
+        γaax :: CT,
+        ) where {VT, CT <: ChannelViewX2X{Q}} where {Q}
+
+        return new{Q, VT, CT}(F0, γpp, γtp, γatp, γaap, γpx, γtx, γatx, γaax)
+    end
+end
+
+function MatsubaraFunctions.temperature(F :: MBEVertexViewX2X) :: Float64
+    return MatsubaraFunctions.temperature(F.γpp)
+end
+
+numK1(F :: MBEVertexViewX2X) :: Int64 = numK1(F.γpp)
+numK2(F :: MBEVertexViewX2X) :: NTuple{2, Int64} = numK2(F.γpp)
+numK3(F :: MBEVertexViewX2X) :: NTuple{2, Int64} = numK3(F.γpp)
+
+
+@inline function fixed_momentum_view(
+    γ :: MBEVertex,
+    P  :: BrillouinPoint,
+    k  :: BrillouinPoint,
+    kp :: BrillouinPoint,
+       :: Type{Ch}
+    ) where {Ch <: ChannelTag}
+    # TODO: Merge with fixed_momentum_view.jl
+    γ
+end
+
+
+@inline function fixed_momentum_view(
+    F  :: NL2_MBEVertex,
+    P  :: BrillouinPoint,
+    k  :: BrillouinPoint,
+    kp :: BrillouinPoint,
+       :: Type{Ch}
+    ) where {Ch <: ChannelTag}
+    # TODO: Merge with fixed_momentum_view.jl
+
+    F0 = fixed_momentum_view(F.F0, P, k, kp, Ch)
+
+    ks_p = convert_momentum(P, k, kp, Ch, pCh)
+    ks_t = convert_momentum(P, k, kp, Ch, tCh)
+    ks_a = convert_momentum(P, k, kp, Ch, aCh)
+
+    γpp = fixed_momentum_view(F.γp, ks_p...)
+    γtp = fixed_momentum_view(F.γt, ks_t...)
+    γatp = fixed_momentum_view(F.γa, ks_t...)
+    γaap = fixed_momentum_view(F.γa, ks_a...)
+
+    # γpx, γtx, and γax stores vertices with crossing applied to the momentum argument.
+    if Ch === pCh
+        γpx  = fixed_momentum_view(F.γp, convert_momentum(P, k, P - kp, pCh, pCh)...)
+        γtx  = fixed_momentum_view(F.γt, convert_momentum(P, k, P - kp, pCh, tCh)...)
+        γatx = fixed_momentum_view(F.γa, convert_momentum(P, k, P - kp, pCh, tCh)...)
+        γaax = fixed_momentum_view(F.γa, convert_momentum(P, k, P - kp, pCh, aCh)...)
+    elseif Ch === tCh
+        γpx  = fixed_momentum_view(F.γp, convert_momentum(P, k, kp, aCh, pCh)...)
+        γtx  = fixed_momentum_view(F.γt, convert_momentum(P, k, kp, aCh, tCh)...)
+        γatx = fixed_momentum_view(F.γa, convert_momentum(P, k, kp, aCh, tCh)...)
+        γaax = fixed_momentum_view(F.γa, convert_momentum(P, k, kp, aCh, aCh)...)
+    elseif Ch === aCh
+        γpx  = fixed_momentum_view(F.γp, convert_momentum(P, k, kp, tCh, pCh)...)
+        γtx  = fixed_momentum_view(F.γt, convert_momentum(P, k, kp, tCh, tCh)...)
+        γatx = fixed_momentum_view(F.γa, convert_momentum(P, k, kp, tCh, tCh)...)
+        γaax = fixed_momentum_view(F.γa, convert_momentum(P, k, kp, tCh, aCh)...)
+    end
+
+    MBEVertexViewX2X(F0, γpp, γtp, γatp, γaap, γpx, γtx, γatx, γaax)
+end
+
+
+@inline function (F :: MBEVertex{Q})(
+    Ω  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+       :: Type{Ch},
+       :: Type{Ch_k},
+       :: Type{Sp},
+       :: Type{Cl},
+    )  :: Q where {Q, Ch <: ChannelTag, Ch_k <: ChannelTag, Sp <: SpinTag, Cl <: ClassTag}
+
+    # Recursively evaluate the Vertex `F` and its RefVertex `F.F0`
+    # at the `Sp` spin component, channel `Ch` and asymptotic class `Cl`
+
+    val = F.F0(Ω, ν, νp, Ch, Sp, Cl)
+
+    Ch === pCh && Sp == pSp && (val += F.γp(Ω, ν, νp, Cl))
+    Ch === pCh && Sp == xSp && (val -= F.γp(Ω, ν, νp, Cl))
+
+    Ch === tCh && Sp == pSp && (val += F.γt(Ω, ν, νp, Cl))
+    Ch === tCh && Sp == xSp && (val -= F.γt(Ω, ν, νp, Cl))
+
+    Ch === aCh && Sp == pSp && (val += F.γa(Ω, ν, νp, Cl))
+    Ch === aCh && Sp == xSp && (val -= F.γa(Ω, ν, νp, Cl))
+
+    return val
+end
+
+
+@inline function (F :: MBEVertexViewX2X{Q})(
+    Ω  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+       :: Type{Ch},
+       :: Type{Ch_k},
+       :: Type{Sp},
+       :: Type{Cl},
+    )  :: Q where {Q, Ch <: ChannelTag, Ch_k <: ChannelTag, Sp <: SpinTag, Cl <: ClassTag}
+
+    # Recursively evaluate the Vertex `F` and its RefVertex `F.F0`
+    # at the `Sp` spin component, channel `Ch` and asymptotic class `Cl`
+
+    val = F.F0(Ω, ν, νp, Ch, Ch_k, Sp, Cl)
+
+    if Ch === pCh
+        Sp == pSp && (val += F.γpp(Ω, ν, νp, Cl))
+        Sp == xSp && (val -= F.γpx(Ω, ν, νp, Cl))
+
+    elseif Ch === tCh
+        Sp == pSp && (val += F.γtp(Ω, ν, νp, Cl))
+        Sp == xSp && (val -= F.γtx(Ω, ν, νp, Cl))
+
+    elseif Ch === aCh
+        if Ch_k === tCh
+            Sp == pSp && (val += F.γatp(Ω, ν, νp, Cl))
+            Sp == xSp && (val -= F.γatx(Ω, ν, νp, Cl))
+
+        elseif Ch_k === aCh
+            Sp == pSp && (val += F.γaap(Ω, ν, νp, Cl))
+            Sp == xSp && (val -= F.γaax(Ω, ν, νp, Cl))
+        end
+    end
+
+    return val
+end
+
+
+function (F::MBEVertexViewX2X{Q})(
+    Ω  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+       :: Type{Ch},
+       :: Type{pSp},
+    ;
+    F0 :: Bool = true,
+    γp :: Bool = true,
+    γt :: Bool = true,
+    γa :: Bool = true,
+    )  :: Q where {Q, Ch <: ChannelTag}
+
+    val = zero(Q)
+
+    U = bare_vertex(F)
+
+    val += bare_vertex(F, pSp)
+
+    if γp
+        ωs = convert_frequency(Ω, ν, νp, Ch, pCh)
+        K1  = F(ωs..., pCh, pCh, pSp, K1Cl)
+        K2  = F(ωs..., pCh, pCh, pSp, K2Cl)
+        K2p = F(ωs..., pCh, pCh, pSp, K2pCl)
+        K3  = F(ωs..., pCh, pCh, pSp, K3Cl)
+
+        val += K1 + K2 + K2p + K2 * K2p / (U + K1) + K3
+    end
+
+    if γt
+        ωs = convert_frequency(Ω, ν, νp, Ch, tCh)
+
+        # Magnetic channel
+        K1  = - F(ωs..., aCh, tCh, pSp, K1Cl)
+        K2  = - F(ωs..., aCh, tCh, pSp, K2Cl)
+        K2p = - F(ωs..., aCh, tCh, pSp, K2pCl)
+        K3  = - F(ωs..., aCh, tCh, pSp, K3Cl)
+        val -= (K1 + K2 + K2p + K2 * K2p / (-U + K1) + K3) / 2
+
+        # Density channel
+        K1  = 2 * F(ωs..., tCh, tCh, pSp, K1Cl)  + K1
+        K2  = 2 * F(ωs..., tCh, tCh, pSp, K2Cl)  + K2
+        K2p = 2 * F(ωs..., tCh, tCh, pSp, K2pCl) + K2p
+        K3  = 2 * F(ωs..., tCh, tCh, pSp, K3Cl)  + K3
+        val += (K1 + K2 + K2p + K2 * K2p / (U + K1) + K3) / 2
+    end
+
+    if γa
+        ωs = convert_frequency(Ω, ν, νp, Ch, aCh)
+        K1  = F(ωs..., aCh, aCh, pSp, K1Cl)
+        K2  = F(ωs..., aCh, aCh, pSp, K2Cl)
+        K2p = F(ωs..., aCh, aCh, pSp, K2pCl)
+        K3  = F(ωs..., aCh, aCh, pSp, K3Cl)
+
+        val += K1 + K2 + K2p + K2 * K2p / (U + K1) + K3
+    end
+
+    if F0 == false
+        val -= F.F0(Ω, ν, νp, Ch, pSp; γp, γt, γa)
+    end
+
+    return val
+end
+
+
+
+
+
+@inline function (F :: MBEVertexViewX2X{Q})(
+    Ω  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+       :: Type{Ch},
+       :: Type{xSp}
+    ;
+    F0 :: Bool = true,
+    γp :: Bool = true,
+    γt :: Bool = true,
+    γa :: Bool = true
+    )  :: Q where {Q, Ch <: ChannelTag}
+
+    val = zero(Q)
+
+    U = bare_vertex(F)
+
+    val += bare_vertex(F, xSp)
+
+    if F0 == false
+        val -= F.F0(Ω, ν, νp, Ch, xSp; γp, γt, γa)
+    end
+
+    # Apply crossing symmetry to the frequency arguments
+    if Ch === pCh
+        Ω, ν, νp = Ω, ν, Ω - νp
+        Ch_ = pCh
+    elseif Ch === aCh
+        Ch_ = tCh
+    elseif Ch === tCh
+        Ch_ = aCh
+    end
+    γa, γt = γt, γa
+
+
+    if γp
+        ωs = convert_frequency(Ω, ν, νp, Ch_, pCh)
+        K1  = F(ωs..., pCh, pCh, xSp, K1Cl)
+        K2  = F(ωs..., pCh, pCh, xSp, K2Cl)
+        K2p = F(ωs..., pCh, pCh, xSp, K2pCl)
+        K3  = F(ωs..., pCh, pCh, xSp, K3Cl)
+
+        val += K1 + K2 + K2p + K2 * K2p / (-U + K1) + K3
+    end
+
+    if γt
+        ωs = convert_frequency(Ω, ν, νp, Ch_, tCh)
+
+        # Magnetic channel
+        K1  = - F(ωs..., aCh, tCh, xSp, K1Cl)
+        K2  = - F(ωs..., aCh, tCh, xSp, K2Cl)
+        K2p = - F(ωs..., aCh, tCh, xSp, K2pCl)
+        K3  = - F(ωs..., aCh, tCh, xSp, K3Cl)
+        val -= (K1 + K2 + K2p + K2 * K2p / (U + K1) + K3) / 2
+
+        # Density channel
+        K1  = 2 * F(ωs..., tCh, tCh, xSp, K1Cl)  + K1
+        K2  = 2 * F(ωs..., tCh, tCh, xSp, K2Cl)  + K2
+        K2p = 2 * F(ωs..., tCh, tCh, xSp, K2pCl) + K2p
+        K3  = 2 * F(ωs..., tCh, tCh, xSp, K3Cl)  + K3
+        val += (K1 + K2 + K2p + K2 * K2p / (-U + K1) + K3) / 2
+    end
+
+    if γa
+        ωs = convert_frequency(Ω, ν, νp, Ch_, aCh)
+        K1  = F(ωs..., aCh, aCh, xSp, K1Cl)
+        K2  = F(ωs..., aCh, aCh, xSp, K2Cl)
+        K2p = F(ωs..., aCh, aCh, xSp, K2pCl)
+        K3  = F(ωs..., aCh, aCh, xSp, K3Cl)
+
+        val += K1 + K2 + K2p + K2 * K2p / (-U + K1) + K3
+    end
+
+    return val
+end
+
+
+# evaluators for density spin component
+@inline function (F :: MBEVertexViewX2X{Q})(
+    Ω  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+       :: Type{Ch},
+       :: Type{dSp}
+    ;
+    F0 :: Bool = true,
+    γp :: Bool = true,
+    γt :: Bool = true,
+    γa :: Bool = true
+    )  :: Q where {Q, Ch <: ChannelTag}
+
+    return ( 2 * F(Ω, ν, νp, Ch, pSp; F0, γp, γt, γa)
+               + F(Ω, ν, νp, Ch, xSp; F0, γp, γt, γa) )
+end
+
+
+
+
+@inline function (F :: RefVertex{Q})(
+    Ω  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+       :: Type{Ch},
+       :: Type{Sp},
+       :: Type{Cl},
+    ; kwargs...
+    )  :: Q where {Q, Ch <: ChannelTag, Sp <: SpinTag, Cl <: ClassTag}
+
+    if Cl === K3Cl
+        if Ch === pCh && Sp === pSp
+            return F.Fp_p(Ω, ν, νp)
+
+        elseif Ch === tCh && Sp === pSp
+            return F.Ft_p(Ω, ν, νp)
+
+        elseif Ch === aCh && Sp === pSp
+            return -F.Ft_x(Ω, νp, ν)
+
+        elseif Ch === pCh && Sp === xSp
+            return -F.Fp_p(Ω, ν, Ω - νp)
+
+        elseif Ch === tCh && Sp === xSp
+            return F.Ft_x(Ω, ν, νp)
+
+        elseif Ch === aCh && Sp === xSp
+            return -F.Ft_p(Ω, νp, ν)
+
+        end
+    else
+        return zero(Q)
+    end
 end
