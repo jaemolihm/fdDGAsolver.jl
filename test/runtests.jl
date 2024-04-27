@@ -25,4 +25,5 @@ println("nthreads = $(Threads.nthreads())")
     include("test_fixed_momentum_view.jl")
 
     include("test_boson_exchange_local.jl")
+    include("test_boson_exchange_NL2.jl")
 end

@@ -66,6 +66,35 @@ struct K3Cl <: ClassTag end
 
 end
 
+
+@inline function (γ :: fdDGAsolver.NL2_Channel{Q})(
+    Ω  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    P  :: BrillouinPoint,
+    k  :: BrillouinPoint,
+    kp :: BrillouinPoint,
+       :: Type{Cl},
+    )  :: Q where {Q, Cl <: ClassTag}
+
+    if Cl === K1Cl
+        return γ.K1(Ω, P)
+
+    elseif Cl === K2Cl
+        return γ.K2(Ω, ν, P, k)
+
+    elseif Cl === K2pCl
+        return γ.K2(Ω, νp, P, kp)
+
+    elseif Cl === K3Cl
+        return γ.K3(Ω, ν, νp, P)
+
+    else
+        throw(ArgumentError("Invalid class tag $Cl"))
+    end
+
+end
+
 @inline function (F :: RefVertex{Q})(
     Ω  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
@@ -130,7 +159,9 @@ end
 
 # -------------------------------------------------------------------------- #
 
-struct MBEVertex{Q, NL, VT} <: AbstractVertex{Q}
+abstract type AbstractMBEVertex{Q} <: AbstractVertex{Q} end
+
+struct MBEVertex{Q, VT} <: AbstractMBEVertex{Q}
     F0 :: VT
     γp :: Channel{Q}
     γt :: Channel{Q}
@@ -143,7 +174,7 @@ struct MBEVertex{Q, NL, VT} <: AbstractVertex{Q}
         γa :: Channel{Q},
         ) where {Q, VT}
 
-        return new{Q, 0, VT}(F0, γp, γt, γa)
+        return new{Q, VT}(F0, γp, γt, γa)
     end
 
     function MBEVertex(
@@ -157,7 +188,7 @@ struct MBEVertex{Q, NL, VT} <: AbstractVertex{Q}
         Q = eltype(F0)
 
         γ = Channel(T, numK1, numK2, numK3, Q)
-        return new{Q, 0, VT}(F0, γ, copy(γ), copy(γ))
+        return new{Q, VT}(F0, γ, copy(γ), copy(γ))
     end
 end
 
@@ -242,7 +273,7 @@ function (F::MBEVertex{Q, 0})(
 end
 
 
-function (F::MBEVertex{Q, 0})(
+function (F::AbstractMBEVertex{Q})(
     Ω  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
@@ -316,7 +347,7 @@ function (F::MBEVertex{Q, 0})(
 end
 
 
-@inline function (F :: MBEVertex{Q, 0})(
+@inline function (F :: AbstractMBEVertex{Q})(
     Ω  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
@@ -350,7 +381,7 @@ end
 
 
 # evaluators for density spin component
-@inline function (F :: MBEVertex{Q, 0})(
+@inline function (F :: AbstractMBEVertex{Q})(
     Ω  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
@@ -519,4 +550,49 @@ function mbe_to_asymptotic(F_mbe :: MBEVertex)
     end
 
     return F
+end
+
+
+
+# -------------------------------------------------------------------------- #
+
+struct NL2_MBEVertex{Q, VT} <: AbstractMBEVertex{Q}
+    F0 :: VT
+    γp :: NL2_Channel{Q}
+    γt :: NL2_Channel{Q}
+    γa :: NL2_Channel{Q}
+
+    function NL2_MBEVertex(
+        F0 :: VT,
+        γp :: NL2_Channel{Q},
+        γt :: NL2_Channel{Q},
+        γa :: NL2_Channel{Q},
+        ) where {Q, VT}
+
+        return new{Q, VT}(F0, γp, γt, γa)
+    end
+
+    function NL2_MBEVertex(
+        F0    :: VT,
+        T     :: Float64,
+        numK1 :: Int64,
+        numK2 :: NTuple{2, Int64},
+        numK3 :: NTuple{2, Int64},
+        meshK :: KMesh,
+        ) where {VT}
+
+        Q = eltype(F0)
+
+        γ = NL2_Channel(T, numK1, numK2, numK3, meshK, Q)
+        return new{Q, VT}(F0, γ, copy(γ), copy(γ))
+    end
+end
+
+fdDGAsolver.channel_type(::Type{NL2_MBEVertex}) = NL2_Channel
+
+function Base.:copy(
+    F :: NL2_MBEVertex{Q}
+    ) :: NL2_MBEVertex{Q} where {Q}
+
+    return NL2_MBEVertex(copy(F.F0), copy(F.γp), copy(F.γt), copy(F.γa))
 end

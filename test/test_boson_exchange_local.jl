@@ -30,8 +30,8 @@ using Test
     # Test InfiniteMatsubaraFrequency evaluation
     unflatten!(Γ, rand(eltype(Γ), length(Γ)))
     for (Ch, γ) in zip([aCh, pCh, tCh], [Γ.γa, Γ.γp, Γ.γt])
-        @test Γ(Ω, νInf,    ω, Ch, pSp) ≈ U + γ.K1(Ω) + γ.K2(Ω, ω)
         @test Γ(Ω,    ν, νInf, Ch, pSp) ≈ U + γ.K1(Ω) + γ.K2(Ω, ν)
+        @test Γ(Ω, νInf,    ω, Ch, pSp) ≈ U + γ.K1(Ω) + γ.K2(Ω, ω)
         @test Γ(Ω, νInf, νInf, Ch, pSp) ≈ U + γ.K1(Ω)
     end
 
