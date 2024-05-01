@@ -1,4 +1,4 @@
-__precompile__(false)
+__precompile__(true)
 module fdDGAsolver
 
     using PrecompileTools
@@ -64,8 +64,6 @@ module fdDGAsolver
     include("fixed_momentum_view.jl")
 
     include("mfRG.jl")
-
-    include("nonlocal_2/mbe.jl")
 
     include("boson_exchange.jl")
 
