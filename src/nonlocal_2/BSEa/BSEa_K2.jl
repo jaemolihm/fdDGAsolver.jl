@@ -63,7 +63,7 @@ function BSE_K2!(
     sign :: Int,
          :: Type{Ch},
          :: Type{Sp},
-    is_mfRG :: Val{false},
+    is_mfRG :: Union{Val{true}, Val{false}} = Val(false),
     ;
     mode :: Symbol = :serial
     ) where {Q, Ch <: ChannelTag, Sp <: SpinTag}
@@ -101,7 +101,7 @@ function BSE_K2!(
                     FLr = FL(Ω, ω, νInf, P, q, k0, Ch, Sp)
 
                     # 1ℓ and central part
-                    val += Fl * Π0slice[ω, q] * FLr
+                    val += Fl * Π0slice[iω, iq] * FLr
 
                 else
 

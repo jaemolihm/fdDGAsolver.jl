@@ -147,7 +147,7 @@ module fdDGAsolver
         solve_using_mfRG!(S; maxiter = 1, occ_target, hubbard_params = (; t1, t2), tol = 1e3, verbose=false);
 
         Σ_corr = copy(S.Σ0)
-        mult_add!(Σ_corr, SDE!(copy(Σ_corr), S.F0, S.G0, S.Π0pp, S.Π0ph, S; include_U² = true, include_Hartree = true), -1)
+        mult_add!(Σ_corr, SDE!(copy(Σ_corr), S.G0, S.Π0pp, S.Π0ph, S.L0pp, S.L0ph, S.F0, S.SGΣ, S.SG0pp2, S.SG0ph2; S.mode, include_U² = true, include_Hartree = true), -1)
         solve_using_mfRG_v2!(S; maxiter = 1, occ_target, hubbard_params = (; t1, t2), tol = 1e3, verbose=false, Σ_corr);
     end
 

@@ -21,9 +21,9 @@ function LinearMaps._unsafe_mul!(y, A::mfRGLinearMap, x::AbstractVector)
     BSE_L_K2!(S, aCh)
     BSE_L_K2!(S, tCh)
 
-    BSE_K1_mfRG!(S, pCh)
-    BSE_K1_mfRG!(S, aCh)
-    BSE_K1_mfRG!(S, tCh)
+    BSE_K1!(S, pCh, Val(true))
+    BSE_K1!(S, aCh, Val(true))
+    BSE_K1!(S, tCh, Val(true))
 
     # Takes ~60% of the time
     BSE_K2!(S, pCh, Val(true))
@@ -440,7 +440,7 @@ function solve_using_mfRG_v2!(
     verbose = true,
     occ_target = nothing,
     hubbard_params = nothing,
-    mixing_step_init = 1.0,
+    mixing_init = 1.0,
     iter_restart = 0,
     tol = 1e-4,
     auto_restart = false,

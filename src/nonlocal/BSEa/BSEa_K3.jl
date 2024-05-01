@@ -88,7 +88,7 @@ function BSE_K3!(
 
                 # central part
                 ω_ = _crossing(Ω, ω, Ch)
-                if is_inbounds(ω_, meshes(S.FL.γt.K3, Val(2)))
+                if is_inbounds(ω_, meshes(γL.K3, Val(2)))
                     if Ch === aCh || Ch === pCh
                         val += Fslice[i] * Π0_val * γL.K3[Ω, ω_, νp, P] * sign2
                     elseif Ch === tCh
