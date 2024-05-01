@@ -200,7 +200,7 @@ end
 # symmetry group initialization
 function init_sym_grp!(
     S::ParquetSolver
-)::Nothing
+    )::Nothing
 
     # self-energy
     S.SGΣ = my_SymmetryGroup([Symmetry{1}(sΣ)], S.Σ)
@@ -228,10 +228,24 @@ function init_sym_grp!(
     return nothing
 end
 
+
+function reset_sym_grp!(S :: AbstractSolver)
+    (; F, Σ) = S
+
+    S.SGΣ = SymmetryGroup(Σ)
+    S.SGpp = SymmetryGroup[SymmetryGroup(F.γp.K1), SymmetryGroup(F.γp.K2), SymmetryGroup(F.γp.K3)]
+    S.SGph = SymmetryGroup[SymmetryGroup(F.γp.K1), SymmetryGroup(F.γp.K2), SymmetryGroup(F.γp.K3)]
+    S.SGppL = SymmetryGroup[SymmetryGroup(F.γp.K1), SymmetryGroup(F.γp.K2), SymmetryGroup(F.γp.K3)]
+    S.SGphL = SymmetryGroup[SymmetryGroup(F.γp.K1), SymmetryGroup(F.γp.K2), SymmetryGroup(F.γp.K3)]
+
+    return nothing
+end
+
+
 # getter methods
 function MatsubaraFunctions.temperature(
     S::AbstractSolver
-)::Float64
+    )::Float64
 
     return MatsubaraFunctions.temperature(S.F)
 end

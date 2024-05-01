@@ -1,12 +1,12 @@
 # Define AbstractSolver interface
 
 function SDE!(S :: AbstractSolver; strategy = :scPA, include_U² = true, include_Hartree = true)
-    if strategy == :scPA
+    if strategy == :scPA || strategy == :scPA_new
         # Σ = SDE(ΔΓ + Γ₀, Π, G)
         set!(S.Σ, 0)
         SDE!(S.Σ, S.G, S.Πpp, S.Πph, S.Lpp, S.Lph, S.F, S.SGΣ, S.SGpp[2], S.SGph[2]; include_U², include_Hartree, S.mode)
 
-    elseif strategy == :fdPA
+    elseif strategy == :fdPA || strategy == :fdPA_new
         # Σ = SDE(ΔΓ + Γ₀, Π, G)
         set!(S.Σ, 0)
         SDE!(S.Σ, S.G, S.Πpp, S.Πph, S.Lpp, S.Lph, S.F, S.SGΣ, S.SGpp[2], S.SGph[2]; include_U², include_Hartree, S.mode)

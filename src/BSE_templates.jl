@@ -178,3 +178,75 @@ function BSE_K3!(
 
     return nothing
 end
+
+
+
+
+#----------------------------------------------------------------------------------------------#
+# K1 class, alternative form K1 = (U + K1 + K2') Π U
+
+function BSE_K1_new!(
+    S       :: AbstractSolver,
+            :: Type{aCh},
+    is_mfRG :: Union{Val{true}, Val{false}} = Val(false),
+    )       :: Nothing
+    BSE_K1_new!(S.Fbuff.γa.K1, S.F0, S.F, S.Π0ph, S.Πph, S.SGph[1], +1, aCh, pSp, is_mfRG; S.mode)
+end
+
+function BSE_K1_new!(
+    S       :: AbstractSolver,
+            :: Type{pCh},
+    is_mfRG :: Union{Val{true}, Val{false}} = Val(false),
+    )       :: Nothing
+    BSE_K1_new!(S.Fbuff.γp.K1, S.F0, S.F, S.Π0pp, S.Πpp, S.SGpp[1], +1, pCh, pSp, is_mfRG; S.mode)
+end
+
+function BSE_K1_new!(
+    S       :: AbstractSolver,
+            :: Type{tCh},
+    is_mfRG :: Union{Val{true}, Val{false}} = Val(false),
+    )       :: Nothing
+    BSE_K1_new!(S.Fbuff.γt.K1, S.F0, S.F, S.Π0ph, S.Πph, S.SGph[1], -1, tCh, dSp, is_mfRG; S.mode)
+
+    # Currently S.Fbuff.γt.K1 has γtd = 2 γtp + γtx = 2 γtp - γax
+    # We want to store γtp = (γtd + γax) / 2
+    add!(S.Fbuff.γt.K1, S.Fbuff.γa.K1)
+    S.Fbuff.γt.K1.data ./= 2
+
+    return nothing
+end
+
+
+#----------------------------------------------------------------------------------------------#
+# K2 class, alternative form K2 = (K2 + K3 + (I - U)) Π U
+
+function BSE_K2_new!(
+    S       :: AbstractSolver,
+            :: Type{aCh},
+    is_mfRG :: Union{Val{true}, Val{false}} = Val(false),
+    )       :: Nothing
+    BSE_K2_new!(S.Fbuff.γa.K2, S.F0, S.F, S.Π0ph, S.Πph, S.SGph[2], +1, aCh, pSp, is_mfRG; S.mode)
+end
+
+function BSE_K2_new!(
+    S       :: AbstractSolver,
+            :: Type{pCh},
+    is_mfRG :: Union{Val{true}, Val{false}} = Val(false),
+    )       :: Nothing
+    BSE_K2_new!(S.Fbuff.γp.K2, S.F0, S.F, S.Π0pp, S.Πpp, S.SGpp[2], +1, pCh, pSp, is_mfRG; S.mode)
+end
+
+function BSE_K2_new!(
+    S       :: AbstractSolver,
+            :: Type{tCh},
+    is_mfRG :: Union{Val{true}, Val{false}} = Val(false),
+    )       :: Nothing
+    BSE_K2_new!(S.Fbuff.γt.K2, S.F0, S.F, S.Π0ph, S.Πph, S.SGph[2], -1, tCh, dSp, is_mfRG; S.mode)
+
+    # Currently S.Fbuff.γt.K2 has γtd = 2 γtp + γtx = 2 γtp - γax
+    # We want to store γtp = (γtd + γax) / 2
+    add!(S.Fbuff.γt.K2, S.Fbuff.γa.K2)
+    S.Fbuff.γt.K2.data ./= 2
+
+    return nothing
+end

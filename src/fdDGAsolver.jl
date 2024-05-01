@@ -32,6 +32,7 @@ module fdDGAsolver
     include("bubble.jl")
     include("dyson.jl")
     include("SDE.jl")
+    include("BSE_templates.jl")
     include("BSE.jl")
     include("build_K3_cache.jl")
     include("solve.jl")

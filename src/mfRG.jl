@@ -21,39 +21,36 @@ function LinearMaps._unsafe_mul!(y, A::mfRGLinearMap, x::AbstractVector)
     BSE_L_K2!(S, aCh)
     BSE_L_K2!(S, tCh)
 
-    BSE_L_K3!(S, pCh)
-    BSE_L_K3!(S, aCh)
-    BSE_L_K3!(S, tCh)
-
-    set!(S.Fbuff, 0)
-
     BSE_K1_mfRG!(S, pCh)
     BSE_K1_mfRG!(S, aCh)
     BSE_K1_mfRG!(S, tCh)
 
     # Takes ~60% of the time
-    BSE_K2_mfRG!(S, pCh)
-    BSE_K2_mfRG!(S, aCh)
-    BSE_K2_mfRG!(S, tCh)
+    BSE_K2!(S, pCh, Val(true))
+    BSE_K2!(S, aCh, Val(true))
+    BSE_K2!(S, tCh, Val(true))
 
-    BSE_K3_mfRG!(S, pCh)
-    BSE_K3_mfRG!(S, aCh)
-    BSE_K3_mfRG!(S, tCh)
+    # # New version
+    # BSE_K1_new!(S, pCh, Val(true))
+    # BSE_K1_new!(S, aCh, Val(true))
+    # BSE_K1_new!(S, tCh, Val(true))
+
+    # BSE_K2_new!(S, pCh, Val(true))
+    # BSE_K2_new!(S, aCh, Val(true))
+    # BSE_K2_new!(S, tCh, Val(true))
+
+    BSE_L_K3!(S, pCh)
+    BSE_L_K3!(S, aCh)
+    BSE_L_K3!(S, tCh)
+
+    BSE_K3!(S, pCh, Val(true))
+    BSE_K3!(S, aCh, Val(true))
+    BSE_K3!(S, tCh, Val(true))
 
     set!(S.F, S.Fbuff)
 
-    # set!(S.F.γa.K1, 0)
-    # set!(S.F.γp.K1, 0)
-    # set!(S.F.γt.K1, 0)
-    # set!(S.F.γa.K2, 0)
-    # set!(S.F.γp.K2, 0)
-    # set!(S.F.γt.K2, 0)
-    # set!(S.F.γa.K3, 0)
-    # set!(S.F.γp.K3, 0)
-    # set!(S.F.γt.K3, 0)
-
     flatten!(S.F, y)
-    y .-= x
+    y .= x .- y
 
     return y
 end
@@ -79,7 +76,7 @@ function fixed_point_preconditioned!(
     R .-= x
 
     # Precondition output
-    res = Krylov.dqgmres(mfRGLinearMap(S), .-R;
+    res = Krylov.dqgmres(mfRGLinearMap(S), R;
         atol = 1e-6, rtol = 1e-6, itmax = 400,
         memory = 200, verbose = 0, history = true);
 
@@ -216,6 +213,7 @@ function solve_using_mfRG!(
             println("Solving vertex")
         end
         kwargs_solver_vertex = (; update_Σ = false, strategy = :fdPA)
+        # kwargs_solver_vertex = (; update_Σ = false, strategy = :fdPA_new)
         @time res = nlsolve((R, x) -> fixed_point_preconditioned!(R, x, S; kwargs_solver_vertex...), flatten(S.F),
             method = :anderson,
             iterations = 100,
@@ -383,6 +381,7 @@ function solve_using_mfRG_fixed_bubble!(
         mpi_ismain() && verbose && println("Solving vertex")
 
         kwargs_solver_vertex = (; update_Σ = false, strategy = :fdPA)
+        # kwargs_solver_vertex = (; update_Σ = false, strategy = :fdPA_new)
         @time res = nlsolve((R, x) -> fixed_point_preconditioned!(R, x, S; kwargs_solver_vertex...), flatten(S.F),
             method = :anderson,
             iterations = 200,

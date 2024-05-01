@@ -4,7 +4,7 @@ function iterate_solver!(S :: AbstractSolver;
     update_Σ :: Bool = true,
     ) ::Nothing
 
-    @assert strategy in (:fdPA, :scPA) "Calculation strategy unknown"
+    @assert strategy in (:fdPA, :scPA, :scPA_new, :fdPA_new) "Calculation strategy unknown"
 
     if update_Σ
         # If Σ is not updated, G and bubbles are already set at the initialization step,
@@ -19,46 +19,64 @@ function iterate_solver!(S :: AbstractSolver;
 
     build_K3_cache!(S)
 
-    if strategy == :fdPA
-        # calculate FL
-        BSE_L_K2!(S, pCh)
-        BSE_L_K2!(S, aCh)
-        BSE_L_K2!(S, tCh)
 
-        BSE_L_K3!(S, pCh)
-        BSE_L_K3!(S, aCh)
-        BSE_L_K3!(S, tCh)
+    if strategy == :fdPA_new || strategy == :scPA_new
+        if strategy == :fdPA_new
+            # calculate FL
+            BSE_L_K3!(S, pCh)
+            BSE_L_K3!(S, aCh)
+            BSE_L_K3!(S, tCh)
+        end
+
+        BSE_K3!(S, pCh)
+        BSE_K3!(S, aCh)
+        BSE_K3!(S, tCh)
+
+        # New version
+        BSE_K1_new!(S, pCh)
+        BSE_K1_new!(S, aCh)
+        BSE_K1_new!(S, tCh)
+
+        BSE_K2_new!(S, pCh)
+        BSE_K2_new!(S, aCh)
+        BSE_K2_new!(S, tCh)
+
+    else
+        if strategy == :fdPA
+            # calculate FL
+            BSE_L_K2!(S, pCh)
+            BSE_L_K2!(S, aCh)
+            BSE_L_K2!(S, tCh)
+
+            BSE_L_K3!(S, pCh)
+            BSE_L_K3!(S, aCh)
+            BSE_L_K3!(S, tCh)
+        end
+
+        # calculate Fbuff
+        BSE_K1!(S, pCh)
+        BSE_K1!(S, aCh)
+        BSE_K1!(S, tCh)
+
+        BSE_K2!(S, pCh)
+        BSE_K2!(S, aCh)
+        BSE_K2!(S, tCh)
+
+        BSE_K3!(S, pCh)
+        BSE_K3!(S, aCh)
+        BSE_K3!(S, tCh)
     end
-
-    # calculate Fbuff
-    BSE_K1!(S, pCh)
-    BSE_K1!(S, aCh)
-    BSE_K1!(S, tCh)
-
-    BSE_K2!(S, pCh)
-    BSE_K2!(S, aCh)
-    BSE_K2!(S, tCh)
-
-    BSE_K3!(S, pCh)
-    BSE_K3!(S, aCh)
-    BSE_K3!(S, tCh)
 
     # update F
     set!(S.F, S.Fbuff)
 
-    # set!(S.F.γa.K1, 0)
-    # set!(S.F.γp.K1, 0)
-    # set!(S.F.γt.K1, 0)
-    # set!(S.F.γa.K2, 0)
-    # set!(S.F.γp.K2, 0)
-    # set!(S.F.γt.K2, 0)
-    # set!(S.F.γa.K3, 0)
-    # set!(S.F.γp.K3, 0)
-    # set!(S.F.γt.K3, 0)
+    # average_fermionic_momenta!(S.F.γa.K3)
+    # average_fermionic_momenta!(S.F.γp.K3)
+    # average_fermionic_momenta!(S.F.γt.K3)
 
-
-    # Symmetrize F (symmetry can be broken during reduction)
-    my_symmetrize!(S)
+    # average_fermionic_momenta!(S.F.γa.K2)
+    # average_fermionic_momenta!(S.F.γp.K2)
+    # average_fermionic_momenta!(S.F.γt.K2)
 
     if update_Σ
         # update self-energy

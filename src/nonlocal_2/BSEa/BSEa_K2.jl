@@ -136,3 +136,95 @@ function BSE_K2!(
 
     return nothing
 end
+
+
+
+function BSE_K2_new!(
+    K2   :: NL2_MF_K2{Q},
+    F0   :: AbstractVertex{Q},
+    F    :: AbstractVertex{Q},
+    Π0   :: NL2_MF_Π{Q},
+    Π    :: NL2_MF_Π{Q},
+    SG   :: SymmetryGroup{4, Q},
+    sign :: Int,
+         :: Type{Ch},
+         :: Type{Sp},
+    is_mfRG :: Union{Val{true}, Val{false}} = Val(false),
+    ;
+    mode :: Symbol = :serial
+    ) where {Q, Ch <: ChannelTag, Sp <: SpinTag}
+
+    U = bare_vertex(F, Sp)
+
+    # model the diagram
+    @inline function diagram(wtpl)
+
+        Ω, ν, P, k = wtpl
+        val     = zero(Q)
+        # Π0slice = view(Π0, Ω, :, P, :)
+        # Πslice  = view(Π , Ω, :, P, :)
+
+        Π0slice = MeshFunction((meshes(Π0, Val(2)), meshes(Π0, Val(4))), view(Π0, Ω, :, P, :))
+        Πslice  = MeshFunction((meshes(Π,  Val(2)), meshes(Π,  Val(4))), view(Π,  Ω, :, P, :))
+
+        # for iq in axes(Π0slice, 2)
+        #     q = value(meshes(Π0, Val(4))[iq])
+        #     Fview  = fixed_momentum_view(F,  P, k, q, Ch)
+        #     F0view = fixed_momentum_view(F0, P, k, q, Ch)
+
+        #     for iω in axes(Π0slice, 1)
+        #         ω = value(meshes(Π0, Val(2))[iω])
+
+        #         # vertices
+        #         Fl  = Fview( Ω, ν, ω, Ch, Sp) - Fview( Ω, νInf, ω, Ch, Sp)
+        #         F0l = F0view(Ω, ν, ω, Ch, Sp) - F0view(Ω, νInf, ω, Ch, Sp)
+
+        #         # 1ℓ and central part
+        #         if is_mfRG === Val(true)
+        #             val += (Fl - F0l) * Πslice[iω, iq] * U
+        #         else
+        #             val += (Fl * Πslice[iω, iq] - F0l * Π0slice[iω, iq]) * U
+        #         end
+        #     end
+        # end
+
+        # for i in eachindex(Π0slice)
+        #     ω = value(meshes(Π0, Val(2))[i.I[1]])
+        #     q = value(meshes(Π0, Val(4))[i.I[2]])
+
+        #     # vertices
+        #     Fl  = F( Ω, ν, ω, P, k, q, Ch, Sp) - F( Ω, νInf, ω, P, k, q, Ch, Sp)
+        #     F0l = F0(Ω, ν, ω, P, k, q, Ch, Sp) - F0(Ω, νInf, ω, P, k, q, Ch, Sp)
+
+        #     # 1ℓ and central part
+        #     if is_mfRG === Val(true)
+        #         val += (Fl - F0l) * Πslice[i] * U
+        #     else
+        #         val += (Fl * Πslice[i] - F0l * Π0slice[i]) * U
+        #     end
+        # end
+
+        for iq in eachindex(meshes(K2, Val(4))), iω in eachindex(meshes(K2, Val(2)))
+            ω = value(meshes(K2, Val(2))[iω])
+            q = value(meshes(K2, Val(4))[iq])
+
+            # vertices
+            Fl  = F( Ω, ν, ω, P, k, q, Ch, Sp) - F( Ω, νInf, ω, P, k, q, Ch, Sp)
+            F0l = F0(Ω, ν, ω, P, k, q, Ch, Sp) - F0(Ω, νInf, ω, P, k, q, Ch, Sp)
+
+            # 1ℓ and central part
+            if is_mfRG === Val(true)
+                val += (Fl - F0l) * Πslice[ω, q] * U
+            else
+                val += (Fl * Πslice[ω, q] - F0l * Π0slice[ω, q]) * U
+            end
+        end
+
+        return temperature(F) * val / numP(F) * sign
+    end
+
+    # compute K2
+    SG(K2, InitFunction{4, Q}(diagram); mode)
+
+    return nothing
+end

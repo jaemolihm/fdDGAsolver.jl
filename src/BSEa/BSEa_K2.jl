@@ -101,3 +101,51 @@ function BSE_K2!(
 
     return nothing
 end
+
+
+
+
+function BSE_K2_new!(
+    K2   :: MF_K2{Q},
+    F0   :: AbstractVertex{Q},
+    F    :: AbstractVertex{Q},
+    Π0   :: MF_Π{Q},
+    Π    :: MF_Π{Q},
+    SG   :: SymmetryGroup{2, Q},
+    sign :: Int,
+         :: Type{Ch},
+         :: Type{Sp},
+    is_mfRG :: Union{Val{true}, Val{false}} = Val(false),
+    ;
+    mode :: Symbol = :serial
+    ) where {Q, Ch <: ChannelTag, Sp <: SpinTag}
+
+    U = bare_vertex(F, Sp)
+
+    # model the diagram
+    @inline function diagram(wtpl)
+
+        Ω, ν    = wtpl
+        val     = zero(Q)
+        Π0slice = view(Π0, Ω, :)
+        Πslice  = view(Π,  Ω, :)
+
+        for i in eachindex(Π0slice)
+            ω = value(meshes(Π0, Val(2))[i])
+
+            # vertices
+            Fl  = F( Ω, ν, ω, Ch, Sp) - F( Ω, νInf, ω, Ch, Sp)
+            F0l = F0(Ω, ν, ω, Ch, Sp) - F0(Ω, νInf, ω, Ch, Sp)
+
+            # 1ℓ and central part
+            val += (Fl * Πslice[i] - F0l * Π0slice[i]) * U
+        end
+
+        return temperature(F) * val * sign
+    end
+
+    # compute K2
+    SG(K2, InitFunction{2, Q}(diagram); mode)
+
+    return nothing
+end
