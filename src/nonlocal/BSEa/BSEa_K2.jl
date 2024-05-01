@@ -1,102 +1,105 @@
 function BSE_L_K2!(
-    S :: NL_ParquetSolver{Q},
-      :: Type{aCh}
-    ) :: Nothing where {Q}
+    K2   :: NL_MF_K2{Q},
+    F0   :: Union{RefVertex{Q}, AbstractVertex{Q}},
+    F    :: AbstractVertex{Q},
+    Π0   :: NL_MF_Π{Q},
+    Π    :: NL_MF_Π{Q},
+    SG   :: SymmetryGroup{3, Q},
+    sign :: Int,
+         :: Type{Ch},
+         :: Type{Sp},
+    is_mfRG :: Union{Val{true}, Val{false}} = Val(false),
+    ;
+    mode :: Symbol = :serial
+    ) where {Q, Ch <: ChannelTag, Sp <: SpinTag}
 
     # model the diagram
     @inline function diagram(wtpl)
 
         Ω, ν, P = wtpl
         val     = zero(Q)
-        Π0slice = MeshFunction((meshes(S.Π0ph, Val(2)),), view(S.Π0ph, Ω, :, P))
+        Π0slice = MeshFunction((meshes(Π0, Val(2)),), view(Π0, Ω, :, P))
 
-        for iω in eachindex(meshes(S.FL.γa.K2, Val(2)))
-            ω = value(meshes(S.FL.γa.K2, Val(2))[iω])
+        for iω in eachindex(meshes(K2, Val(2)))
+            ω = value(meshes(K2, Val(2))[iω])
 
-            # vertices
-            Γp  = S.F( Ω, ν,    ω, P, kSW, kSW, aCh, pSp; F0 = false, γa = false)
-            F0p = S.F0(Ω, ω, νInf, P, kSW, kSW, aCh, pSp)
+            Γl  = F( Ω, ν, _crossing(Ω, ω, Ch), P, kSW, kSW, Ch, Sp; F0 = false, γa = (Ch !== aCh), γp = (Ch !== pCh), γt = (Ch !== tCh))
+            F0r = F0(Ω, ω, νInf, P, kSW, kSW, Ch, Sp)
 
-            val += Γp * Π0slice[ω] * F0p
+            val += Γl * Π0slice[ω] * F0r
         end
 
-        return temperature(S) * val
+        return temperature(F) * val * sign
     end
 
     # compute K2
-    S.SGphL[2](S.FL.γa.K2, InitFunction{3, Q}(diagram); mode = S.mode)
+    SG(K2, InitFunction{3, Q}(diagram); mode)
 
     return nothing
 end
+
 
 # Note: K2 contributions to right part always vanishes
 function BSE_K2!(
-    S :: NL_ParquetSolver{Q},
-      :: Type{aCh}
-    ) :: Nothing where {Q}
+    K2   :: NL_MF_K2{Q},
+    F0   :: Union{RefVertex{Q}, AbstractVertex{Q}},
+    F    :: AbstractVertex{Q},
+    FL   :: AbstractVertex{Q},
+    Π0   :: NL_MF_Π{Q},
+    Π    :: NL_MF_Π{Q},
+    SG   :: SymmetryGroup{3, Q},
+    sign :: Int,
+         :: Type{Ch},
+         :: Type{Sp},
+    is_mfRG :: Union{Val{true}, Val{false}} = Val(false),
+    ;
+    mode :: Symbol = :serial
+    ) where {Q, Ch <: ChannelTag, Sp <: SpinTag}
 
     # model the diagram
     @inline function diagram(wtpl)
 
         Ω, ν, P = wtpl
         val     = zero(Q)
-        Π0slice = view(S.Π0ph, Ω, :, P)
-        Πslice  = view(S.Πph , Ω, :, P)
+        Π0slice = view(Π0, Ω, :, P)
+        Πslice  = view(Π , Ω, :, P)
 
-        for i in eachindex(Π0slice)
-            ω = value(meshes(S.Π0ph, Val(2))[i])
+        for iω in eachindex(Π0slice)
+            ω = value(meshes(Π0, Val(2))[iω])
 
-            # vertices
-            Fl  = S.F( Ω, ν,    ω, P, kSW, kSW, aCh, pSp) - S.F(Ω, νInf, ω, P, kSW, kSW, aCh, pSp)
-            F0r = S.F0(Ω, ω, νInf, P, kSW, kSW, aCh, pSp)
-            FLr = S.FL(Ω, ω, νInf, P, kSW, kSW, aCh, pSp)
+            if is_mfRG === Val(true)
 
-            # 1ℓ and central part
-            val += Fl * ((Πslice[i] - Π0slice[i]) * F0r + Πslice[i] * FLr)
+                Fl  = F0(Ω, ν, _crossing(Ω, ω, Ch), P, kSW, kSW, Ch, Sp) - F0(Ω, νInf, _crossing(Ω, ω, Ch), P, kSW, kSW, Ch, Sp)
+                FLr = FL(Ω, ω, νInf, P, kSW, kSW, Ch, Sp)
+
+                # 1ℓ and central part
+                val += Fl * Π0slice[iω] * FLr
+
+            else
+
+                Fl  = F( Ω, ν, ω, P, kSW, kSW, Ch, Sp) - F( Ω, νInf, ω, P, kSW, kSW, Ch, Sp)
+                F0r = F0(Ω, _crossing(Ω, ω, Ch), νInf, P, kSW, kSW, Ch, Sp)
+                FLr = FL(Ω, _crossing(Ω, ω, Ch), νInf, P, kSW, kSW, Ch, Sp)
+
+                # 1ℓ and central part
+                val += Fl * ((Πslice[iω] - Π0slice[iω]) * F0r + Πslice[iω] * FLr)
+
+            end
+
         end
 
-        return temperature(S) * val
+        return temperature(F) * val * sign
     end
 
     # compute K2
-    S.SGph[2](S.Fbuff.γa.K2, InitFunction{3, Q}(diagram); mode = S.mode)
+    SG(K2, InitFunction{3, Q}(diagram); mode)
 
-    add!(S.Fbuff.γa.K2, S.FL.γa.K2)
-
-    return nothing
-end
-
-
-function BSE_K2_mfRG!(
-    S :: NL_ParquetSolver{Q},
-      :: Type{aCh}
-    ) :: Nothing where {Q}
-
-    # model the diagram
-    @inline function diagram(wtpl)
-
-        Ω, ν, P = wtpl
-        val     = zero(Q)
-        Π0slice = MeshFunction((meshes(S.Π0ph, Val(2)),), view(S.Π0ph, Ω, :, P))
-
-        for iω in eachindex(meshes(S.FL.γa.K2, Val(2)))
-            ω = value(meshes(S.FL.γa.K2, Val(2))[iω])
-
-            # vertices
-            Fl  = S.F0(Ω, ν,    ω, P, kSW, kSW, aCh, pSp) - S.F0(Ω, νInf, ω, P, kSW, kSW, aCh, pSp)
-            FLr = S.FL(Ω, ω, νInf, P, kSW, kSW, aCh, pSp)
-
-            # 1ℓ and central part
-            val += Fl * Π0slice[ω] * FLr
-        end
-
-        return temperature(S) * val
+    if Ch === tCh
+        mult_add!(K2, FL.γt.K2, 2)
+        mult_add!(K2, FL.γa.K2, -1)
+    else
+        add!(K2, get_reducible_vertex(FL, Ch).K2)
     end
-
-    # compute K2
-    S.SGph[2](S.Fbuff.γa.K2, InitFunction{3, Q}(diagram); mode = S.mode)
-
-    add!(S.Fbuff.γa.K2, S.FL.γa.K2)
 
     return nothing
 end
