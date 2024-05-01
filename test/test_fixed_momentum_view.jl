@@ -1,6 +1,5 @@
 using fdDGAsolver
 using MatsubaraFunctions
-using HDF5
 using StaticArrays
 using Test
 

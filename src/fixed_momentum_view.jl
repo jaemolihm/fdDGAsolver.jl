@@ -117,13 +117,13 @@ end
         γtx = fixed_momentum_view(F.γt, convert_momentum(P, k, P - kp, pCh, tCh)...)
         γax = fixed_momentum_view(F.γa, convert_momentum(P, k, P - kp, pCh, aCh)...)
     elseif Ch === tCh
-        γpx = fixed_momentum_view(F.γp, convert_momentum(P, kp, k, aCh, pCh)...)
-        γtx = fixed_momentum_view(F.γt, convert_momentum(P, kp, k, aCh, tCh)...)
-        γax = fixed_momentum_view(F.γa, convert_momentum(P, kp, k, aCh, aCh)...)
+        γpx = fixed_momentum_view(F.γp, convert_momentum(P, k, kp, aCh, pCh)...)
+        γtx = fixed_momentum_view(F.γt, convert_momentum(P, k, kp, aCh, tCh)...)
+        γax = fixed_momentum_view(F.γa, convert_momentum(P, k, kp, aCh, aCh)...)
     elseif Ch === aCh
-        γpx = fixed_momentum_view(F.γp, convert_momentum(P, kp, k, tCh, pCh)...)
-        γtx = fixed_momentum_view(F.γt, convert_momentum(P, kp, k, tCh, tCh)...)
-        γax = fixed_momentum_view(F.γa, convert_momentum(P, kp, k, tCh, aCh)...)
+        γpx = fixed_momentum_view(F.γp, convert_momentum(P, k, kp, tCh, pCh)...)
+        γtx = fixed_momentum_view(F.γt, convert_momentum(P, k, kp, tCh, tCh)...)
+        γax = fixed_momentum_view(F.γa, convert_momentum(P, k, kp, tCh, aCh)...)
     end
 
     VertexViewX2X(F0, γpp, γtp, γap, γpx, γtx, γax)
@@ -168,8 +168,8 @@ end
 
 @inline function (F :: VertexViewX2X{Q})(
     Ω  :: MatsubaraFrequency,
-    ν  :: MatsubaraFrequency,
-    νp :: MatsubaraFrequency,
+    ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
        :: Type{Ch},
        :: Type{pSp}
     ;
@@ -202,8 +202,8 @@ end
 
 @inline function (F :: VertexViewX2X{Q})(
     Ω  :: MatsubaraFrequency,
-    ν  :: MatsubaraFrequency,
-    νp :: MatsubaraFrequency,
+    ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
+    νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
        :: Type{Ch},
        :: Type{xSp}
     ;
@@ -228,103 +228,19 @@ end
         γa && (val -= F.γtx(convert_frequency(Ω, ν, Ω - νp, pCh, tCh)...))
 
     elseif Ch === tCh
-        γp && (val -= F.γpx(convert_frequency(Ω, νp, ν, aCh, pCh)...))
-        γt && (val -= F.γax(convert_frequency(Ω, νp, ν, aCh, aCh)...))
-        γa && (val -= F.γtx(convert_frequency(Ω, νp, ν, aCh, tCh)...))
+        γp && (val -= F.γpx(convert_frequency(Ω, ν, νp, aCh, pCh)...))
+        γt && (val -= F.γax(convert_frequency(Ω, ν, νp, aCh, aCh)...))
+        γa && (val -= F.γtx(convert_frequency(Ω, ν, νp, aCh, tCh)...))
 
     elseif Ch === aCh
-        γp && (val -= F.γpx(convert_frequency(Ω, νp, ν, tCh, pCh)...))
-        γt && (val -= F.γax(convert_frequency(Ω, νp, ν, tCh, aCh)...))
-        γa && (val -= F.γtx(convert_frequency(Ω, νp, ν, tCh, tCh)...))
+        γp && (val -= F.γpx(convert_frequency(Ω, ν, νp, tCh, pCh)...))
+        γt && (val -= F.γax(convert_frequency(Ω, ν, νp, tCh, aCh)...))
+        γa && (val -= F.γtx(convert_frequency(Ω, ν, νp, tCh, tCh)...))
 
     end
 
     return val
 end
-
-# Special cases where either ν or νp is an InfiniteMatsubaraFrequency
-@inline function (F :: VertexViewX2X{Q})(
-    Ω  :: MatsubaraFrequency,
-    ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
-    νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
-       :: Type{Ch},
-       :: Type{pSp}
-    ;
-    F0 :: Bool = true,
-    γp :: Bool = true,
-    γt :: Bool = true,
-    γa :: Bool = true
-    )  :: Q where {Q, Ch <: ChannelTag}
-
-    val = zero(Q)
-
-    if F0
-        val += F.F0(Ω, ν, νp, Ch, pSp)
-    end
-
-    # This function is called only if either ν or νp is an InfiniteMatsubaraFrequency.
-    # Otherwise, the specific case of having all MatsubaraFrequency's is called.
-
-    # If ν or νp is an InfiniteMatsubaraFrequency, reducible vertices is nonzero
-    # only for the same channel evaluated.
-
-    if Ch === pCh && γp
-        val += F.γpp(Ω, ν, νp)
-    end
-
-    if Ch === tCh && γt
-        val += F.γtp(Ω, ν, νp)
-    end
-
-    if Ch === aCh && γa
-        val += F.γap(Ω, ν, νp)
-    end
-
-    return val
-end
-
-
-# Special cases where either ν or νp is an InfiniteMatsubaraFrequency
-@inline function (F :: VertexViewX2X{Q})(
-    Ω  :: MatsubaraFrequency,
-    ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
-    νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
-       :: Type{Ch},
-       :: Type{xSp}
-    ;
-    F0 :: Bool = true,
-    γp :: Bool = true,
-    γt :: Bool = true,
-    γa :: Bool = true
-    )  :: Q where {Q, Ch <: ChannelTag}
-
-    val = zero(Q)
-
-    if F0
-        val += F.F0(Ω, ν, νp, Ch, xSp)
-    end
-
-    # This function is called only if either ν or νp is an InfiniteMatsubaraFrequency.
-    # Otherwise, the specific case of having all MatsubaraFrequency's is called.
-
-    # If ν or νp is an InfiniteMatsubaraFrequency, reducible vertices is nonzero
-    # only for the same channel evaluated.
-
-    if Ch === pCh && γp
-        val -= F.γpx(Ω, ν, Ω - νp)
-    end
-
-    if Ch === tCh && γt
-        val -= F.γax(Ω, νp, ν)
-    end
-
-    if Ch === aCh && γa
-        val -= F.γtx(Ω, νp, ν)
-    end
-
-    return val
-end
-
 
 
 # evaluators for density spin component
