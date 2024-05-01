@@ -1,67 +1,54 @@
 # Note: K1 contributions to left and right part always vanish
 function BSE_K1!(
-    S :: ParquetSolver{Q},
-      :: Type{aCh}
-    ) :: Nothing where {Q}
+    K1   :: MF_K1{Q},
+    F0   :: Union{RefVertex{Q}, AbstractVertex{Q}},
+    F    :: AbstractVertex{Q},
+    FL   :: AbstractVertex{Q},
+    Π0   :: MF_Π{Q},
+    Π    :: MF_Π{Q},
+    SG   :: SymmetryGroup{1, Q},
+    sign :: Int,
+         :: Type{Ch},
+         :: Type{Sp},
+    is_mfRG :: Union{Val{true}, Val{false}} = Val(false),
+    ;
+    mode :: Symbol = :serial
+    ) where {Q, Ch <: ChannelTag, Sp <: SpinTag}
 
     # model the diagram
     @inline function diagram(wtpl)
 
         Ω       = wtpl[1]
         val     = zero(Q)
-        Π0slice = view(S.Π0ph, Ω, :)
-        Πslice  = view(S.Πph, Ω, :)
+        Π0slice = view(Π0, Ω, :)
+        Πslice  = view(Π, Ω, :)
 
         for i in eachindex(Π0slice)
-            ω = value(meshes(S.Π0ph, Val(2))[i])
+            ω = value(meshes(Π0, Val(2))[i])
 
-            # vertices
-            Fl  = S.F( Ω, νInf, ω, aCh, pSp)
-            F0r = S.F0(Ω, ω, νInf, aCh, pSp)
-            FLr = S.FL(Ω, ω, νInf, aCh, pSp)
+            if is_mfRG == Val(true)
+                # vertices
+                F0l = F0(Ω, νInf, ω, aCh, pSp)
+                FLr = FL(Ω, _crossing(Ω, ω, Ch), νInf, aCh, pSp)
 
-            # 1ℓ and central part
-            val += Fl * ((Πslice[i] - Π0slice[i]) * F0r + Πslice[i] * FLr)
+                # central part
+                val += F0l * Π0slice[i] * FLr
+            else
+                # vertices
+                Fl  = F( Ω, νInf, ω, Ch, Sp)
+                F0r = F0(Ω, _crossing(Ω, ω, Ch), νInf, Ch, Sp)
+                FLr = FL(Ω, _crossing(Ω, ω, Ch), νInf, Ch, Sp)
+
+                # 1ℓ and central part
+                val += Fl * ((Πslice[i] - Π0slice[i]) * F0r + Πslice[i] * FLr)
+            end
         end
 
-        return temperature(S) * val
+        return temperature(F) * val * sign
     end
 
     # compute K1
-    S.SGph[1](S.Fbuff.γa.K1, InitFunction{1, Q}(diagram); mode = S.mode)
-
-    return nothing
-end
-
-
-function BSE_K1_mfRG!(
-    S :: ParquetSolver{Q},
-      :: Type{aCh}
-    ) :: Nothing where {Q}
-
-    # model the diagram
-    @inline function diagram(wtpl)
-
-        Ω       = wtpl[1]
-        val     = zero(Q)
-        Π0slice = view(S.Π0ph, Ω, :)
-
-        for i in eachindex(Π0slice)
-            ω = value(meshes(S.Π0ph, Val(2))[i])
-
-            # vertices
-            Fl  = S.F0(Ω, νInf, ω, aCh, pSp)
-            FLr = S.FL(Ω, ω, νInf, aCh, pSp)
-
-            # 1ℓ and central part
-            val += Fl * Π0slice[i] * FLr
-        end
-
-        return temperature(S) * val
-    end
-
-    # compute K1
-    S.SGph[1](S.Fbuff.γa.K1, InitFunction{1, Q}(diagram); mode = S.mode)
+    SG(K1, InitFunction{1, Q}(diagram); mode)
 
     return nothing
 end
