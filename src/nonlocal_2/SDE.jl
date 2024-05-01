@@ -3,7 +3,7 @@
 function SDE_channel_L_pp!(
     Lpp   :: NL2_MF_K2{Q},
     Πpp   :: NL2_MF_Π{Q},
-    F     :: Union{Vertex{Q}, NL_Vertex{Q}, NL2_Vertex{Q}},
+    F     :: AbstractVertex{Q},
     SGpp2 :: SymmetryGroup
     ;
     mode  :: Symbol,
@@ -20,7 +20,9 @@ function SDE_channel_L_pp!(
             ω = value(meshes(Πpp, Val(2))[i.I[1]])
             q = value(meshes(Πpp, Val(4))[i.I[2]])
 
-            val += bare_vertex(F) * Πslice[i] * F.γp(Ω, Ω - ω, ν, P, P - q, k)
+            # val += bare_vertex(F) * Πslice[i] * F.γp(Ω, Ω - ω, ν, P, P - q, k)
+            val += bare_vertex(F) * Πslice[i] * (
+                F(Ω, Ω - ω, ν, P, P - q, k, pCh, pSp; γp = true, F0 = false, γa = false, γt = false) )
         end
 
         return temperature(F) * val / length(meshes(Πpp, Val(4)))
@@ -35,7 +37,7 @@ end
 function SDE_channel_L_ph!(
     Lph   :: NL2_MF_K2{Q},
     Πph   :: NL2_MF_Π{Q},
-    F     :: Union{Vertex{Q}, NL_Vertex{Q}, NL2_Vertex{Q}},
+    F     :: AbstractVertex{Q},
     SGph2 :: SymmetryGroup
     ;
     mode  :: Symbol,
@@ -52,7 +54,10 @@ function SDE_channel_L_ph!(
             ω = value(meshes(Πph, Val(2))[i.I[1]])
             q = value(meshes(Πph, Val(4))[i.I[2]])
 
-            val += bare_vertex(F) * Πslice[i] * (F.γt(Ω, ν, ω, P, k, q) + F.γa(Ω, ν, ω, P, k, q))
+            # val += bare_vertex(F) * Πslice[i] * (F.γt(Ω, ν, ω, P, k, q) + F.γa(Ω, ν, ω, P, k, q))
+            val += bare_vertex(F) * Πslice[i] * (
+                F(Ω, ν, ω, P, k, q, aCh, pSp; γa = true, F0 = false, γp = false, γt = false)
+              + F(Ω, ν, ω, P, k, q, tCh, pSp; γt = true, F0 = false, γp = false, γa = false) )
         end
 
         return temperature(F) * val / length(meshes(Πph, Val(4)))
@@ -222,10 +227,8 @@ function SDE_compute!(
                         for iΩ in eachindex(meshes(Lpp, Val(1)))
                             Ω = value(meshes(Lpp, Val(1))[iΩ])
 
-                            if is_inbounds(Ω - ν, meshes(G, Val(1)))
-                                Σ_R_pp[ν] += G_R[Ω - ν] * Lpp_R[iΩ, iν] * weight
-                                Σ_R_ph[ν] += G_R[Ω + ν] * Lph_R[iΩ, iν] * weight
-                            end
+                            Σ_R_pp[ν] += G_R(Ω - ν) * Lpp_R[iΩ, iν] * weight
+                            Σ_R_ph[ν] += G_R(Ω + ν) * Lph_R[iΩ, iν] * weight
                         end
 
                     end

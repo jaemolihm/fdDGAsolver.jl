@@ -126,7 +126,7 @@ const NL_MF_K3{Q} = MeshFunction{4, Q, Tuple{BMesh, FMesh, FMesh, KMesh}, Array{
 
 const NL2_MF_Π{Q} = MeshFunction{4, Q, Tuple{BMesh, FMesh, KMesh, KMesh}, Array{Q, 4}}
 const NL2_MF_K2{Q} = MeshFunction{4, Q, Tuple{BMesh, FMesh, KMesh, KMesh}, Array{Q, 4}}
-const NL2_MF_K3{Q} = MeshFunction{5, Q, Tuple{BMesh, FMesh, FMesh, KMesh, KMesh}, Array{Q, 5}}
+const NL3_MF_K3{Q} = MeshFunction{6, Q, Tuple{BMesh, FMesh, FMesh, KMesh, KMesh, KMesh}, Array{Q, 6}}
 
 # struct to describe high-frequency limit
 #----------------------------------------------------------------------------------------------#
