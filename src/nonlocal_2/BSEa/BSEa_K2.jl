@@ -1,122 +1,138 @@
 function BSE_L_K2!(
-    S :: NL2_ParquetSolver{Q},
-      :: Type{aCh}
-    ) :: Nothing where {Q}
+    K2   :: NL2_MF_K2{Q},
+    F0   :: Union{RefVertex{Q}, AbstractVertex{Q}},
+    F    :: AbstractVertex{Q},
+    Π0   :: NL2_MF_Π{Q},
+    Π    :: NL2_MF_Π{Q},
+    SG   :: SymmetryGroup{4, Q},
+    sign :: Int,
+         :: Type{Ch},
+         :: Type{Sp},
+    is_mfRG :: Union{Val{true}, Val{false}} = Val(false),
+    ;
+    mode :: Symbol = :serial
+    ) where {Q, Ch <: ChannelTag, Sp <: SpinTag}
 
     # model the diagram
     @inline function diagram(wtpl)
 
         Ω, ν, P, k = wtpl
         val     = zero(Q)
-        Π0slice = MeshFunction((meshes(S.Π0ph, Val(2)), meshes(S.Π0ph, Val(4))), view(S.Π0ph, Ω, :, P, :))
+        Π0slice = MeshFunction((meshes(Π0, Val(2)), meshes(Π0, Val(4))), view(Π0, Ω, :, P, :))
 
-        for iq in eachindex(meshes(S.FL.γa.K2, Val(4)))
-            q = value(meshes(S.FL.γa.K2, Val(4))[iq])
-            Fview  = fixed_momentum_view(S.F,  P, k,  q, aCh)
-            F0view = fixed_momentum_view(S.F0, P, q, k0, aCh)
+        for iq in eachindex(meshes(K2, Val(4)))
+            q = value(meshes(K2, Val(4))[iq])
+            # Fview  = fixed_momentum_view(F,  P, k, _crossing(P, q, Ch), Ch)
+            # F0view = fixed_momentum_view(F0, P, q, k0, Ch)
 
-            for iω in eachindex(meshes(S.FL.γa.K2, Val(2)))
-                ω = value(meshes(S.FL.γa.K2, Val(2))[iω])
+            for iω in eachindex(meshes(K2, Val(2)))
+                ω = value(meshes(K2, Val(2))[iω])
 
                 # vertices
-                Γp  = Fview( Ω, ν,    ω, aCh, pSp; F0 = false, γa = false)
-                F0p = F0view(Ω, ω, νInf, aCh, pSp)
+                # Γl  = Fview( Ω, ν, _crossing(Ω, ω, Ch), Ch, Sp; F0 = false, γa = (Ch !== aCh), γp = (Ch !== pCh), γt = (Ch !== tCh))
+                # F0r = F0view(Ω, ω, νInf, Ch, Sp)
 
-                val += Γp * Π0slice[ω, q] * F0p
+                Γl  = F( Ω, ν, _crossing(Ω, ω, Ch), P, k, _crossing(P, q, Ch), Ch, Sp; F0 = false, γa = (Ch !== aCh), γp = (Ch !== pCh), γt = (Ch !== tCh))
+                F0r = F0(Ω, ω, νInf, P, q, k0, Ch, Sp)
+
+                val += Γl * Π0slice[ω, q] * F0r
             end
         end
 
-        return temperature(S) * val / numP_Γ(S)
+        return temperature(F) * val / numP(F) * sign
     end
 
     # compute K2
-    S.SGphL[2](S.FL.γa.K2, InitFunction{4, Q}(diagram); mode = S.mode)
+    SG(K2, InitFunction{4, Q}(diagram); mode)
 
     return nothing
 end
+
+
+
 
 # Note: K2 contributions to right part always vanishes
 function BSE_K2!(
-    S :: NL2_ParquetSolver{Q},
-      :: Type{aCh}
-    ) :: Nothing where {Q}
+    K2   :: NL2_MF_K2{Q},
+    F0   :: Union{RefVertex{Q}, AbstractVertex{Q}},
+    F    :: AbstractVertex{Q},
+    FL   :: AbstractVertex{Q},
+    Π0   :: NL2_MF_Π{Q},
+    Π    :: NL2_MF_Π{Q},
+    SG   :: SymmetryGroup{4, Q},
+    sign :: Int,
+         :: Type{Ch},
+         :: Type{Sp},
+    is_mfRG :: Val{false},
+    ;
+    mode :: Symbol = :serial
+    ) where {Q, Ch <: ChannelTag, Sp <: SpinTag}
 
     # model the diagram
     @inline function diagram(wtpl)
 
         Ω, ν, P, k = wtpl
         val     = zero(Q)
-        Π0slice = view(S.Π0ph, Ω, :, P, :)
-        Πslice  = view(S.Πph , Ω, :, P, :)
+        Π0slice = view(Π0, Ω, :, P, :)
+        Πslice  = view(Π , Ω, :, P, :)
 
         for iq in axes(Π0slice, 2)
-            q = value(meshes(S.Π0ph, Val(4))[iq])
-            Fview  = fixed_momentum_view(S.F,  P, k,  q, aCh)
-            F0view = fixed_momentum_view(S.F0, P, q, k0, aCh)
-            FLview = fixed_momentum_view(S.FL, P, q, k0, aCh)
+            q = value(meshes(Π0, Val(4))[iq])
+
+            # if is_mfRG === Val(true)
+            #     F0view = fixed_momentum_view(F0, P, k,  q, Ch)
+            #     FLview = fixed_momentum_view(FL, P, _crossing(P, q, Ch), k0, Ch)
+            # else
+            #     Fview  = fixed_momentum_view(F,  P, k,  q, Ch)
+            #     F0view = fixed_momentum_view(F0, P, _crossing(P, q, Ch), k0, Ch)
+            #     FLview = fixed_momentum_view(FL, P, _crossing(P, q, Ch), k0, Ch)
+            # end
 
             for iω in axes(Π0slice, 1)
-                ω = value(meshes(S.Π0ph, Val(2))[iω])
+                ω = value(meshes(Π0, Val(2))[iω])
 
-                # vertices
-                Fl  = Fview( Ω, ν,    ω, aCh, pSp) - Fview( Ω, νInf, ω, aCh, pSp)
-                F0r = F0view(Ω, ω, νInf, aCh, pSp)
-                FLr = FLview(Ω, ω, νInf, aCh, pSp)
+                if is_mfRG === Val(true)
 
-                # 1ℓ and central part
-                val += Fl * ((Πslice[iω, iq] - Π0slice[iω, iq]) * F0r + Πslice[iω, iq] * FLr)
+                    # vertices
+                    # Fl  = F0view(Ω, ν, _crossing(Ω, ω, Ch), Ch, Sp) - F0view(Ω, νInf, _crossing(Ω, ω, Ch), Ch, Sp)
+                    # FLr = FLview(Ω, ω, νInf, Ch, Sp)
+
+                    Fl  = F0(Ω, ν, _crossing(Ω, ω, Ch), P, k, _crossing(P, q, Ch), Ch, Sp) - F0(Ω, νInf, _crossing(Ω, ω, Ch), P, k, _crossing(P, q, Ch), Ch, Sp)
+                    FLr = FL(Ω, ω, νInf, P, q, k0, Ch, Sp)
+
+                    # 1ℓ and central part
+                    val += Fl * Π0slice[ω, q] * FLr
+
+                else
+
+                    # vertices
+                    # Fl  = Fview( Ω, ν,    ω, Ch, Sp) - Fview( Ω, νInf, ω, Ch, Sp)
+                    # F0r = F0view(Ω, _crossing(Ω, ω, Ch), νInf, Ch, Sp)
+                    # FLr = FLview(Ω, _crossing(Ω, ω, Ch), νInf, Ch, Sp)
+
+                    Fl  = F( Ω, ν, ω, P, k, q, Ch, Sp) - F( Ω, νInf, ω, P, k, q, Ch, Sp)
+                    F0r = F0(Ω, _crossing(Ω, ω, Ch), νInf, P, _crossing(P, q, Ch), k0, Ch, Sp)
+                    FLr = FL(Ω, _crossing(Ω, ω, Ch), νInf, P, _crossing(P, q, Ch), k0, Ch, Sp)
+
+                    # 1ℓ and central part
+                    val += Fl * ((Πslice[iω, iq] - Π0slice[iω, iq]) * F0r + Πslice[iω, iq] * FLr)
+
+                end
             end
         end
 
-        return temperature(S) * val / numP_Γ(S)
+        return temperature(F) * val / numP(F) * sign
     end
 
     # compute K2
-    S.SGph[2](S.Fbuff.γa.K2, InitFunction{4, Q}(diagram); mode = S.mode)
+    SG(K2, InitFunction{4, Q}(diagram); mode)
 
-    add!(S.Fbuff.γa.K2, S.FL.γa.K2)
-
-    return nothing
-end
-
-
-# Note: K2 contributions to right part always vanishes
-function BSE_K2_mfRG!(
-    S :: NL2_ParquetSolver{Q},
-      :: Type{aCh}
-    ) :: Nothing where {Q}
-
-    # model the diagram
-    @inline function diagram(wtpl)
-
-        Ω, ν, P, k = wtpl
-        val     = zero(Q)
-        Π0slice = MeshFunction((meshes(S.Π0ph, Val(2)), meshes(S.Π0ph, Val(4))), view(S.Π0ph, Ω, :, P, :))
-
-        for iq in eachindex(meshes(S.Fbuff.γa.K2, Val(4)))
-            q = value(meshes(S.Fbuff.γa.K2, Val(4))[iq])
-            F0view = fixed_momentum_view(S.F0, P, k,  q, aCh)
-            FLview = fixed_momentum_view(S.FL, P, q, k0, aCh)
-
-            for iω in eachindex(meshes(S.Fbuff.γa.K2, Val(2)))
-                ω = value(meshes(S.Fbuff.γa.K2, Val(2))[iω])
-
-                # vertices
-                Fl  = F0view(Ω, ν,    ω, aCh, pSp) - F0view(Ω, νInf, ω, aCh, pSp)
-                FLr = FLview(Ω, ω, νInf, aCh, pSp)
-
-                # 1ℓ and central part
-                val += Fl * Π0slice[ω, q] * FLr
-            end
-        end
-
-        return temperature(S) * val / numP_Γ(S)
+    if Ch === tCh
+        mult_add!(K2, FL.γt.K2, 2)
+        mult_add!(K2, FL.γa.K2, -1)
+    else
+        add!(K2, get_reducible_vertex(FL, Ch).K2)
     end
-
-    # compute K2
-    S.SGph[2](S.Fbuff.γa.K2, InitFunction{4, Q}(diagram); mode = S.mode)
-
-    add!(S.Fbuff.γa.K2, S.FL.γa.K2)
 
     return nothing
 end
