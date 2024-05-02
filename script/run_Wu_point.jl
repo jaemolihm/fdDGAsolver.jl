@@ -5,8 +5,7 @@ using MatsubaraFunctions
 using StaticArrays
 using LinearAlgebra
 using HDF5
-using MatsubaraFunctions: mesh_index
-using fdDGAsolver: numP_Γ, k0, kSW
+using fdDGAsolver: kSW
 
 # JML note
 # `julia -t 8 jun_Wu_point.jl 6 6 2` takes a few minutes per nlsolve iteration.
@@ -18,13 +17,22 @@ using fdDGAsolver: numP_Γ, k0, kSW
 """
 - `nmax` : Frequency box size
 - `nq` : Momentum grid size
-- `nl_method` : 1 for s-wave, 2 for K2(k,q)
+- `nl_method` : 1 for s-wave, 2 for K2(k,q), -2 for SBE(k,q) + s-wave MBE
 - `filename_log` : Prefix of the file name. Files `filename_log.iter#.h5` will be created
                    for every self-energy iteration.
 - `auto_restart` : If true, restart from the last log file.
 """
 function solve(nmax, nq, nl_method; filename_log = nothing, auto_restart = true, tol = 1e-3)
-    mpi_ismain() && println("Solve Wu point, nmax = $nmax, nq = $nq, NL $nl_method")
+    if mpi_ismain()
+        println("Solve Wu point, nmax = $nmax, nq = $nq, NL $nl_method")
+        if nl_method == 1
+            println("s-wave with asymptotic decomposition")
+        elseif nl_method == 2
+            println("Asymptotic decomposition with K1(q), K2(k, q) and s-wave K3")
+        elseif nl_method == -2
+            println("MBE with K1(q), K2(k, q) and s-wave M")
+        end
+    end
 
     # --------------------------------------------------------------------------------
     # System parameters
@@ -39,6 +47,12 @@ function solve(nmax, nq, nl_method; filename_log = nothing, auto_restart = true,
 
     data_triqs = load_triqs_data("/home/ucl/modl/jmlihm/MFjl/fdDGAsolver.jl/data/Wu_point.h5")
 
+    # T = 0.5
+    # U = 2.089
+    # μ = 0.
+    # t1 = -0.25
+    # t2 = 0.
+    # data_triqs = load_triqs_data("/home/ucl/modl/jmlihm/MFjl/fdDGAsolver.jl/data/high_temperature_U2.089.h5")
     # --------------------------------------------------------------------------------
     # Solver parameters
     nG  = 4nmax
@@ -78,9 +92,14 @@ function solve(nmax, nq, nl_method; filename_log = nothing, auto_restart = true,
     if nl_method == 1
         F0 = NL_Vertex(data_triqs.Γ, T, nK1, nK2, nK3, mK_Γ)
         S = NL_ParquetSolver(nK1, nK2, nK3, mK_Γ, Gbare, copy(G0), copy(Σ0), F0; mode = :hybrid)
-    else
+    elseif nl_method == 2
         F0 = NL2_Vertex(data_triqs.Γ, T, nK1, nK2, nK3, mK_Γ)
         S = NL2_ParquetSolver(nK1, nK2, nK3, mK_Γ, Gbare, copy(G0), copy(Σ0), F0; mode = :hybrid)
+    elseif nl_method == -2
+        F0 = NL2_MBEVertex(asymptotic_to_mbe(data_triqs.Γ), T, nK1, nK2, nK3, mK_Γ)
+        S = NL2_ParquetSolver(nK1, nK2, nK3, mK_Γ, Gbare, copy(G0), copy(Σ0), F0, NL2_MBEVertex; mode = :hybrid)
+    else
+        throw(ArgumentError("Invalid nl_method: $nl_method"))
     end
 
     init_sym_grp!(S)
@@ -89,17 +108,17 @@ function solve(nmax, nq, nl_method; filename_log = nothing, auto_restart = true,
     # --------------------------------------------------------------------------------
     # Run mfRG solver
 
-    # fdDGAsolver.solve_using_mfRG!(S; filename_log, maxiter = 200, occ_target, hubbard_params = (; t1, t2), mixing_init = 0.2, tol, auto_restart)
+    fdDGAsolver.solve_using_mfRG!(S; filename_log, maxiter = 200, occ_target, hubbard_params = (; t1, t2), mixing_init = 0.2, tol, auto_restart)
 
 
     # v2 solver
 
-    Σ_corr = copy(S.Σ)
-    set!(Σ_corr, 0)
-    fdDGAsolver.SDE_fdPA_no_corr!(Σ_corr, S.F0, S.G0, S.Π0pp, S.Π0ph, S; include_U² = true, include_Hartree = true)
-    Σ_corr = S.Σ0 - Σ_corr;
+    # Σ_corr = copy(S.Σ)
+    # set!(Σ_corr, 0)
+    # mult_add!(Σ_corr, SDE!(copy(Σ_corr), S.G0, S.Π0pp, S.Π0ph, S.L0pp, S.L0ph, S.F0, S.SGΣ, S.SG0pp2, S.SG0ph2; S.mode, include_U² = true, include_Hartree = true), -1)
+    # Σ_corr = S.Σ0 - Σ_corr;
 
-    fdDGAsolver.solve_using_mfRG_v2!(S; filename_log, maxiter = 200, occ_target, hubbard_params = (; t1, t2), mixing_init = 0.2, tol, auto_restart, Σ_corr)
+    # fdDGAsolver.solve_using_mfRG_v2!(S; filename_log, maxiter = 200, occ_target, hubbard_params = (; t1, t2), mixing_init = 0.2, tol, auto_restart, Σ_corr)
 
 
     return S
