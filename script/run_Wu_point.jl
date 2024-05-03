@@ -8,7 +8,7 @@ using HDF5
 using fdDGAsolver: kSW
 
 # JML note
-# `julia -t 8 jun_Wu_point.jl 6 6 2` takes a few minutes per nlsolve iteration.
+# `julia -t 8 jun_Wu_point.jl 6 6 2 Wu_point_U5.0.h5` takes a few minutes per nlsolve iteration.
 # It involves ~200 mfRG iterations and a single fdDGammaA iteration.
 # To directly call these functions, use the following.
 # @time fdDGAsolver.mfRGLinearMap(S) * flatten(S.F); # mfRG iteration
@@ -118,22 +118,25 @@ function solve(nmax, nq, nl_method, filename_dmft; filename_log = nothing, auto_
     return S
 end
 
-# Wu point
-filename_dmft = joinpath(dirname(pathof(fdDGAsolver)), "../data", "Wu_point.h5")
+# # Wu point
+# filename_dmft_partial = "Wu_point.h5"
 
-# High temperature half filling points
-filename_dmft = joinpath(dirname(pathof(fdDGAsolver)), "../data", "high_temperature_U2.089.h5")
+# # High temperature half filling points
+# filename_dmft_partial = "high_temperature_U2.089.h5"
 
-# Weak coupling points (from Eckhardt et al PRB (2020))
-filename_dmft = joinpath(dirname(pathof(fdDGAsolver)), "../data", "weak_coupling_U2.0.h5")
+# # Weak coupling points (from Eckhardt et al PRB (2020))
+# filename_dmft_partial = "weak_coupling_U2.0.h5"
 
-# Various U near the Wu point - Update May 3 2024
-filename_dmft = joinpath(dirname(pathof(fdDGAsolver)), "../data", "Wu_point_U5.0.h5")  # 5.0 : 0.2 : 6.2
+# # Various U near the Wu point - Update May 3 2024
+# filename_dmft_partial = "Wu_point_U5.0.h5"  # 5.0 : 0.2 : 6.2
 
 nmax = parse(Int, ARGS[1])
 nq   = parse(Int, ARGS[2])
 nl_method = parse(Int, ARGS[3])
-# filename_dmft = ARGS[4]
+filename_dmft_partial = ARGS[4]
+
+
+filename_dmft = joinpath(dirname(pathof(fdDGAsolver)), "../data", filename_dmft_partial)
 
 # filename_log = "/globalscratch/ucl/modl/jmlihm/temp/Wu.mix_bubble.NL$nl_method.nmax$nmax.nq$nq"
 # filename_log = "/globalscratch/ucl/modl/jmlihm/temp/Wu.mix_bubble.v2.NL$nl_method.nmax$nmax.nq$nq"
