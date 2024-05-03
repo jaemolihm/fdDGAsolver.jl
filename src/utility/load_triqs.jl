@@ -261,6 +261,7 @@ function load_triqs_data(filename)
     Σ = load_mesh_function(f, "Σ")
     Γ = fdDGAsolver.load_vertex(Vertex, f, "Γ")
     occ = read(f, "occ")
+    params = (; (Symbol(key) => val for (key, val) in read(f, "params"))...)
     close(f)
-    (; G, G0, Σ, Γ, occ)
+    (; G, G0, Σ, Γ, occ, params)
 end

@@ -22,9 +22,9 @@ using fdDGAsolver: kSW
                    for every self-energy iteration.
 - `auto_restart` : If true, restart from the last log file.
 """
-function solve(nmax, nq, nl_method; filename_log = nothing, auto_restart = true, tol = 1e-3)
+function solve(nmax, nq, nl_method, filename_dmft; filename_log = nothing, auto_restart = true, tol = 1e-3)
     if mpi_ismain()
-        println("Solve Wu point, nmax = $nmax, nq = $nq, NL $nl_method")
+        println("Solve DΓA, nmax = $nmax, nq = $nq, NL $nl_method")
         if nl_method == 1
             println("s-wave with asymptotic decomposition")
         elseif nl_method == 2
@@ -36,23 +36,17 @@ function solve(nmax, nq, nl_method; filename_log = nothing, auto_restart = true,
 
     # --------------------------------------------------------------------------------
     # System parameters
-    T = 0.2
-    U = 5.6
-    μ = 2.1800201007694464 - U/2
-    t1 = 1.0
-    t2 = -0.3
-
     k1 = 2pi * SVector(1., 0.)
     k2 = 2pi * SVector(0., 1.)
 
-    data_triqs = load_triqs_data("/home/ucl/modl/jmlihm/MFjl/fdDGAsolver.jl/data/Wu_point.h5")
+    data_triqs = load_triqs_data(filename_dmft)
+    (; T, U, μ, t1, t2, t3) = data_triqs.params
+    if mpi_ismain()
+        println("DMFT INPUT : $filename_dmft")
+        println("U = $U, T = $T, μ = $μ, t1 = $t1, t2 = $t2, t3 = $t3")
+        println("occupation = $(data_triqs.occ)")
+    end
 
-    # T = 0.5
-    # U = 2.089
-    # μ = 0.
-    # t1 = -0.25
-    # t2 = 0.
-    # data_triqs = load_triqs_data("/home/ucl/modl/jmlihm/MFjl/fdDGAsolver.jl/data/high_temperature_U2.089.h5")
     # --------------------------------------------------------------------------------
     # Solver parameters
     nG  = 4nmax
@@ -67,7 +61,7 @@ function solve(nmax, nq, nl_method; filename_log = nothing, auto_restart = true,
 
     # Set reference Green function and self-energy
     mG = MatsubaraMesh(T, nG, Fermion)
-    Gbare = hubbard_bare_Green(mG, mK_G; μ, t1, t2)
+    Gbare = hubbard_bare_Green(mG, mK_G; μ, t1, t2, t3)
     G0 = copy(Gbare)
     Σ0 = copy(Gbare)
     set!(G0, 0)
@@ -124,11 +118,25 @@ function solve(nmax, nq, nl_method; filename_log = nothing, auto_restart = true,
     return S
 end
 
+# Wu point
+filename_dmft = joinpath(dirname(pathof(fdDGAsolver)), "../data", "Wu_point.h5")
+
+# High temperature half filling points
+filename_dmft = joinpath(dirname(pathof(fdDGAsolver)), "../data", "high_temperature_U2.089.h5")
+
+# Weak coupling points (from Eckhardt et al PRB (2020))
+filename_dmft = joinpath(dirname(pathof(fdDGAsolver)), "../data", "weak_coupling_U2.0.h5")
+
+# Various U near the Wu point - Update May 3 2024
+filename_dmft = joinpath(dirname(pathof(fdDGAsolver)), "../data", "Wu_point_U5.0.h5")  # 5.0 : 0.2 : 6.2
+
 nmax = parse(Int, ARGS[1])
 nq   = parse(Int, ARGS[2])
 nl_method = parse(Int, ARGS[3])
+# filename_dmft = ARGS[4]
 
 # filename_log = "/globalscratch/ucl/modl/jmlihm/temp/Wu.mix_bubble.NL$nl_method.nmax$nmax.nq$nq"
-filename_log = "/globalscratch/ucl/modl/jmlihm/temp/Wu.mix_bubble.v2.NL$nl_method.nmax$nmax.nq$nq"
+# filename_log = "/globalscratch/ucl/modl/jmlihm/temp/Wu.mix_bubble.v2.NL$nl_method.nmax$nmax.nq$nq"
+filename_log = "/globalscratch/ucl/modl/jmlihm/temp/Wu.U5.0.v2.NL$nl_method.nmax$nmax.nq$nq"
 
-S = solve(nmax, nq, nl_method; filename_log);
+S = solve(nmax, nq, nl_method, filename_dmft; filename_log);
