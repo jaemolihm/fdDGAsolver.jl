@@ -24,7 +24,7 @@ function SDE!(S :: AbstractSolver; strategy = :scPA, include_U² = true, include
     end
 end
 
-function SDE!(Σ, G, Πpp, Πph, Lpp, Lph, F, SGΣ, SGpp, SGph; include_U² = true, include_Hartree = true, mode)
+function SDE!(Σ, G, Πpp, Πph, Lpp, Lph, F, SGΣ, SGpp, SGph; include_U² = true, include_Hartree = true, mode = :threads)
     # Apply SDE for F and all of its reference vertices F.F0, F.F0.F0, ... recursively.
 
     # Current vertex

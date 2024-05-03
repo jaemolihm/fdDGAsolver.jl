@@ -56,7 +56,7 @@ end
 
 function BSE_K1_new!(
     K1   :: MF_K1{Q},
-    F0   :: AbstractVertex{Q},
+    F0   :: Union{RefVertex{Q}, AbstractVertex{Q}},
     F    :: AbstractVertex{Q},
     Π0   :: MF_Π{Q},
     Π    :: MF_Π{Q},

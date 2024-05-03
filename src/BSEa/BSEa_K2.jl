@@ -107,7 +107,7 @@ end
 
 function BSE_K2_new!(
     K2   :: MF_K2{Q},
-    F0   :: AbstractVertex{Q},
+    F0   :: Union{RefVertex{Q}, AbstractVertex{Q}},
     F    :: AbstractVertex{Q},
     Π0   :: MF_Π{Q},
     Π    :: MF_Π{Q},
