@@ -25,9 +25,9 @@ end
 
 begin
     # Check parquet self-consistency of the local DMFT vertex
-    data_trqis = load_triqs_data(filename)
-    (; G, Σ, Γ) = data_trqis
-    (; U, T, μ, t1, t2, t3) = data_trqis.params
+    data_triqs = load_triqs_data(filename);
+    (; G, Σ, Γ) = data_triqs
+    (; U, T, μ, t1, t2, t3) = data_triqs.params
 
     display(Γ)
 
@@ -86,15 +86,15 @@ begin
 
     mult_add!(S.Fbuff, Γ, -1)
     # plot_vertex_K2(Γ; vmax = 1.0)
-    # plot_vertex_K2(S.Fbuff; vmax = 1.0)
+    plot_vertex_K2(S.Fbuff; vmax = 0.1)
 end
 
 
 begin
     # Check DMFT self-consistency of the local Green function
-    data_trqis = load_triqs_data(filename)
-    (; G0, G, Σ, occ) = data_trqis
-    (; U, T, μ, t1, t2, t3) = data_trqis.params
+    data_triqs = load_triqs_data(filename)
+    (; G0, G, Σ, occ) = data_triqs
+    (; U, T, μ, t1, t2, t3) = data_triqs.params
 
     # Check Dyson equation within the impurity
     G_new = copy(G)
@@ -102,7 +102,7 @@ begin
     @info "Impurity Dyson error : $(absmax(G_new - G))"
 
     # Check occupation
-    @info "Occupation from file = $(data_trqis.occ)"
+    @info "Occupation from file = $(data_triqs.occ)"
     @info "Occupation from G    = $(compute_occupation(G))"
 
     nG  = 128
