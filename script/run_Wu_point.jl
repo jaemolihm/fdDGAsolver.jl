@@ -24,7 +24,7 @@ using fdDGAsolver: kSW
 """
 function solve(nmax, nq, nl_method, filename_dmft; filename_log = nothing, auto_restart = true, tol = 1e-3)
     if mpi_ismain()
-        println("Solve DΓA, nmax = $nmax, nq = $nq, NL $nl_method")
+        println("=== Solve DΓA, nmax = $nmax, nq = $nq, NL $nl_method ===")
         if nl_method == 1
             println("s-wave with asymptotic decomposition")
         elseif nl_method == 2
@@ -32,6 +32,8 @@ function solve(nmax, nq, nl_method, filename_dmft; filename_log = nothing, auto_
         elseif nl_method == -2
             println("MBE with K1(q), K2(k, q) and s-wave M")
         end
+
+        println("=== Output data are written at $filename_log.iter#.h5 ===")
     end
 
     # --------------------------------------------------------------------------------
@@ -42,7 +44,7 @@ function solve(nmax, nq, nl_method, filename_dmft; filename_log = nothing, auto_
     data_triqs = load_triqs_data(filename_dmft)
     (; T, U, μ, t1, t2, t3) = data_triqs.params
     if mpi_ismain()
-        println("DMFT INPUT : $filename_dmft")
+        println("=== DMFT INPUT : $filename_dmft ===")
         println("U = $U, T = $T, μ = $μ, t1 = $t1, t2 = $t2, t3 = $t3")
         println("occupation = $(data_triqs.occ)")
     end
@@ -102,7 +104,7 @@ function solve(nmax, nq, nl_method, filename_dmft; filename_log = nothing, auto_
     # --------------------------------------------------------------------------------
     # Run mfRG solver
 
-    fdDGAsolver.solve_using_mfRG!(S; filename_log, maxiter = 200, occ_target, hubbard_params = (; t1, t2), mixing_init = 0.2, tol, auto_restart)
+    fdDGAsolver.solve_using_mfRG!(S; filename_log, maxiter = 200, occ_target, hubbard_params = (; t1, t2, t3), mixing_init = 0.2, tol, auto_restart)
 
 
     # v2 solver
@@ -140,6 +142,7 @@ filename_dmft = joinpath(dirname(pathof(fdDGAsolver)), "../data", filename_dmft_
 
 # filename_log = "/globalscratch/ucl/modl/jmlihm/temp/Wu.mix_bubble.NL$nl_method.nmax$nmax.nq$nq"
 # filename_log = "/globalscratch/ucl/modl/jmlihm/temp/Wu.mix_bubble.v2.NL$nl_method.nmax$nmax.nq$nq"
-filename_log = "/globalscratch/ucl/modl/jmlihm/temp/Wu.U5.0.v2.NL$nl_method.nmax$nmax.nq$nq"
+filename_log = "/globalscratch/ucl/modl/jmlihm/temp/$(filename_dmft_partial[1:end-3]).NL$nl_method.nmax$nmax.nq$nq"
+
 
 S = solve(nmax, nq, nl_method, filename_dmft; filename_log);
