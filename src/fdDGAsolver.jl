@@ -67,6 +67,13 @@ module fdDGAsolver
 
     include("boson_exchange.jl")
 
+    include("nonlocal_3/symmetries.jl")
+    include("nonlocal_3/channel.jl")
+    include("nonlocal_3/vertex.jl")
+    include("nonlocal_3/ParquetSolver.jl")
+    include("nonlocal_3/build_K3_cache.jl")
+    include("nonlocal_3/BSE_K3.jl")
+
 
     @compile_workload begin
         MPI.Init()
@@ -161,14 +168,17 @@ module fdDGAsolver
         AbstractSolver,
         NL_Channel, NL_Vertex,
         NL2_Channel, NL2_Vertex,
+        NL3_Channel, NL3_Vertex,
         compute_occupation,
         init_sym_grp!,
         ParquetSolver,
         NL_ParquetSolver,
         NL2_ParquetSolver,
+        NL3_ParquetSolver,
         parquet_solver_siam_parquet_approximation,
         parquet_solver_hubbard_parquet_approximation,
         parquet_solver_hubbard_parquet_approximation_NL2,
+        parquet_solver_hubbard_parquet_approximation_NL3,
         SDE!, BSE_K1!, BSE_K2!, BSE_K3!, BSE_L_K2!, BSE_L_K3!, build_K3_cache, iterate_solver!,
         get_P_mesh, Dyson!, bubbles!,
         load_triqs_data, compute_hubbard_chemical_potential,

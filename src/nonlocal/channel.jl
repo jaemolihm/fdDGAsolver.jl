@@ -27,8 +27,8 @@ struct NL_Channel{Q <: Number} <: AbstractReducibleVertex{Q}
         K1 = MeshFunction(mK1Ω, meshK; data_t = Q)
         set!(K1, 0)
 
-        @assert numK1 > numK2[1] "No. bosonic frequencies in K1 must be larger than no. bosonic frequencies in K2"
-        @assert numK1 > numK2[2] "No. bosonic frequencies in K1 must be larger than no. fermionic frequencies in K2"
+        @assert numK1 >= numK2[1] "No. bosonic frequencies in K1 must be larger than no. bosonic frequencies in K2"
+        @assert numK1 >= numK2[2] "No. bosonic frequencies in K1 must be larger than no. fermionic frequencies in K2"
         mK2Ω = MatsubaraMesh(T, numK2[1], Boson)
         mK2ν = MatsubaraMesh(T, numK2[2], Fermion)
         K2   = MeshFunction(mK2Ω, mK2ν, meshK; data_t = Q)
