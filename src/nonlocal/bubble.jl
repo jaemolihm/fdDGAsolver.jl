@@ -51,7 +51,12 @@ function bubbles_momentum_space!(
     return nothing
 end
 
-
+function green_with_tail(G :: MeshFunction{1, Q}, ν :: MatsubaraFrequency{Fermion}) :: Q where {Q}
+    # Evaluate Green function G using the tail 1 / (im * ν) for extrapolation
+    # Since we factor out (-im) factor in the Green function, the tail is 1 / ν.
+    return is_inbounds(ν, meshes(G, Val(1))) ? G[ν] : 1 / value(ν)
+    # return is_inbounds(ν, meshes(G, Val(1))) ? G[ν] : zero(Q)
+end
 
 
 function bubbles_real_space!(
@@ -106,8 +111,13 @@ function bubbles_real_space!(
             Ω = value(meshes(Πpp, Val(1))[iΩ])
             ν = value(meshes(Πpp, Val(2))[iν])
 
-            Πpp_R[iΩ, iν, iR_Π...] += G_pR(Ω - ν) * G_pR(ν) * weight
-            Πph_R[iΩ, iν, iR_Π...] += G_pR(Ω + ν) * G_mR(ν) * weight
+            if R_vec == (0, 0)
+                Πpp_R[iΩ, iν, iR_Π...] += green_with_tail(G_pR, Ω - ν) * green_with_tail(G_pR, ν) * weight
+                Πph_R[iΩ, iν, iR_Π...] += green_with_tail(G_pR, Ω + ν) * green_with_tail(G_mR, ν) * weight
+            else
+                Πpp_R[iΩ, iν, iR_Π...] += G_pR(Ω - ν) * G_pR(ν) * weight
+                Πph_R[iΩ, iν, iR_Π...] += G_pR(Ω + ν) * G_mR(ν) * weight
+            end
         end
     end
 

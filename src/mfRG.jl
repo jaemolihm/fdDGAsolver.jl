@@ -1,8 +1,12 @@
 mutable struct mfRGLinearMap{ST, Q} <: LinearMaps.LinearMap{Q}
     const S :: ST
+    strategy :: Symbol
     is_first_iteration :: Bool
-    function mfRGLinearMap(S :: ST) where {ST <: AbstractSolver{Q}} where {Q}
-        new{ST, Q}(S, true)
+    function mfRGLinearMap(S :: ST, strategy) where {ST <: AbstractSolver{Q}} where {Q}
+        if strategy !== :fdPA && strategy !== :fdPA_new
+            error("Invalid strategy $strategy. Must be fdPA or fdPA_new.")
+        end
+        new{ST, Q}(S, strategy, true)
     end
 end
 
@@ -16,28 +20,30 @@ function LinearMaps._unsafe_mul!(y, A::mfRGLinearMap, x::AbstractVector)
     build_K3_cache_mfRG!(S, A.is_first_iteration)
     A.is_first_iteration = false
 
-    # Takes ~40% of the time
-    BSE_L_K2!(S, pCh)
-    BSE_L_K2!(S, aCh)
-    BSE_L_K2!(S, tCh)
+    if A.strategy === :fdPA
+        # Takes ~40% of the time
+        BSE_L_K2!(S, pCh)
+        BSE_L_K2!(S, aCh)
+        BSE_L_K2!(S, tCh)
 
-    BSE_K1!(S, pCh, Val(true))
-    BSE_K1!(S, aCh, Val(true))
-    BSE_K1!(S, tCh, Val(true))
+        BSE_K1!(S, pCh, Val(true))
+        BSE_K1!(S, aCh, Val(true))
+        BSE_K1!(S, tCh, Val(true))
 
-    # Takes ~60% of the time
-    BSE_K2!(S, pCh, Val(true))
-    BSE_K2!(S, aCh, Val(true))
-    BSE_K2!(S, tCh, Val(true))
+        # Takes ~60% of the time
+        BSE_K2!(S, pCh, Val(true))
+        BSE_K2!(S, aCh, Val(true))
+        BSE_K2!(S, tCh, Val(true))
+    elseif A.strategy === :fdPA_new
+        # New version
+        BSE_K1_new!(S, pCh, Val(true))
+        BSE_K1_new!(S, aCh, Val(true))
+        BSE_K1_new!(S, tCh, Val(true))
 
-    # # New version
-    # BSE_K1_new!(S, pCh, Val(true))
-    # BSE_K1_new!(S, aCh, Val(true))
-    # BSE_K1_new!(S, tCh, Val(true))
-
-    # BSE_K2_new!(S, pCh, Val(true))
-    # BSE_K2_new!(S, aCh, Val(true))
-    # BSE_K2_new!(S, tCh, Val(true))
+        BSE_K2_new!(S, pCh, Val(true))
+        BSE_K2_new!(S, aCh, Val(true))
+        BSE_K2_new!(S, tCh, Val(true))
+    end
 
     BSE_L_K3!(S, pCh)
     BSE_L_K3!(S, aCh)
@@ -62,21 +68,34 @@ function fixed_point_preconditioned!(
     x :: Vector{Q},
     S :: AbstractSolver{Q}
     ;
+    strategy,
+    update_Σ = false,
+    occ_target = nothing,
+    hubbard_params = nothing,
     kwargs_solver...
     ) :: Nothing where {Q}
 
     # update solver from input vector
-    unflatten!(S.F, x)
+    if update_Σ
+        unflatten!(S, x)
+
+        if occ_target !== nothing
+            # Update chemical potential to fix the occupation
+            μ = compute_hubbard_chemical_potential(occ_target, S.Σ, hubbard_params)
+            set!(S.Gbare, hubbard_bare_Green(meshes(S.Gbare)...; μ, hubbard_params...))
+        end
+    else
+        unflatten!(S.F, x)
+    end
 
     # Iterate the solver
-    iterate_solver!(S; kwargs_solver...)
+    iterate_solver!(S; strategy, update_Σ, kwargs_solver...)
 
     # calculate residue
-    flatten!(S.F, R)
-    R .-= x
+    R_F = flatten(S.F) .- x[1:length(S.F)]
 
     # Precondition output
-    res = Krylov.dqgmres(mfRGLinearMap(S), R;
+    res = Krylov.dqgmres(mfRGLinearMap(S, strategy), R_F;
         atol = 1e-6, rtol = 1e-6, itmax = 400,
         memory = 200, verbose = 0, history = true);
 
@@ -86,7 +105,11 @@ function fixed_point_preconditioned!(
     flush(stdout)
     flush(stderr)
 
-    R .= res[1]
+    R[1:length(S.F)] .= res[1]
+
+    if update_Σ
+        R[length(S.F)+1:end] .= flatten(S.Σ) .- x[length(S.F)+1:end]
+    end
 
     return nothing
 end
@@ -151,6 +174,9 @@ function solve_using_mfRG!(
     iter_restart = 0,
     tol = 1e-4,
     auto_restart = false,
+    _debug_single_iter = false,
+    strategy = :fdPA,
+    update_Σ = false,
     )
 
     if auto_restart && filename_log !== nothing
@@ -204,24 +230,26 @@ function solve_using_mfRG!(
         if mpi_ismain() && verbose
             println(" === Iteration $iter (including retry: $iter_) ===")
             println("Mix Π and Π0 by $mixing")
-            println("max|Πpp - Π0pp| = $(absmax(S.Πpp - S.Π0pp))")
-            println("max|Πph - Π0ph| = $(absmax(S.Πph - S.Π0ph))")
+            println("max|Πpp - Π0pp| = $(norm((S.Πpp - S.Π0pp).data))")
+            println("max|Πph - Π0ph| = $(norm((S.Πph - S.Π0ph).data))")
         end
 
         # Solve vertex
         if mpi_ismain() && verbose
             println("Solving vertex")
         end
-        kwargs_solver_vertex = (; update_Σ = false, strategy = :fdPA)
-        # kwargs_solver_vertex = (; update_Σ = false, strategy = :fdPA_new)
-        @time res = nlsolve((R, x) -> fixed_point_preconditioned!(R, x, S; kwargs_solver_vertex...), flatten(S.F),
+        @time res = nlsolve((R, x) -> fixed_point_preconditioned!(R, x, S; update_Σ, strategy), flatten(S.F),
             method = :anderson,
-            iterations = 100,
+            iterations = 40,
             ftol = tol,
             beta = 0.85,
             m = 50,
             show_trace = mpi_ismain() && verbose,
         );
+        if _debug_single_iter
+            unflatten!(S.F, res.zero);
+            return
+        end
 
         if ! res.f_converged
             # If the calculation did not converge, reduce mixing and retry.
@@ -353,6 +381,7 @@ function solve_using_mfRG_fixed_bubble!(
     verbose = true,
     mixing_step_init = 1.0,
     tol = 1e-3,
+    strategy,
     )
 
     # Converge for given Π and Π0 by incremental mixing
@@ -380,11 +409,10 @@ function solve_using_mfRG_fixed_bubble!(
         # Solve vertex
         mpi_ismain() && verbose && println("Solving vertex")
 
-        kwargs_solver_vertex = (; update_Σ = false, strategy = :fdPA)
-        # kwargs_solver_vertex = (; update_Σ = false, strategy = :fdPA_new)
+        kwargs_solver_vertex = (; update_Σ = false, strategy)
         @time res = nlsolve((R, x) -> fixed_point_preconditioned!(R, x, S; kwargs_solver_vertex...), flatten(S.F),
             method = :anderson,
-            iterations = 200,
+            iterations = 40,
             ftol = tol,
             beta = 0.85,
             m = 100,
@@ -593,4 +621,66 @@ function solve_using_mfRG_v2!(
             end
         end
     end
+end
+
+
+
+
+
+function solve_using_mfRG_without_mixing!(
+    S :: AbstractSolver
+    ;
+    verbose = true,
+    occ_target = nothing,
+    hubbard_params = nothing,
+    tol = 1e-4,
+    strategy = :fdPA,
+    update_Σ = false,
+    maxiter = 100,
+    memory = 50,
+    )
+
+    if occ_target !== nothing
+        if hubbard_params === nothing
+            throw(ArgumentError("hubbard_params must be provided if occ_target is given."))
+        end
+    end
+
+    if mpi_ismain() && verbose
+        println("Solve using mfRG preconditioning, strategy $strategy, tol $tol, maxiter $maxiter, update_Σ $update_Σ")
+        if occ_target !== nothing
+            println("Occupation fixed to $occ_target, hubbard parameters $hubbard_params")
+        end
+        println("norm|Πpp - Π0pp| = $(norm((S.Πpp - S.Π0pp).data))")
+        println("norm|Πph - Π0ph| = $(norm((S.Πph - S.Π0ph).data))")
+    end
+
+    # Solve vertex
+    if mpi_ismain() && verbose
+        println("Solving vertex")
+    end
+
+    if update_Σ
+        x0 = flatten(S)
+    else
+        x0 = flatten(S.F)
+    end
+
+    @time res = nlsolve((R, x) -> fixed_point_preconditioned!(R, x, S; update_Σ, strategy, occ_target, hubbard_params), x0,
+        method = :anderson,
+        iterations = maxiter,
+        ftol = tol,
+        beta = 0.85,
+        m = memory,
+        show_trace = mpi_ismain() && verbose,
+    );
+
+    if ! res.f_converged
+        mpi_ismain() && println("Calculation did not converge in $(res.iterations) iterations.")
+    else
+        # If the calculation converged, increase mixing.
+        mpi_ismain() && println("Calculation converged")
+    end
+
+    return res
 end

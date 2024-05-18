@@ -75,6 +75,7 @@ module fdDGAsolver
     include("nonlocal_3/BSE_K3.jl")
 
     include("flow.jl")
+    include("interpolate.jl")
 
 
     @compile_workload begin
@@ -185,6 +186,6 @@ module fdDGAsolver
         get_P_mesh, Dyson!, bubbles!,
         load_triqs_data, compute_hubbard_chemical_potential,
         MBEVertex, NL2_MBEVertex,
-        bare_Green_Ω_flow
+        bare_Green_Ω_flow, interpolate_solver!, load_solver!
 
 end

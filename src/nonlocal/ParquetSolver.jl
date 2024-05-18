@@ -307,3 +307,37 @@ function bubbles!(S :: NL_ParquetSolver)
     bubbles_real_space!(S)
     # bubbles_momentum_space!(S)
 end
+
+function load_vertex!(F :: AbstractVertex, f, name)
+    if F isa Vertex
+        set!(F, load_vertex(Vertex, f, name))
+    elseif F isa MBEVertex
+        set!(F, load_vertex(MBEVertex, f, name))
+    elseif F isa NL_Vertex
+        set!(F, load_vertex(NL_Vertex, f, name))
+    elseif F isa NL2_Vertex
+        set!(F, load_vertex(NL2_Vertex, f, name))
+    elseif F isa NL2_MBEVertex
+        set!(F, load_vertex(NL2_MBEVertex, f, name))
+    elseif F isa NL3_MBEVertex
+        set!(F, load_vertex(NL3_MBEVertex, f, name))
+    else
+        error("Wrong type of F")
+    end
+end
+
+function load_solver!(S :: AbstractSolver, filename)
+    f = h5open(filename, "r")
+    set!(S.Gbare, load_mesh_function(f, "Gbare"))
+    set!(S.G, load_mesh_function(f, "G"))
+    set!(S.Σ, load_mesh_function(f, "Σ"))
+    set!(S.G0, load_mesh_function(f, "G0"))
+    set!(S.Σ0, load_mesh_function(f, "Σ0"))
+    set!(S.Π0pp, load_mesh_function(f, "Π0pp"))
+    set!(S.Π0ph, load_mesh_function(f, "Π0ph"))
+    set!(S.Πpp, load_mesh_function(f, "Πpp"))
+    set!(S.Πph, load_mesh_function(f, "Πph"))
+    load_vertex!(S.F0, f, "F0")
+    load_vertex!(S.F, f, "F")
+    close(f)
+end

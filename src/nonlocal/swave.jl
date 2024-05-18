@@ -134,3 +134,23 @@ function Base.getindex(
     return sum(view(f, i1, i2, :, :)) / length(meshes(f, Val(3))) / length(meshes(f, Val(4)))
 
 end
+
+
+function Base.getindex(
+    f  :: NL3_MF_K3{Q},
+    w1 :: Union{MeshPoint, <: AbstractValue, Int},
+    w2 :: Union{MeshPoint, <: AbstractValue, Int},
+    w3 :: Union{MeshPoint, <: AbstractValue, Int},
+    w4 :: Union{MeshPoint, <: AbstractValue, Int},
+       :: SWaveBrillouinPoint,
+       :: SWaveBrillouinPoint,
+    )  :: Q where {Q}
+
+    i1 = MatsubaraFunctions.mesh_index(w1, meshes(f, Val(1)))
+    i2 = MatsubaraFunctions.mesh_index(w2, meshes(f, Val(2)))
+    i3 = MatsubaraFunctions.mesh_index(w3, meshes(f, Val(3)))
+    i4 = MatsubaraFunctions.mesh_index(w4, meshes(f, Val(4)))
+
+    return sum(view(f, i1, i2, i3, i4, :, :)) / length(meshes(f, Val(5))) / length(meshes(f, Val(6)))
+
+end
