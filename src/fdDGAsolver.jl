@@ -74,6 +74,8 @@ module fdDGAsolver
     include("nonlocal_3/build_K3_cache.jl")
     include("nonlocal_3/BSE_K3.jl")
 
+    include("flow.jl")
+
 
     @compile_workload begin
         MPI.Init()
@@ -182,6 +184,7 @@ module fdDGAsolver
         SDE!, BSE_K1!, BSE_K2!, BSE_K3!, BSE_L_K2!, BSE_L_K3!, build_K3_cache, iterate_solver!,
         get_P_mesh, Dyson!, bubbles!,
         load_triqs_data, compute_hubbard_chemical_potential,
-        MBEVertex, NL2_MBEVertex
+        MBEVertex, NL2_MBEVertex,
+        bare_Green_Ω_flow
 
 end

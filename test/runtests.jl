@@ -26,4 +26,6 @@ println("nthreads = $(Threads.nthreads())")
 
     include("test_boson_exchange_local.jl")
     include("test_boson_exchange_NL2.jl")
+
+    include("test_flow.jl")
 end
