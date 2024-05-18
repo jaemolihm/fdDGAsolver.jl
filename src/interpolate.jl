@@ -144,10 +144,26 @@ function interpolate_vertex!(Ko :: NL2_MF_K2, Ki :: NL2_MF_K2)
     return nothing
 end
 
-function interpolate_solver!(So :: ST, Si :: ST) where {ST <: AbstractSolver}
+function interpolate_solver!(
+    So :: ST,
+    Si :: ST;
+    occ_target = nothing,
+    hubbard_params = nothing
+    ) where {ST <: AbstractSolver}
+
     # Interpolate the self-energy and vertex of Si to the mesh of So
-    set!(So.Σ, Si.Σ)
-    set!(So.Gbare, Si.Gbare)
+
+    @assert meshes(So.Σ, Val(2)) == meshes(Si.Σ, Val(2))
+    for i in eachindex(So.Σ.data)
+        ν, k = value.(to_meshes(So.Σ, i))
+        So.Σ[ν, k] = Si.Σ(ν, k)
+    end
+
+    if occ_target !== nothing
+        # Update chemical potential to fix the occupation
+        μ = compute_hubbard_chemical_potential(occ_target, So.Σ, hubbard_params)
+        set!(So.Gbare, hubbard_bare_Green(meshes(So.Gbare)...; μ, hubbard_params...))
+    end
     Dyson!(So)
     bubbles!(So)
 
