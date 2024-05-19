@@ -967,7 +967,7 @@ function build_K3_cache!(
     Threads.@threads for i in mpi_split(1 : length(S.cache_Γpx.data))
         Ω, ω, νp, P = value.(MatsubaraFunctions.to_meshes(S.cache_Γpx, i))
 
-        S.cache_Γpx[i] = S.F( Ω, ω, νp, P, kSW, kSW, pCh, xSp; F0=false, γp=false)
+        S.cache_Γpx[i] = S.F( Ω, ω, νp, P, kSW, kSW, pCh, xSp; γp=false) - S.F.F0( Ω, ω, νp, P, kSW, kSW, pCh, xSp; γp=false)
 
         # (Iᵣ - U) + Mᵣ
         S.cache_F0p[i] = S.F0(Ω, ω, νp, P, kSW, kSW, pCh, xSp; γp = false) + U + S.F0(Ω, ω, Ω - νp, P, kSW, kSW, pCh, K3Cl) * -1
@@ -991,9 +991,9 @@ function build_K3_cache!(
         Ω, ν, ω, P = value.(MatsubaraFunctions.to_meshes(S.cache_Γpp, i))
 
         # r-irreducible vertex in each channel r = p, a, t
-        S.cache_Γpp[i] = S.F(Ω, ν, ω, P, kSW, kSW, pCh, pSp; F0=false, γp=false)
-        S.cache_Γa[i]  = S.F(Ω, ν, ω, P, kSW, kSW, aCh, pSp; F0=false, γa=false)
-        S.cache_Γt[i]  = S.F(Ω, ν, ω, P, kSW, kSW, tCh, pSp; F0=false, γt=false)
+        S.cache_Γpp[i] = S.F(Ω, ν, ω, P, kSW, kSW, pCh, pSp; γp=false) - S.F.F0(Ω, ν, ω, P, kSW, kSW, pCh, pSp; γp=false)
+        S.cache_Γa[i]  = S.F(Ω, ν, ω, P, kSW, kSW, aCh, pSp; γa=false) - S.F.F0(Ω, ν, ω, P, kSW, kSW, aCh, pSp; γa=false)
+        S.cache_Γt[i]  = S.F(Ω, ν, ω, P, kSW, kSW, tCh, pSp; γt=false) - S.F.F0(Ω, ν, ω, P, kSW, kSW, tCh, pSp; γt=false)
 
         # (Iᵣ - U) + Mᵣ
         S.cache_Fp[i]  = S.F(Ω, ν, ω, P, kSW, kSW, pCh, pSp; γp = false) - U + S.F(Ω, ν, ω, P, kSW, kSW, pCh, K3Cl)

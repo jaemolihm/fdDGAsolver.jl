@@ -107,7 +107,7 @@ function build_K3_cache_mfRG!(
     # Vertices multiplied by bubbles from the left
     @inline function diagram_Γpx(wtpl)
         Ω, ω, νp, P = wtpl
-        return S.F(Ω, ω, νp, P, kSW, kSW, pCh, xSp; F0=false, γp=false)
+        return S.F(Ω, ω, νp, P, kSW, kSW, pCh, xSp; γp=false) - S.F.F0(Ω, ω, νp, P, kSW, kSW, pCh, xSp; γp=false)
     end
     S.SGpp[3](S.cache_Γpx, InitFunction{4, Q}(diagram_Γpx); mode = S.mode)
 
@@ -115,15 +115,15 @@ function build_K3_cache_mfRG!(
     # Vertices multiplied by bubbles from the right
     @inline function diagram_Γpp(wtpl)
         Ω, ν, ω, P = wtpl
-        return S.F(Ω, ν, ω, P, kSW, kSW, pCh, pSp; F0=false, γp=false)
+        return S.F(Ω, ν, ω, P, kSW, kSW, pCh, pSp; γp=false) - S.F.F0(Ω, ν, ω, P, kSW, kSW, pCh, pSp; γp=false)
     end
     @inline function diagram_Γa(wtpl)
         Ω, ν, ω, P = wtpl
-        return S.F(Ω, ν, ω, P, kSW, kSW, aCh, pSp; F0=false, γa=false)
+        return S.F(Ω, ν, ω, P, kSW, kSW, aCh, pSp; γa=false) - S.F.F0(Ω, ν, ω, P, kSW, kSW, aCh, pSp; γa=false)
     end
     @inline function diagram_Γt(wtpl)
         Ω, ν, ω, P = wtpl
-        return S.F(Ω, ν, ω, P, kSW, kSW, tCh, pSp; F0=false, γt=false)
+        return S.F(Ω, ν, ω, P, kSW, kSW, tCh, pSp; γt=false) - S.F.F0(Ω, ν, ω, P, kSW, kSW, tCh, pSp; γt=false)
     end
 
     S.SGpp[3](S.cache_Γpp, InitFunction{4, Q}(diagram_Γpp); mode = S.mode)
