@@ -82,12 +82,12 @@ function BSE_K1_new!(
 
         Ω, P    = wtpl
         val     = zero(Q)
-        Π0slice = view(Π0, Ω, :, P, :)
-        Πslice  = view(Π , Ω, :, P, :)
+        Π0slice = MeshFunction((meshes(Π0, Val(2)), meshes(Π0, Val(4))), view(Π0, Ω, :, P, :))
+        Πslice  = MeshFunction((meshes(Π,  Val(2)), meshes(Π,  Val(4))), view(Π,  Ω, :, P, :))
 
-        for i in eachindex(Π0slice)
-            ω = value(meshes(Π0, Val(2))[i.I[1]])
-            q = value(meshes(Π0, Val(4))[i.I[2]])
+        for iq in eachindex(meshes(Πslice, Val(2))), iω in eachindex(meshes(Πslice, Val(1)))
+            ω = value(meshes(Πslice, Val(1))[iω])
+            q = value(meshes(Πslice, Val(2))[iq])
 
             # vertices
             Fl  = F( Ω, νInf, ω, P, k0, q, Ch, Sp)
@@ -95,9 +95,9 @@ function BSE_K1_new!(
 
             # 1ℓ and central part
             if is_mfRG === Val(true)
-                val += (Fl - F0l) * Πslice[i] * U
+                val += (Fl - F0l) * Πslice[iω, iq] * U
             else
-                val += (Fl * Πslice[i] - F0l * Π0slice[i]) * U
+                val += (Fl * Πslice[iω, iq] - F0l * Π0slice[iω, iq]) * U
             end
         end
 
