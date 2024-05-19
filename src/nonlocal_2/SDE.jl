@@ -22,7 +22,8 @@ function SDE_channel_L_pp!(
 
             # val += bare_vertex(F) * Πslice[i] * F.γp(Ω, Ω - ω, ν, P, P - q, k)
             val += bare_vertex(F) * Πslice[i] * (
-                F(Ω, Ω - ω, ν, P, P - q, k, pCh, pSp; γp = true, F0 = false, γa = false, γt = false) )
+                +    F(Ω, Ω - ω, ν, P, P - q, k, pCh, pSp; γp = true, γa = false, γt = false)
+                - F.F0(Ω, Ω - ω, ν, P, P - q, k, pCh, pSp; γp = true, γa = false, γt = false) )
         end
 
         return temperature(F) * val / length(meshes(Πpp, Val(4)))
@@ -56,8 +57,10 @@ function SDE_channel_L_ph!(
 
             # val += bare_vertex(F) * Πslice[i] * (F.γt(Ω, ν, ω, P, k, q) + F.γa(Ω, ν, ω, P, k, q))
             val += bare_vertex(F) * Πslice[i] * (
-                F(Ω, ν, ω, P, k, q, aCh, pSp; γa = true, F0 = false, γp = false, γt = false)
-              + F(Ω, ν, ω, P, k, q, tCh, pSp; γt = true, F0 = false, γp = false, γa = false) )
+              +    F(Ω, ν, ω, P, k, q, aCh, pSp; γa = true, γp = false, γt = false)
+              +    F(Ω, ν, ω, P, k, q, tCh, pSp; γt = true, γp = false, γa = false)
+              - F.F0(Ω, ν, ω, P, k, q, aCh, pSp; γa = true, γp = false, γt = false)
+              - F.F0(Ω, ν, ω, P, k, q, tCh, pSp; γt = true, γp = false, γa = false) )
         end
 
         return temperature(F) * val / length(meshes(Πph, Val(4)))
