@@ -66,7 +66,8 @@ end
 function fixed_point_preconditioned!(
     R :: Vector{Q},
     x :: Vector{Q},
-    S :: AbstractSolver{Q}
+    S :: AbstractSolver{Q},
+    krylov_solver = nothing,
     ;
     strategy,
     update_Σ = false,
@@ -95,17 +96,26 @@ function fixed_point_preconditioned!(
     R_F = flatten(S.F) .- x[1:length(S.F)]
 
     # Precondition output
-    res = Krylov.dqgmres(mfRGLinearMap(S, strategy), R_F;
-        atol = 1e-6, rtol = 1e-6, itmax = 400,
-        memory = 200, verbose = 0, history = true);
+    if krylov_solver === nothing
+        xsol, stats = Krylov.dqgmres(mfRGLinearMap(S, strategy), R_F;
+            atol = 1e-6, rtol = 1e-6, itmax = 400,
+            memory = 200, verbose = 0, history = true);
+    else
+        # In-place solver
+        res = Krylov.dqgmres!(krylov_solver, mfRGLinearMap(S, strategy), R_F;
+            atol = 1e-6, rtol = 1e-6, itmax = 400,
+            verbose = 0, history = true);
+        xsol = res.x
+        stats = res.stats
+    end
 
-    if !res[2].solved
-        @warn "Krylov solver did not converge after $(res[2].niter) iterations, residual $(res[2].residuals[end])."
+    if !stats.solved
+        @warn "Krylov solver did not converge after $(stats.niter) iterations, residual $(stats.residuals[end])."
     end
     flush(stdout)
     flush(stderr)
 
-    R[1:length(S.F)] .= res[1]
+    R[1:length(S.F)] .= xsol
 
     if update_Σ
         R[length(S.F)+1:end] .= flatten(S.Σ) .- x[length(S.F)+1:end]
@@ -667,7 +677,10 @@ function solve_using_mfRG_without_mixing!(
         x0 = flatten(S.F)
     end
 
-    @time res = nlsolve((R, x) -> fixed_point_preconditioned!(R, x, S; update_Σ, strategy, occ_target, hubbard_params), x0,
+    krylov_memory = 200
+    krylov_solver = Krylov.DqgmresSolver(mfRGLinearMap(S, strategy), flatten(S.F), krylov_memory)
+
+    res = nlsolve((R, x) -> fixed_point_preconditioned!(R, x, S, krylov_solver; update_Σ, strategy, occ_target, hubbard_params), x0,
         method = :anderson,
         iterations = maxiter,
         ftol = tol,
