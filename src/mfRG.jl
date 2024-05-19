@@ -648,6 +648,7 @@ function solve_using_mfRG_without_mixing!(
 
     if mpi_ismain() && verbose
         println("Solve using mfRG preconditioning, strategy $strategy, tol $tol, maxiter $maxiter, update_Σ $update_Σ")
+        println("Parallelization mode: $(S.mode), nthreads = $(Threads.nthreads())")
         if occ_target !== nothing
             println("Occupation fixed to $occ_target, hubbard parameters $hubbard_params")
         end
