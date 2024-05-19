@@ -150,15 +150,20 @@ module fdDGAsolver
             view(Σ0, ν, :) .= data_triqs.Σ(value(ν))
         end
         occ_target = data_triqs.occ
+        hubbard_params = (; t1, t2)
 
         F0 = NL2_Vertex(data_triqs.Γ, T, nK1, nK2, nK3, mK_Γ)
         S = NL2_ParquetSolver(nK1, nK2, nK3, mK_Γ, copy(Gbare), copy(G0), copy(Σ0), F0; mode = :hybrid)
         init_sym_grp!(S)
-        solve_using_mfRG!(S; maxiter = 1, occ_target, hubbard_params = (; t1, t2), tol = 1e3, verbose=false);
+        solve_using_mfRG!(S; maxiter = 1, occ_target, hubbard_params, tol = 1e3, verbose=false);
 
         Σ_corr = copy(S.Σ0)
         mult_add!(Σ_corr, SDE!(copy(Σ_corr), S.G0, S.Π0pp, S.Π0ph, S.L0pp, S.L0ph, S.F0, S.SGΣ, S.SG0pp2, S.SG0ph2; S.mode, include_U² = true, include_Hartree = true), -1)
-        solve_using_mfRG_v2!(S; maxiter = 1, occ_target, hubbard_params = (; t1, t2), tol = 1e3, verbose=false, Σ_corr);
+        solve_using_mfRG_v2!(S; maxiter = 1, occ_target, hubbard_params, tol = 1e3, verbose=false, Σ_corr);
+
+        F0 = NL2_MBEVertex(asymptotic_to_mbe(data_triqs.Γ), T, nK1, nK2, nK3, mK_Γ)
+        S = NL2_ParquetSolver(nK1, nK2, nK3, mK_Γ, copy(Gbare), copy(G0), copy(Σ0), F0, NL2_MBEVertex)
+        res = solve_using_mfRG_without_mixing!(S; strategy = :fdPA_new, update_Σ = true, occ_target, hubbard_params, maxiter=1);
     end
 
     export

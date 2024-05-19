@@ -11,7 +11,7 @@ begin
     k1 = 2pi * SVector(1., 0.)
     k2 = 2pi * SVector(0., 1.)
 
-    data_triqs = load_triqs_data("/home/ucl/modl/jmlihm/MFjl/fdDGAsolver.jl/data/Wu_point.h5")
+    data_triqs = load_triqs_data(joinpath(dirname(pathof(fdDGAsolver)), "../data/Wu_point.h5"))
 
     (; U, T, μ, t1, t2, t3) = data_triqs.params
 
