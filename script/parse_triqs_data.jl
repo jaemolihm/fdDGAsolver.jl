@@ -94,3 +94,23 @@ begin
         # plot_vertex_core(Γ; vmax = 0.1, Ω = 2π*T)
     end
 end;
+
+begin
+    # System parameters : Krien point
+    T = 0.15
+    U = 8.0
+    μ = 3.8217923274829233 - U/2
+    t1 = 1.0
+    t2 = -0.2
+    t3 = 0.1
+
+
+    # Load impurity vertex
+    prefix = "/home/ucl/modl/jmlihm/MFjl/data/beta6.6667_t-1.0_U8.0_mu3.8217923274829233_numc1_numk254"
+    filename_output = "/home/ucl/modl/jmlihm/MFjl/fdDGAsolver.jl/data/Krien_point.h5"
+
+    data_triqs = fdDGAsolver.parse_triqs_data(prefix, T, U; params = (; μ, t1, t2, t3), half_filling = false, symmetrize = true, filename_output)
+    plot_vertex_K1(data_triqs.Γ)
+    plot_vertex_K2(data_triqs.Γ; vmax = 10.)
+    plot_vertex_core(data_triqs.Γ; vmax = 20., Ω = 2π*T*0)
+end;

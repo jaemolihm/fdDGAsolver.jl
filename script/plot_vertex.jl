@@ -46,7 +46,7 @@ function plot_vertex_core(Γ; vmax = 0.1, Ω = 0.0)
     fig, plotaxes = subplots(4, 2, figsize=(6, 12); sharex=true, sharey=true)
 
     mesh_Ω = meshes(Γ.F0.Ft_p, Val(1))
-    iΩ = mesh_index(Ω, mesh_Ω)
+    iΩ = MatsubaraFunctions.mesh_index(Ω, mesh_Ω)
 
     for (i, (Λ, label)) in enumerate(zip([Γ.F0.Ft_p, Γ.F0.Ft_x, Γ.F0.Fp_p, Γ.F0.Fp_x], ["Ft_p", "Ft_x", "Fp_p", "Fp_x"]))
         plotaxes[i, 1].imshow(real.(Λ.data[iΩ,:,:])'; vmin=-vmax, vmax, cmap="RdBu_r", aspect="auto", interpolation="none")

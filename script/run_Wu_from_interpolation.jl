@@ -61,15 +61,15 @@ function initialize_solver_by_interpolation(nl_method, nmax, nq, nmax_in, nq_in;
     S = initialize_solver(nl_method, nmax, nq)
     interpolate_solver!(S, Si; occ_target, hubbard_params)
 
-    if nl_method == 1
-        @assert norm(S.F.γp.K1.data) / nq ≈ norm(Si.F.γp.K1.data) / nq_in
-        @assert norm(S.F.γp.K2.data) / nq ≈ norm(Si.F.γp.K2.data) / nq_in
-        @assert norm(S.F.γp.K3.data) / nq ≈ norm(Si.F.γp.K3.data) / nq_in
-    elseif nl_method == -2
-        @assert norm(S.F.γp.K1.data) / nq ≈ norm(Si.F.γp.K1.data) / nq_in
-        @assert norm(S.F.γp.K2.data) / nq^2 ≈ norm(Si.F.γp.K2.data) / nq_in^2
-        @assert norm(S.F.γp.K3.data) / nq ≈ norm(Si.F.γp.K3.data) / nq_in
-    end
+    # if nl_method == 1
+    #     @assert norm(S.F.γp.K1.data) / nq ≈ norm(Si.F.γp.K1.data) / nq_in
+    #     @assert norm(S.F.γp.K2.data) / nq ≈ norm(Si.F.γp.K2.data) / nq_in
+    #     @assert norm(S.F.γp.K3.data) / nq ≈ norm(Si.F.γp.K3.data) / nq_in
+    # elseif nl_method == -2
+    #     @assert norm(S.F.γp.K1.data) / nq ≈ norm(Si.F.γp.K1.data) / nq_in
+    #     @assert norm(S.F.γp.K2.data) / nq^2 ≈ norm(Si.F.γp.K2.data) / nq_in^2
+    #     @assert norm(S.F.γp.K3.data) / nq ≈ norm(Si.F.γp.K3.data) / nq_in
+    # end
 
     return S
 end

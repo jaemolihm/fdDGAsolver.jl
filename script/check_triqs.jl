@@ -21,6 +21,7 @@ begin
     filename = "/home/ucl/modl/jmlihm/MFjl/fdDGAsolver.jl/data/Wu_point_U5.2.h5"
     filename = "/home/ucl/modl/jmlihm/MFjl/fdDGAsolver.jl/data/Wu_point_U5.0.h5"
     filename = "/home/ucl/modl/jmlihm/MFjl/fdDGAsolver.jl/data/Wu_point.h5"
+    filename = "/home/ucl/modl/jmlihm/MFjl/fdDGAsolver.jl/data/Krien_point.h5"
 end
 
 begin
@@ -86,7 +87,7 @@ begin
 
     mult_add!(S.Fbuff, Γ, -1)
     # plot_vertex_K2(Γ; vmax = 1.0)
-    plot_vertex_K2(S.Fbuff; vmax = 0.1)
+    # plot_vertex_K2(S.Fbuff; vmax = 1)
 end
 
 
@@ -111,7 +112,7 @@ begin
     mK_G = BrillouinZoneMesh(BrillouinZone(64, k1, k2))
 
     mG = MatsubaraMesh(T, nG, Fermion)
-    Gbare = hubbard_bare_Green(mG, mK_G; μ, t1, t2)
+    Gbare = hubbard_bare_Green(mG, mK_G; μ, t1, t2, t3)
     Σ0 = copy(Gbare)
     set!(Σ0, 0)
     for ν in MatsubaraFunctions.meshes(Σ0, Val(1))
