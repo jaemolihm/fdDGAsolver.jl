@@ -204,9 +204,9 @@ function BSE_K2_new!(
         #     end
         # end
 
-        for iq in eachindex(meshes(K2, Val(4))), iω in eachindex(meshes(K2, Val(2)))
-            ω = value(meshes(K2, Val(2))[iω])
-            q = value(meshes(K2, Val(4))[iq])
+        for iq in eachindex(meshes(Πslice, Val(2))), iω in eachindex(meshes(Πslice, Val(1)))
+            ω = value(meshes(Πslice, Val(1))[iω])
+            q = value(meshes(Πslice, Val(2))[iq])
 
             # vertices
             Fl  = F( Ω, ν, ω, P, k, q, Ch, Sp) - F( Ω, νInf, ω, P, k, q, Ch, Sp)
@@ -214,9 +214,9 @@ function BSE_K2_new!(
 
             # 1ℓ and central part
             if is_mfRG === Val(true)
-                val += (Fl - F0l) * Πslice[ω, q] * U
+                val += (Fl - F0l) * Πslice[iω, iq] * U
             else
-                val += (Fl * Πslice[ω, q] - F0l * Π0slice[ω, q]) * U
+                val += (Fl * Πslice[iω, iq] - F0l * Π0slice[iω, iq]) * U
             end
         end
 

@@ -13,10 +13,12 @@ using fdDGAsolver: numP_Γ, k0, kSW
 include("/home/ucl/modl/jmlihm/MFjl/fdDGAsolver.jl/script/plot_vertex.jl")
 
 begin
+    filename = "/home/ucl/modl/jmlihm/MFjl/fdDGAsolver.jl/data/high_temperature_U2.089.h5"
     filename = "/home/ucl/modl/jmlihm/MFjl/fdDGAsolver.jl/data/Wu_point_U6.2.h5"
     filename = "/home/ucl/modl/jmlihm/MFjl/fdDGAsolver.jl/data/Wu_point_U6.0.h5"
     filename = "/home/ucl/modl/jmlihm/MFjl/fdDGAsolver.jl/data/Wu_point_U5.8.h5"
     filename = "/home/ucl/modl/jmlihm/MFjl/fdDGAsolver.jl/data/Wu_point_U5.6.h5"
+    filename = "/home/ucl/modl/jmlihm/MFjl/fdDGAsolver.jl/data/Wu_point_U5.5.h5"
     filename = "/home/ucl/modl/jmlihm/MFjl/fdDGAsolver.jl/data/Wu_point_U5.4.h5"
     filename = "/home/ucl/modl/jmlihm/MFjl/fdDGAsolver.jl/data/Wu_point_U5.2.h5"
     filename = "/home/ucl/modl/jmlihm/MFjl/fdDGAsolver.jl/data/Wu_point_U5.0.h5"
@@ -65,13 +67,13 @@ begin
     fdDGAsolver.BSE_K2_new!(S, aCh)
     fdDGAsolver.BSE_K2_new!(S, tCh)
 
-    @info absmax(S.Fbuff.γp.K1 - Γ.γp.K1)
-    @info absmax(S.Fbuff.γa.K1 - Γ.γa.K1)
-    @info absmax(S.Fbuff.γt.K1 - Γ.γt.K1)
+    @info absmax(S.Fbuff.γp.K1 - Γ.γp.K1) / absmax(Γ.γp.K1)
+    @info absmax(S.Fbuff.γa.K1 - Γ.γa.K1) / absmax(Γ.γa.K1)
+    @info absmax(S.Fbuff.γt.K1 - Γ.γt.K1) / absmax(Γ.γt.K1)
 
-    @info absmax(S.Fbuff.γp.K2 - Γ.γp.K2)
-    @info absmax(S.Fbuff.γa.K2 - Γ.γa.K2)
-    @info absmax(S.Fbuff.γt.K2 - Γ.γt.K2)
+    @info absmax(S.Fbuff.γp.K2 - Γ.γp.K2) / absmax(Γ.γp.K2)
+    @info absmax(S.Fbuff.γa.K2 - Γ.γa.K2) / absmax(Γ.γa.K2)
+    @info absmax(S.Fbuff.γt.K2 - Γ.γt.K2) / absmax(Γ.γt.K2)
 
 
     for (K1, label) in zip([Γ.γp.K1, Γ.γt.K1, Γ.γa.K1], ["K1p", "K1t", "K1a"])

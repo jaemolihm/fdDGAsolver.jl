@@ -43,10 +43,10 @@ function initialize_solver(nl_method, nmax, nq)
     mK_Γ = BrillouinZoneMesh(BrillouinZone(nq, k1, k2))
     if nl_method == 1
         F0 = NL_Vertex(data_triqs.Γ, T, nK1, nK2, nK3, mK_Γ)
-        S = NL_ParquetSolver(nK1, nK2, nK3, mK_Γ, copy(Gbare), copy(G0), copy(Σ0), F0)
+        S = NL_ParquetSolver(nK1, nK2, nK3, mK_Γ, copy(Gbare), copy(G0), copy(Σ0), F0; mode = :threads)
     elseif nl_method == -2
         F0 = NL2_MBEVertex(fdDGAsolver.asymptotic_to_mbe(data_triqs.Γ), T, nK1, nK2, nK3, mK_Γ)
-        S = NL2_ParquetSolver(nK1, nK2, nK3, mK_Γ, copy(Gbare), copy(G0), copy(Σ0), F0, NL2_MBEVertex)
+        S = NL2_ParquetSolver(nK1, nK2, nK3, mK_Γ, copy(Gbare), copy(G0), copy(Σ0), F0, NL2_MBEVertex; mode = :threads)
     else
         error("Invalid nl_method $nl_method")
     end
@@ -85,9 +85,11 @@ begin
     nmax_in = parse(Int, ARGS[4])
     nq_in = parse(Int, ARGS[5])
     
-    # S0 = initialize_solver(nl_method)
-
-    S0 = initialize_solver_by_interpolation(nl_method, nmax, nq, nmax_in, nq_in; occ_target, hubbard_params)
+    if nmax_in < 0
+        S0 = initialize_solver(nl_method, nmax, nq)
+    else
+        S0 = initialize_solver_by_interpolation(nl_method, nmax, nq, nmax_in, nq_in; occ_target, hubbard_params)
+    end
 
     # res = fdDGAsolver.solve!(S0; strategy = :fdPA, maxiter=50, mem=50, tol=1e-5);
     for i in 1:10
@@ -95,7 +97,7 @@ begin
         flush(stdout)
         flush(stderr)
 
-        res = fdDGAsolver.solve_using_mfRG_without_mixing!(S0; strategy = (nl_method > 0 ? :fdPA : :fdPA_new), tol=1e-5, update_Σ = true, occ_target, hubbard_params, memory=100, maxiter=50);
+        @time res = fdDGAsolver.solve_using_mfRG_without_mixing!(S0; strategy = (nl_method > 0 ? :fdPA : :fdPA_new), tol=1e-5, update_Σ = true, occ_target, hubbard_params, memory=100, maxiter=50);
         unflatten!(S0, res.zero);
 
         filename = "/globalscratch/ucl/modl/jmlihm/temp/flow.Wu.NL$nl_method.nmax$nmax.nq$nq.h5"

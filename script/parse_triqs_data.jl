@@ -5,6 +5,7 @@ using MatsubaraFunctions
 using StaticArrays
 using HDF5
 
+include("/home/ucl/modl/jmlihm/MFjl/fdDGAsolver.jl/script/plot_vertex.jl")
 
 begin
     # System parameters : high temperature
@@ -53,13 +54,16 @@ begin
     t1 = 1.0
     t2 = -0.3
     t3 = 0.0
-    for (U, μ) in [(5.0, 1.8622674424442904),
-                   (5.2, 1.9690673134296466),
-                   (5.4, 2.0734335491694544),
-                   (5.6, 2.178910712243582),
-                   (5.8, 2.2840101729704414),
-                   (6.0, 2.3877368985791043),
-                   (6.2, 2.490307386373797)]
+    # for (U, μ) in [(5.0, 1.8622674424442904),
+    #                (5.2, 1.9690673134296466),
+    #                (5.4, 2.0734335491694544),
+    #                (5.6, 2.178910712243582),
+    #                (5.8, 2.2840101729704414),
+    #                (6.0, 2.3877368985791043),
+                #    (6.2, 2.490307386373797),
+                #    (5.5, 2.125315907991539),
+    # ]
+    for (U, μ) in []
 
         # Load impurity vertex
         prefix = "/home/ucl/modl/jmlihm/MFjl/data/beta5.0_t-1.0_U$(U)_mu$(μ)_numc1_numk254"
@@ -68,7 +72,7 @@ begin
         μ = μ - U/2
 
         data_triqs = fdDGAsolver.parse_triqs_data(prefix, T, U; params = (; μ, t1, t2, t3), half_filling = false, symmetrize = true, filename_output)
-        # plot_vertex_K1(Γ)
+        # plot_vertex_K1(data_triqs.Γ)
         # plot_vertex_K2(Γ; vmax = 0.01)
         # plot_vertex_core(Γ; vmax = 0.1, Ω = 2π*T)
     end
