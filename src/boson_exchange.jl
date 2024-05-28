@@ -426,9 +426,9 @@ end
     Ω  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
-    P  :: Union{BrillouinPoint, SWaveBrillouinPoint},
-    k  :: Union{BrillouinPoint, SWaveBrillouinPoint},
-    kp :: Union{BrillouinPoint, SWaveBrillouinPoint},
+    P  :: BrillouinPoint,
+    k  :: BrillouinPoint,
+    kp :: BrillouinPoint,
        :: Type{Ch},
        :: Type{xSp}
     ;
@@ -460,9 +460,9 @@ end
     Ω  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     νp :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
-    P  :: Union{BrillouinPoint, SWaveBrillouinPoint},
-    k  :: Union{BrillouinPoint, SWaveBrillouinPoint},
-    kp :: Union{BrillouinPoint, SWaveBrillouinPoint},
+    P  :: BrillouinPoint,
+    k  :: BrillouinPoint,
+    kp :: BrillouinPoint,
        :: Type{Ch},
        :: Type{dSp}
     ;
@@ -486,20 +486,20 @@ function (F::AbstractMBEVertex{Q})(
     k  :: BrillouinPoint,
     kp :: SWaveBrillouinPoint,
        :: Type{Ch},
-       :: Type{pSp},
+       :: Type{Sp},
     ;
     F0 :: Bool = true,
     γp :: Bool = true,
     γt :: Bool = true,
     γa :: Bool = true,
-    )  :: Q where {Q, Ch <: ChannelTag}
+    )  :: Q where {Q, Ch <: ChannelTag, Sp <: SpinTag}
 
     val = zero(Q)
 
     mK = get_P_mesh(F)
 
     for q in mK
-        val += F(Ω, ν, νp, P, k, value(q), Ch, pSp; F0, γp, γt, γa)
+        val += F(Ω, ν, νp, P, k, value(q), Ch, Sp; F0, γp, γt, γa)
     end
 
     return val / length(mK)
@@ -513,20 +513,20 @@ function (F::AbstractMBEVertex{Q})(
     k  :: SWaveBrillouinPoint,
     kp :: BrillouinPoint,
        :: Type{Ch},
-       :: Type{pSp},
+       :: Type{Sp},
     ;
     F0 :: Bool = true,
     γp :: Bool = true,
     γt :: Bool = true,
     γa :: Bool = true,
-    )  :: Q where {Q, Ch <: ChannelTag}
+    )  :: Q where {Q, Ch <: ChannelTag, Sp <: SpinTag}
 
     val = zero(Q)
 
     mK = get_P_mesh(F)
 
     for q in mK
-        val += F(Ω, ν, νp, P, value(q), kp, Ch, pSp; F0, γp, γt, γa)
+        val += F(Ω, ν, νp, P, value(q), kp, Ch, Sp; F0, γp, γt, γa)
     end
 
     return val / length(mK)
@@ -540,20 +540,20 @@ function (F::AbstractMBEVertex{Q})(
     k  :: SWaveBrillouinPoint,
     kp :: SWaveBrillouinPoint,
        :: Type{Ch},
-       :: Type{pSp},
+       :: Type{Sp},
     ;
     F0 :: Bool = true,
     γp :: Bool = true,
     γt :: Bool = true,
     γa :: Bool = true,
-    )  :: Q where {Q, Ch <: ChannelTag}
+    )  :: Q where {Q, Ch <: ChannelTag, Sp <: SpinTag}
 
     val = zero(Q)
 
     mK = get_P_mesh(F)
 
     for qp in mK, q in mK
-        val += F(Ω, ν, νp, P, value(q), value(qp), Ch, pSp; F0, γp, γt, γa)
+        val += F(Ω, ν, νp, P, value(q), value(qp), Ch, Sp; F0, γp, γt, γa)
     end
 
     return val / length(mK)^2
