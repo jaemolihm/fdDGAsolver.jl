@@ -47,6 +47,19 @@ function numK3(
     return N(meshes(Λ.Fp_p, Val(1))), N(meshes(Λ.Fp_p, Val(2)))
 end
 
+function MatsubaraFunctions.set!(
+    F :: RefVertex,
+    val :: Number,
+    ) :: Nothing
+
+    set!(F.Fp_p, val)
+    set!(F.Fp_x, val)
+    set!(F.Ft_p, val)
+    set!(F.Ft_x, val)
+
+    return nothing
+end
+
 # getter methods
 function MatsubaraFunctions.temperature(
     F :: RefVertex

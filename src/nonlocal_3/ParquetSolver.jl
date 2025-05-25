@@ -176,7 +176,7 @@ function parquet_solver_hubbard_parquet_approximation_NL3(
     VT = NL3_Vertex,
     T,
     U,
-    μ, t1, t2 = 0, t3 = 0,
+    μ, t1, t2 = 0., t3 = 0.,
 ) where {Q}
 
     # Mesh for the Green functions and self-energy

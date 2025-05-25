@@ -163,6 +163,17 @@ module fdDGAsolver
 
         F0 = NL2_MBEVertex(asymptotic_to_mbe(data_triqs.Γ), T, nK1, nK2, nK3, mK_Γ)
         S = NL2_ParquetSolver(nK1, nK2, nK3, mK_Γ, copy(Gbare), copy(G0), copy(Σ0), F0, NL2_MBEVertex)
+        # Trigger compilation. Without this NL2_MBEVertex evaluation with two kSW in
+        # build_K3_cache_mfRG! allocates a lot...
+        Ω = MatsubaraFrequency(T, 0, Boson)
+        ν = MatsubaraFrequency(T, 0, Fermion)
+        P = BrillouinPoint(0, 0)
+        for ch in (aCh, pCh, tCh), sp in (pSp, xSp, dSp)
+            S.F.F0(Ω, ν, ν, P, P, P, ch, sp)
+            S.F.F0(Ω, ν, ν, P, kSW, kSW, ch, sp)
+            S.F.F0(Ω, νInf, ν, P, P, P, ch, sp)
+            S.F.F0(Ω, νInf, ν, P, kSW, kSW, ch, sp)
+        end
         res = solve_using_mfRG_without_mixing!(S; strategy = :fdPA_new, update_Σ = true, occ_target, hubbard_params, maxiter=1);
     end
 

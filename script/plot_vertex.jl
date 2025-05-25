@@ -2,6 +2,18 @@
 # Not included in the package to avoid having PyPlot (or Requires) as dependency.
 # To use these functions, `include` the source file in your script.
 
+function plot_self_energy(Σ, ax1 = gca(), ax2 = gca(); show = false, kwargs...)
+    ax1.plot(values(Σ.meshes[1]), real.(Σ.data .* -im), "o-"; kwargs...)
+    ax2.plot(values(Σ.meshes[1]), imag.(Σ.data .* -im), "x-"; kwargs...)
+    if show
+        ax1.set_xlim([-10, 10] .* (2π * temperature(Γ)))
+        ax2.set_xlim([-10, 10] .* (2π * temperature(Γ)))
+        ax1.legend()
+        fig = gcf(); display(fig); close(fig)
+    end
+    return nothing
+end
+
 
 function plot_vertex_K1(Γ)
     # Plot K1 vertex
@@ -33,8 +45,8 @@ function plot_vertex_K2(Γ; vmax = 1.0)
     for ax in plotaxes
         ax.set_xlabel("ν")
         ax.set_ylabel("Ω")
-        ax.set_xlim([-20, 20] .* (2π * temperature(Γ)))
-        ax.set_ylim([-20, 20] .* (2π * temperature(Γ)))
+        # ax.set_xlim([-40, 40] .* (2π * temperature(Γ)))
+        # ax.set_ylim([-40, 40] .* (2π * temperature(Γ)))
     end
 
     display(fig); close(fig)

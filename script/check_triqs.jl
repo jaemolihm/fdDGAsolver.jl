@@ -8,7 +8,7 @@ using Test
 using PyPlot
 using HDF5
 using MatsubaraFunctions: mesh_index
-using fdDGAsolver: numP_Γ, k0, kSW
+using fdDGAsolver: kSW
 
 include("/home/ucl/modl/jmlihm/MFjl/fdDGAsolver.jl/script/plot_vertex.jl")
 
@@ -25,6 +25,22 @@ begin
     filename = "/home/ucl/modl/jmlihm/MFjl/fdDGAsolver.jl/data/Wu_point_U5.55.h5"
     filename = "/home/ucl/modl/jmlihm/MFjl/fdDGAsolver.jl/data/Wu_point.h5"
     filename = "/home/ucl/modl/jmlihm/MFjl/fdDGAsolver.jl/data/Krien_point.h5"
+    filename = "/home/ucl/modl/jmlihm/MFjl/fdDGAsolver.jl/data/Krien_point_new.h5"
+    filename = "/home/ucl/modl/jmlihm/MFjl/fdDGAsolver.jl/data/Krien_point_new_doping_0.15.h5"
+    filename = "/home/ucl/modl/jmlihm/MFjl/fdDGAsolver.jl/data/Wu_point_new_2024.11.18_U5.6.h5"
+
+    filename = "/home/ucl/modl/jmlihm/MFjl/fdDGAsolver.jl/data/Schaefer_T0.1.h5"
+    filename = "/home/ucl/modl/jmlihm/MFjl/fdDGAsolver.jl/data/Schaefer_T0.067.h5"
+    filename = "/home/ucl/modl/jmlihm/MFjl/fdDGAsolver.jl/data/Schaefer_T0.065.h5"
+    filename = "/home/ucl/modl/jmlihm/MFjl/fdDGAsolver.jl/data/Schaefer_T0.063.h5"
+    filename = "/home/ucl/modl/jmlihm/MFjl/fdDGAsolver.jl/data/Schaefer_T0.061.h5"
+end
+
+begin
+    # Wu point U=5.6
+    filename = "/home/ucl/modl/jmlihm/MFjl/fdDGAsolver.jl/data/Wu_point_new_2024.11.18_U5.6.h5"
+    filename = "/home/ucl/modl/jmlihm/MFjl/fdDGAsolver.jl/data/Wu_point_U5.6.h5"
+    filename = "/home/ucl/modl/jmlihm/MFjl/fdDGAsolver.jl/data/Wu_point.h5"
 end
 
 begin
@@ -45,7 +61,7 @@ begin
     # VT = MBEVertex
 
     # Set solver vertex and Green function to the one from TRIQS
-    S = parquet_solver_siam_parquet_approximation(nG, nK1, nK2, nK3; e=0., T, D=0., Δ=0., U, VT)
+    S = parquet_solver_siam_parquet_approximation(nG, nK1, nK2, nK3; e=0., T, D=0., Δ=0., U, VT, mΠν_factor = 24)
     if VT <: MBEVertex
         S.F = fdDGAsolver.asymptotic_to_mbe(Γ)
     else
@@ -54,19 +70,19 @@ begin
     S.G = G
     bubbles!(S)
 
-    # fdDGAsolver.BSE_K1!(S, pCh)
-    # fdDGAsolver.BSE_K1!(S, aCh)
-    # fdDGAsolver.BSE_K1!(S, tCh)
-    # fdDGAsolver.BSE_K2!(S, pCh)
-    # fdDGAsolver.BSE_K2!(S, aCh)
-    # fdDGAsolver.BSE_K2!(S, tCh)
+    fdDGAsolver.BSE_K1!(S, pCh)
+    fdDGAsolver.BSE_K1!(S, aCh)
+    fdDGAsolver.BSE_K1!(S, tCh)
+    fdDGAsolver.BSE_K2!(S, pCh)
+    fdDGAsolver.BSE_K2!(S, aCh)
+    fdDGAsolver.BSE_K2!(S, tCh)
 
-    fdDGAsolver.BSE_K1_new!(S, pCh)
-    fdDGAsolver.BSE_K1_new!(S, aCh)
-    fdDGAsolver.BSE_K1_new!(S, tCh)
-    fdDGAsolver.BSE_K2_new!(S, pCh)
-    fdDGAsolver.BSE_K2_new!(S, aCh)
-    fdDGAsolver.BSE_K2_new!(S, tCh)
+    # fdDGAsolver.BSE_K1_new!(S, pCh)
+    # fdDGAsolver.BSE_K1_new!(S, aCh)
+    # fdDGAsolver.BSE_K1_new!(S, tCh)
+    # fdDGAsolver.BSE_K2_new!(S, pCh)
+    # fdDGAsolver.BSE_K2_new!(S, aCh)
+    # fdDGAsolver.BSE_K2_new!(S, tCh)
 
     @info absmax(S.Fbuff.γp.K1 - Γ.γp.K1) / absmax(Γ.γp.K1)
     @info absmax(S.Fbuff.γa.K1 - Γ.γa.K1) / absmax(Γ.γa.K1)
@@ -89,8 +105,8 @@ begin
     fig = gcf(); display(fig); close(fig)
 
     mult_add!(S.Fbuff, Γ, -1)
-    # plot_vertex_K2(Γ; vmax = 1.0)
-    # plot_vertex_K2(S.Fbuff; vmax = 1)
+    plot_vertex_K2(Γ; vmax = 0.1)
+    plot_vertex_K2(S.Fbuff; vmax = 0.001)
 end
 
 

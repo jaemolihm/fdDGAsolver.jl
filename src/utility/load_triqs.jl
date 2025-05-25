@@ -11,24 +11,16 @@ function _drop_first_dim(f)
     MeshFunction(f.meshes[2:end], dropdims(f.data, dims=1))
 end
 
-function parse_triqs_data(prefix, T, U; params, half_filling = false, symmetrize = true, filename_output = nothing)
-
-    filename_G = "$(prefix)_DCA.h5"
-    filename_chi = "$(prefix)_chi3_fromDCA.h5"
-    filename_F = "$(prefix)_F_fromDCA.h5"
-    Ω0 = MatsubaraFrequency(T, 0, Boson)
-
-    #-----------------------------------------------------------------------------#
-    # Green function and self-energy
-
-    f = h5open(filename_G, "r")
-    occ = h5read(filename_G, "density")
+function load_triqs_2P(filename, U; half_filling = false)
+    f = h5open(filename, "r")
+    occ = h5read(filename, "density")
     G0 = _drop_first_dim(load_triqs_gf(f, "cG0_k_iw"));
     G = _drop_first_dim(load_triqs_gf(f, "cG_k_iw"));
     Σ = _drop_first_dim(load_triqs_gf(f, "cSigma_k_iw"));
     close(f)
 
-    if half_filling && abs(occ - 0.5) > 1e-5
+    if half_filling && abs(occ - 0.5) > 1e-4
+        println("occupation occ = $occ")
         error("half_filling is set to true but the occupation is not 0.5.")
     end
 
@@ -40,7 +32,6 @@ function parse_triqs_data(prefix, T, U; params, half_filling = false, symmetrize
     mult!(G, im)
     mult!(Σ, im)
 
-
     # Update G0 to take the chemical potential shift by U/2 into account
     Σ_const = copy(G0)
     G0_new = copy(G0)
@@ -48,6 +39,19 @@ function parse_triqs_data(prefix, T, U; params, half_filling = false, symmetrize
     Dyson!(G0_new, Σ_const, G0)
     G0 = G0_new
 
+    (; occ, G0, Σ, G)
+end
+
+function parse_triqs_data(prefix, T, U; params, half_filling = false, symmetrize = true, filename_output = nothing)
+
+    filename_G = "$(prefix)_DCA.h5"
+    filename_chi = "$(prefix)_chi3_fromDCA.h5"
+    filename_F = "$(prefix)_F_fromDCA.h5"
+    Ω0 = MatsubaraFrequency(T, 0, Boson)
+
+    #-----------------------------------------------------------------------------#
+    # Green function and self-energy
+    (; occ, G0, Σ, G) = load_triqs_2P(filename_G, U; half_filling)
 
     #-----------------------------------------------------------------------------#
     # K1 vertex
@@ -166,6 +170,43 @@ function parse_triqs_data(prefix, T, U; params, half_filling = false, symmetrize
             # from the box of F_D and F_M.
             Fp_p.data[ind] -= Γ_K12(Ω, ν, ω, pCh, pSp)
             Fp_x.data[ind] -= Γ_K12(Ω, ν, ω, pCh, xSp)
+        end
+    end
+
+    # Remove the core part if not covered by the K12 vertex.
+    for ind in eachindex(Ft_p.data)
+        Ω, ν, ω = value.(to_meshes(Ft_p, ind))
+
+        for Ch in (aCh, pCh, tCh)
+            Ω_, ν_, ω_ = convert_frequency(Ω, ν, ω, tCh, Ch)
+            γ = Ch == aCh ? Γ_K12.γa : Ch == pCh ? Γ_K12.γp : Γ_K12.γt
+
+            is_inbounds_K1  = all(is_inbounds.((Ω_,), γ.K1.meshes))
+            is_inbounds_K2  = all(is_inbounds.((Ω_, ν_), γ.K2.meshes))
+            is_inbounds_K2p = all(is_inbounds.((Ω_, ω_), γ.K2.meshes))
+
+            if ! (is_inbounds_K1 && is_inbounds_K2 && is_inbounds_K2p)
+                Ft_p.data[ind] = 0
+                Ft_x.data[ind] = 0
+            end
+        end
+    end
+
+    for ind in eachindex(Fp_p.data)
+        Ω, ν, ω = value.(to_meshes(Fp_p, ind))
+
+        for Ch in (aCh, pCh, tCh)
+            Ω_, ν_, ω_ = convert_frequency(Ω, ν, ω, pCh, Ch)
+            γ = Ch == aCh ? Γ_K12.γa : Ch == pCh ? Γ_K12.γp : Γ_K12.γt
+
+            is_inbounds_K1  = all(is_inbounds.((Ω_,), γ.K1.meshes))
+            is_inbounds_K2  = all(is_inbounds.((Ω_, ν_), γ.K2.meshes))
+            is_inbounds_K2p = all(is_inbounds.((Ω_, ω_), γ.K2.meshes))
+
+            if ! (is_inbounds_K1 && is_inbounds_K2 && is_inbounds_K2p)
+                Fp_p.data[ind] = 0
+                Fp_x.data[ind] = 0
+            end
         end
     end
 

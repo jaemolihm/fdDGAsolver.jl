@@ -104,18 +104,80 @@ begin
     # System parameters : Krien point
     T = 0.15
     U = 8.0
-    μ = 3.8217923274829233 - U/2
     t1 = 1.0
     t2 = -0.2
     t3 = 0.1
 
-
     # Load impurity vertex
-    prefix = "/home/ucl/modl/jmlihm/MFjl/data/beta6.6667_t-1.0_U8.0_mu3.8217923274829233_numc1_numk254"
-    filename_output = "/home/ucl/modl/jmlihm/MFjl/fdDGAsolver.jl/data/Krien_point.h5"
+    # prefix = "/home/ucl/modl/jmlihm/MFjl/data/beta6.6667_t-1.0_U8.0_mu3.8217923274829233_numc1_numk254"
+    # filename_output = "/home/ucl/modl/jmlihm/MFjl/fdDGAsolver.jl/data/Krien_point.h5"
+    # μ = 3.8217923274829233 - U/2
+
+    # Update Aug 5 2024 (larger frequency box)
+    # prefix = "/home/ucl/modl/jmlihm/MFjl/data/beta6.6667_t-1.0_U8.0_mu3.8100430368818334_numc1_numk254"
+    # filename_output = "/home/ucl/modl/jmlihm/MFjl/fdDGAsolver.jl/data/Krien_point_new.h5"
+    # μ = 3.8100430368818334 - U/2
+
+    # Update Aug 20 2024 (different doping)
+    prefix = "/home/ucl/modl/jmlihm/MFjl/data/beta6.6667_t-1.0_U8.0_mu1.8146053242102085_numc1_numk254"
+    filename_output = "/home/ucl/modl/jmlihm/MFjl/fdDGAsolver.jl/data/Krien_point_new_doping_0.15.h5"
+    μ = 1.8146053242102085 - U/2
+
 
     data_triqs = fdDGAsolver.parse_triqs_data(prefix, T, U; params = (; μ, t1, t2, t3), half_filling = false, symmetrize = true, filename_output)
     plot_vertex_K1(data_triqs.Γ)
     plot_vertex_K2(data_triqs.Γ; vmax = 10.)
     plot_vertex_core(data_triqs.Γ; vmax = 20., Ω = 2π*T*0)
+end;
+
+
+begin
+    # System parameters : Wu point - update Nov 18 2024
+    T = 0.2
+    t1 = 1.0
+    t2 = -0.3
+    t3 = 0.0
+    U = 5.6
+    μ = 2.178910712243582
+
+    # Load impurity vertex
+    prefix = "/home/ucl/modl/jmlihm/MFjl/data/new_2024.11.18/beta5.0_t-1.0_U$(U)_mu$(μ)_numc1_numk254"
+    filename_output = "/home/ucl/modl/jmlihm/MFjl/fdDGAsolver.jl/data/Wu_point_new_2024.11.18_U$U.h5"
+
+    μ = μ - U/2
+
+    data_triqs = fdDGAsolver.parse_triqs_data(prefix, T, U; params = (; μ, t1, t2, t3), half_filling = false, symmetrize = true, filename_output);
+
+    plot_vertex_K2(data_triqs.Γ; vmax = 1);
+    plot_vertex_core(data_triqs.Γ; vmax = 0.1);
+end;
+
+
+
+begin
+    # System parameters : weak coupling point from Schaefer et al, PRX (2021)
+    U = 2.0
+    μ = 0.0
+    t1 = 1.0
+    t2 = 0.0
+    t3 = 0.0
+    
+    # Load impurity vertex
+    T = 0.1
+    prefix = "/home/ucl/modl/jmlihm/MFjl/data/beta10.0_t-1.0_U2.0_mu1.0000303034649165_numc1_numk254"
+
+    T = 0.067
+    prefix = "/home/ucl/modl/jmlihm/MFjl/data/beta14.925_t-1.0_U2.0_mu0.9999352513262938_numc1_numk254"
+
+    T = 0.065; beta = 15.3846
+    T = 0.063; beta = 15.873
+    T = 0.061; beta = 16.3934
+    prefix = "/home/ucl/modl/jmlihm/MFjl/data/beta$(beta)_t-1.0_U2.0_mu1.0_numc1_numk254"
+
+    filename_output = "/home/ucl/modl/jmlihm/MFjl/fdDGAsolver.jl/data/Schaefer_T$T.h5"
+
+    data_triqs = fdDGAsolver.parse_triqs_data(prefix, T, U; params = (; μ, t1, t2, t3), half_filling = true, symmetrize = true, filename_output)
+    plot_vertex_K1(data_triqs.Γ)
+    plot_vertex_K2(data_triqs.Γ; vmax = 0.1)
+    plot_vertex_core(data_triqs.Γ; vmax = 0.1, Ω = 2π*T*0)
 end;

@@ -59,7 +59,7 @@ function _fourier_interpolate!(yi :: AbstractMatrix, Lo, Li)
     return yo
 end
 
-function interpolate_vertex!(Ko :: NL_MF_K1, Ki :: NL_MF_K1)
+function interpolate_vertex!(Ko :: T, Ki :: T) where {T <: Union{NL_MF_K1, NL_MF_G}}
     # Fourier interpolation
     set!(Ko, 0)
 
@@ -153,10 +153,20 @@ function interpolate_solver!(
 
     # Interpolate the self-energy and vertex of Si to the mesh of So
 
-    @assert meshes(So.Σ, Val(2)) == meshes(Si.Σ, Val(2))
+    # Interpolate self-energy wavevector mesh
+    Σi = MeshFunction(meshes(Si.Σ, Val(1)), meshes(So.Σ, Val(2)); data_t = eltype(Si.Σ.data))
+    interpolate_vertex!(Σi, Si.Σ)
+
+    @assert meshes(So.Σ, Val(2)) == meshes(Σi, Val(2))
     for i in eachindex(So.Σ.data)
         ν, k = value.(to_meshes(So.Σ, i))
-        So.Σ[ν, k] = Si.Σ(ν, k)
+        if value(ν) < plain_value(meshes(Σi, Val(1))[1])
+            So.Σ[ν, k] = Σi(value(meshes(Σi, Val(1))[1]), k)
+        elseif value(ν) > plain_value(meshes(Σi, Val(1))[end])
+            So.Σ[ν, k] = Σi(value(meshes(Σi, Val(1))[end]), k)
+        else
+            So.Σ[ν, k] = Σi(ν, k)
+        end
     end
 
     if occ_target !== nothing
@@ -174,5 +184,8 @@ function interpolate_solver!(
         interpolate_vertex!(γo.K2, γi.K2)
         interpolate_vertex!(γo.K3, γi.K3)
     end
+
+    symmetrize_solver!(So)
+
     return nothing
 end

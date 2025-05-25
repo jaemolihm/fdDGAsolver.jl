@@ -85,13 +85,14 @@ mutable struct NL_ParquetSolver{Q, RefVT} <: AbstractSolver{Q}
         F0    :: RefVT,
         ;
         mode::Symbol = :serial,
+        mΠν_factor :: Int = 32,
     ) where {Q, RefVT}
 
         T = MatsubaraFunctions.temperature(meshes(G0, Val(1)))
 
         # precompute bubbles for reference system
         mΠΩ = MatsubaraMesh(temperature(F0), nK1, Boson)
-        mΠν = MatsubaraMesh(temperature(F0), nK1, Fermion)
+        mΠν = MatsubaraMesh(temperature(F0), nK1 * mΠν_factor, Fermion)
         Π0pp = MeshFunction(mΠΩ, mΠν, mK_Γ; data_t=Q)
         Π0ph = copy(Π0pp)
 
@@ -174,7 +175,7 @@ function parquet_solver_hubbard_parquet_approximation(
     mode::Symbol = :serial,
     T,
     U,
-    μ, t1, t2 = 0, t3 = 0,
+    μ, t1, t2 = 0., t3 = 0.,
 ) where {Q}
 
     # Mesh for the Green functions and self-energy
@@ -319,6 +320,8 @@ function load_vertex!(F :: AbstractVertex, f, name)
         set!(F, load_vertex(NL2_Vertex, f, name))
     elseif F isa NL2_MBEVertex
         set!(F, load_vertex(NL2_MBEVertex, f, name))
+    elseif F isa NL3_Vertex
+        set!(F, load_vertex(NL3_Vertex, f, name))
     elseif F isa NL3_MBEVertex
         set!(F, load_vertex(NL3_MBEVertex, f, name))
     else

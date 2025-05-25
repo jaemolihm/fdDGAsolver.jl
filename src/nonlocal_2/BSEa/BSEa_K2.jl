@@ -161,9 +161,6 @@ function BSE_K2_new!(
 
         Ω, ν, P, k = wtpl
         val     = zero(Q)
-        # Π0slice = view(Π0, Ω, :, P, :)
-        # Πslice  = view(Π , Ω, :, P, :)
-
         Π0slice = MeshFunction((meshes(Π0, Val(2)), meshes(Π0, Val(4))), view(Π0, Ω, :, P, :))
         Πslice  = MeshFunction((meshes(Π,  Val(2)), meshes(Π,  Val(4))), view(Π,  Ω, :, P, :))
 
@@ -188,25 +185,14 @@ function BSE_K2_new!(
         #     end
         # end
 
-        # for i in eachindex(Π0slice)
-        #     ω = value(meshes(Π0, Val(2))[i.I[1]])
-        #     q = value(meshes(Π0, Val(4))[i.I[2]])
-
-        #     # vertices
-        #     Fl  = F( Ω, ν, ω, P, k, q, Ch, Sp) - F( Ω, νInf, ω, P, k, q, Ch, Sp)
-        #     F0l = F0(Ω, ν, ω, P, k, q, Ch, Sp) - F0(Ω, νInf, ω, P, k, q, Ch, Sp)
-
-        #     # 1ℓ and central part
-        #     if is_mfRG === Val(true)
-        #         val += (Fl - F0l) * Πslice[i] * U
-        #     else
-        #         val += (Fl * Πslice[i] - F0l * Π0slice[i]) * U
-        #     end
-        # end
-
-        for iq in eachindex(meshes(Πslice, Val(2))), iω in eachindex(meshes(Πslice, Val(1)))
-            ω = value(meshes(Πslice, Val(1))[iω])
-            q = value(meshes(Πslice, Val(2))[iq])
+        # for iq in eachindex(meshes(Πslice, Val(2))), iω in eachindex(meshes(Πslice, Val(1)))
+        #     ω = value(meshes(Πslice, Val(1))[iω])
+        #     q = value(meshes(Πslice, Val(2))[iq])
+        for iq in eachindex(meshes(K2, Val(4))), iω in eachindex(meshes(K2, Val(2)))
+            ω = value(meshes(K2, Val(2))[iω])
+            q = value(meshes(K2, Val(4))[iq])
+            Π_  = Πslice[ω, q]
+            Π0_ = Π0slice[ω, q]
 
             # vertices
             Fl  = F( Ω, ν, ω, P, k, q, Ch, Sp) - F( Ω, νInf, ω, P, k, q, Ch, Sp)
@@ -214,9 +200,9 @@ function BSE_K2_new!(
 
             # 1ℓ and central part
             if is_mfRG === Val(true)
-                val += (Fl - F0l) * Πslice[iω, iq] * U
+                val += (Fl - F0l) * Π_ * U
             else
-                val += (Fl * Πslice[iω, iq] - F0l * Π0slice[iω, iq]) * U
+                val += (Fl * Π_ - F0l * Π0_) * U
             end
         end
 

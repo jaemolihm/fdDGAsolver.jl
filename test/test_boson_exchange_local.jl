@@ -94,7 +94,7 @@ end
     Δ = π / 5
     D = 10.0
 
-    nmax = 20
+    nmax = 24
     nG  = 6nmax
     nK1 = 4nmax
     nK2 = (nmax, nmax)

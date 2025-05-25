@@ -1,10 +1,29 @@
+function unique_filename_log(filename_log :: Union{String, Nothing})
+    # If filename_log ends with .h5, return it.
+    # Otherwise, append ".iter#.h5" where "#" is the smallest positive integer that
+    # the corresponding filename does not exist.
+    if filename_log === nothing
+        return nothing
+    elseif filename_log[end-2:end] == ".h5"
+        return filename_log
+    else
+        for i in 1:10_000
+            if ! isfile("$filename_log.iter$i.h5")
+                return "$filename_log.iter$i.h5"
+            end
+        end
+        @warn "Cannot find a non-existent filename $filename_log.iter#.h5. Writing to $filename_log.tmp.h5."
+        return filename_log * "tmp.h5"
+    end
+end
+
 mutable struct mfRGLinearMap{ST, Q} <: LinearMaps.LinearMap{Q}
     const S :: ST
     strategy :: Symbol
     is_first_iteration :: Bool
     function mfRGLinearMap(S :: ST, strategy) where {ST <: AbstractSolver{Q}} where {Q}
-        if strategy !== :fdPA && strategy !== :fdPA_new
-            error("Invalid strategy $strategy. Must be fdPA or fdPA_new.")
+        if strategy ∉ [:fdPA, :fdPA_new, :fdPA_1loop]
+            error("Invalid strategy $strategy. Must be fdPA or fdPA_new or fdPA_1loop.")
         end
         new{ST, Q}(S, strategy, true)
     end
@@ -15,12 +34,20 @@ Base.size(A::mfRGLinearMap) = (length(A.S.F), length(A.S.F))
 function LinearMaps._unsafe_mul!(y, A::mfRGLinearMap, x::AbstractVector)
     S = A.S
 
-    unflatten!(S.F, x)
+    factor = 1e-2
+
+    unflatten!(S.F, x .* factor)
+    # set!(S.F.γa.K1, 0)  # DEBUG mfRG wo K1
+    # set!(S.F.γp.K1, 0)  # DEBUG mfRG wo K1
+    # set!(S.F.γt.K1, 0)  # DEBUG mfRG wo K1
+    # set!(S.F.γa.K2, 0)  # DEBUG mfRG wo K2
+    # set!(S.F.γp.K2, 0)  # DEBUG mfRG wo K2
+    # set!(S.F.γt.K2, 0)  # DEBUG mfRG wo K2
 
     build_K3_cache_mfRG!(S, A.is_first_iteration)
     A.is_first_iteration = false
 
-    if A.strategy === :fdPA
+    if A.strategy === :fdPA || A.strategy === :fdPA_1loop
         # Takes ~40% of the time
         BSE_L_K2!(S, pCh)
         BSE_L_K2!(S, aCh)
@@ -36,13 +63,13 @@ function LinearMaps._unsafe_mul!(y, A::mfRGLinearMap, x::AbstractVector)
         BSE_K2!(S, tCh, Val(true))
     elseif A.strategy === :fdPA_new
         # New version
-        BSE_K1_new!(S, pCh, Val(true))
-        BSE_K1_new!(S, aCh, Val(true))
-        BSE_K1_new!(S, tCh, Val(true))
+        BSE_K1_new!(S, pCh, Val(true))  # DEBUG mfRG wo K1
+        BSE_K1_new!(S, aCh, Val(true))  # DEBUG mfRG wo K1
+        BSE_K1_new!(S, tCh, Val(true))  # DEBUG mfRG wo K1
 
-        BSE_K2_new!(S, pCh, Val(true))
-        BSE_K2_new!(S, aCh, Val(true))
-        BSE_K2_new!(S, tCh, Val(true))
+        BSE_K2_new!(S, pCh, Val(true))  # DEBUG mfRG wo K2
+        BSE_K2_new!(S, aCh, Val(true))  # DEBUG mfRG wo K2
+        BSE_K2_new!(S, tCh, Val(true))  # DEBUG mfRG wo K2
     end
 
     BSE_L_K3!(S, pCh)
@@ -56,7 +83,7 @@ function LinearMaps._unsafe_mul!(y, A::mfRGLinearMap, x::AbstractVector)
     set!(S.F, S.Fbuff)
 
     flatten!(S.F, y)
-    y .= x .- y
+    y .= x .- y ./ factor
 
     return y
 end
@@ -73,6 +100,10 @@ function fixed_point_preconditioned!(
     update_Σ = false,
     occ_target = nothing,
     hubbard_params = nothing,
+    filename_log :: Union{Nothing, String} = nothing,
+    use_preconditioner = true,
+    krylov_maxiter = 400,
+    callback_after_iterate = nothing,
     kwargs_solver...
     ) :: Nothing where {Q}
 
@@ -88,34 +119,51 @@ function fixed_point_preconditioned!(
     else
         unflatten!(S.F, x)
     end
+    symmetrize_solver!(S; verbose = false)
 
     # Iterate the solver
     iterate_solver!(S; strategy, update_Σ, kwargs_solver...)
+
+    if callback_after_iterate !== nothing
+        callback_after_iterate(S)
+    end
+
+    if filename_log !== nothing
+        if mpi_ismain()
+            h5open(unique_filename_log(filename_log), "w") do f
+                save!(f, "S", S)
+            end
+        end
+    end
 
     # calculate residue
     R_F = flatten(S.F) .- x[1:length(S.F)]
 
     # Precondition output
-    if krylov_solver === nothing
-        xsol, stats = Krylov.dqgmres(mfRGLinearMap(S, strategy), R_F;
-            atol = 1e-6, rtol = 1e-6, itmax = 400,
-            memory = 200, verbose = 0, history = true);
+    if use_preconditioner
+        if krylov_solver === nothing
+            xsol, stats = Krylov.dqgmres(mfRGLinearMap(S, strategy), R_F;
+                atol = 1e-6, rtol = 1e-6, itmax = krylov_maxiter,
+                memory = 100, verbose = 0, history = true);
+        else
+            # In-place solver
+            res = Krylov.dqgmres!(krylov_solver, mfRGLinearMap(S, strategy), R_F;
+                atol = 1e-6, rtol = 1e-6, itmax = krylov_maxiter,
+                verbose = 0, history = true);
+            xsol = res.x
+            stats = res.stats
+        end
+
+        if !stats.solved
+            @warn "Krylov solver did not converge after $(stats.niter) iterations, residual $(stats.residuals[end])."
+        end
+        flush(stdout)
+        flush(stderr)
+
+        R[1:length(S.F)] .= xsol
     else
-        # In-place solver
-        res = Krylov.dqgmres!(krylov_solver, mfRGLinearMap(S, strategy), R_F;
-            atol = 1e-6, rtol = 1e-6, itmax = 400,
-            verbose = 0, history = true);
-        xsol = res.x
-        stats = res.stats
+        R[1:length(S.F)] .= R_F
     end
-
-    if !stats.solved
-        @warn "Krylov solver did not converge after $(stats.niter) iterations, residual $(stats.residuals[end])."
-    end
-    flush(stdout)
-    flush(stderr)
-
-    R[1:length(S.F)] .= xsol
 
     if update_Σ
         R[length(S.F)+1:end] .= flatten(S.Σ) .- x[length(S.F)+1:end]
@@ -272,7 +320,9 @@ function solve_using_mfRG!(
         else
             # If the calculation converged, increase mixing.
             mixing = min(1.0, mixing * 1.2)
-            mpi_ismain() && println("Calculation converged, increase mixing to $mixing")
+            if mpi_ismain() && verbose
+                println("Calculation converged, increase mixing to $mixing")
+            end
         end
         unflatten!(S.F, res.zero);
 
@@ -648,6 +698,15 @@ function solve_using_mfRG_without_mixing!(
     update_Σ = false,
     maxiter = 100,
     memory = 50,
+    filename_log = nothing,
+    use_preconditioner = true,
+    store_trace = false,
+    mixing = 0.85,
+    _debug_outer = 1,
+    compute_Hartree = true,
+    krylov_maxiter = 400,
+    krylov_memory = 200,
+    callback_after_iterate = nothing,
     )
 
     if occ_target !== nothing
@@ -671,30 +730,47 @@ function solve_using_mfRG_without_mixing!(
         println("Solving vertex")
     end
 
-    if update_Σ
-        x0 = flatten(S)
-    else
-        x0 = flatten(S.F)
+    res = nothing
+    history = NLsolve.SolverState[]
+
+    for i in 1:_debug_outer
+
+        if update_Σ
+            x0 = flatten(S)
+        else
+            x0 = flatten(S.F)
+        end
+
+        krylov_solver = Krylov.DqgmresSolver(mfRGLinearMap(S, strategy), flatten(S.F), krylov_memory)
+
+        res = nlsolve((R, x) -> fixed_point_preconditioned!(R, x, S, krylov_solver; update_Σ, strategy, occ_target, hubbard_params, filename_log, use_preconditioner, compute_Hartree, krylov_maxiter, callback_after_iterate), x0,
+            method = :anderson,
+            iterations = maxiter,
+            ftol = tol,
+            beta = mixing,
+            m = memory,
+            show_trace = mpi_ismain() && verbose,
+            store_trace = store_trace,
+        );
+
+        if ! res.f_converged
+            mpi_ismain() && println("Calculation did not converge in $(res.iterations) iterations.")
+        else
+            # If the calculation converged, increase mixing.
+            if mpi_ismain() && verbose
+                println("Calculation converged")
+            end
+        end
+
+        if update_Σ
+            unflatten!(S, res.zero);
+        else
+            unflatten!(S.F, res.zero);
+        end
+
+        symmetrize_solver!(S; verbose = false)
+        append!(history, res.trace.states)
     end
 
-    krylov_memory = 200
-    krylov_solver = Krylov.DqgmresSolver(mfRGLinearMap(S, strategy), flatten(S.F), krylov_memory)
-
-    res = nlsolve((R, x) -> fixed_point_preconditioned!(R, x, S, krylov_solver; update_Σ, strategy, occ_target, hubbard_params), x0,
-        method = :anderson,
-        iterations = maxiter,
-        ftol = tol,
-        beta = 0.85,
-        m = memory,
-        show_trace = mpi_ismain() && verbose,
-    );
-
-    if ! res.f_converged
-        mpi_ismain() && println("Calculation did not converge in $(res.iterations) iterations.")
-    else
-        # If the calculation converged, increase mixing.
-        mpi_ismain() && println("Calculation converged")
-    end
-
-    return res
+    return (; res, history)
 end

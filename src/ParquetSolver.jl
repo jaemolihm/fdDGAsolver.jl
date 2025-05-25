@@ -89,13 +89,14 @@ mutable struct ParquetSolver{Q, VT, RefVT} <: AbstractSolver{Q}
               :: Type{VT} = Vertex,
         ;
         mode::Symbol = :threads,
+        mΠν_factor :: Int = 6,
     ) where {Q, VT, RefVT}
 
         T = MatsubaraFunctions.temperature(meshes(G0, Val(1)))
 
         # precompute bubbles for reference system
         mΠΩ = MatsubaraMesh(temperature(F0), nK1, Boson)
-        mΠν = MatsubaraMesh(temperature(F0), nK1, Fermion)
+        mΠν = MatsubaraMesh(temperature(F0), nK1 * mΠν_factor, Fermion)
         Π0pp = MeshFunction(mΠΩ, mΠν; data_t=Q)
         Π0ph = copy(Π0pp)
 
@@ -174,6 +175,7 @@ function parquet_solver_siam_parquet_approximation(
     :: Type{Q} = ComplexF64,
     ;
     mode::Symbol = :threads,
+    mΠν_factor = 6,
     VT = Vertex,
     e,
     Δ,
@@ -194,7 +196,7 @@ function parquet_solver_siam_parquet_approximation(
     set!(G0, 0)
     set!(Σ0, 0)
 
-    ParquetSolver(nK1, nK2, nK3, Gbare, G0, Σ0, F0, VT; mode)
+    ParquetSolver(nK1, nK2, nK3, Gbare, G0, Σ0, F0, VT; mode, mΠν_factor)
 end
 
 # symmetry group initialization
@@ -239,6 +241,21 @@ function reset_sym_grp!(S :: AbstractSolver)
     S.SGphL = SymmetryGroup[SymmetryGroup(F.γp.K1), SymmetryGroup(F.γp.K2), SymmetryGroup(F.γp.K3)]
 
     return nothing
+end
+
+function symmetrize_solver!(S :: AbstractSolver; verbose = false)
+    err_list = [S.SGΣ(S.Σ)]
+    for Ch in (aCh, pCh, tCh)
+        SG = Ch === pCh ? S.SGpp : S.SGph
+        γ = get_reducible_vertex(S.F, Ch)
+        push!(err_list, SG[1](γ.K1))
+        push!(err_list, SG[2](γ.K2))
+        push!(err_list, SG[3](γ.K3))
+    end
+    if verbose
+        display(err_list)
+    end
+    return (; S, err_list)
 end
 
 

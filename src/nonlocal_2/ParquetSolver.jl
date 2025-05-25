@@ -86,13 +86,14 @@ mutable struct NL2_ParquetSolver{Q, VT, RefVT} <: AbstractSolver{Q}
               :: Type{VT} = NL2_Vertex,
         ;
         mode::Symbol = :threads,
+        mΠν_factor :: Int = 1,
     ) where {Q, VT, RefVT}
 
         T = MatsubaraFunctions.temperature(meshes(G0, Val(1)))
 
         # precompute bubbles for reference system
         mΠΩ = MatsubaraMesh(temperature(F0), nK1, Boson)
-        mΠν = MatsubaraMesh(temperature(F0), nK1, Fermion)
+        mΠν = MatsubaraMesh(temperature(F0), nK1 * mΠν_factor, Fermion)
         Π0pp = MeshFunction(mΠΩ, mΠν, mK_Γ, mK_Γ; data_t=Q)
         Π0ph = copy(Π0pp)
 
@@ -176,7 +177,7 @@ function parquet_solver_hubbard_parquet_approximation_NL2(
     VT = NL2_Vertex,
     T,
     U,
-    μ, t1, t2 = 0, t3 = 0,
+    μ, t1, t2 = 0., t3 = 0.,
 ) where {Q}
 
     # Mesh for the Green functions and self-energy

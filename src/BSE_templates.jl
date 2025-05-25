@@ -250,3 +250,109 @@ function BSE_K2_new!(
 
     return nothing
 end
+
+
+
+
+#----------------------------------------------------------------------------------------------#
+# K1 class, 1loop BSE
+
+function BSE_K1_1loop!(
+    S       :: AbstractSolver,
+            :: Type{aCh},
+    is_mfRG :: Union{Val{true}, Val{false}} = Val(false),
+    )       :: Nothing
+    BSE_K1_1loop!(S.Fbuff.γa.K1, S.F0, S.F, S.FL, S.Π0ph, S.Πph, S.SGph[1], +1, aCh, pSp, is_mfRG; S.mode)
+end
+
+function BSE_K1_1loop!(
+    S       :: AbstractSolver,
+            :: Type{pCh},
+    is_mfRG :: Union{Val{true}, Val{false}} = Val(false),
+    )       :: Nothing
+    BSE_K1_1loop!(S.Fbuff.γp.K1, S.F0, S.F, S.FL, S.Π0pp, S.Πpp, S.SGpp[1], +1, pCh, pSp, is_mfRG; S.mode)
+end
+
+function BSE_K1_1loop!(
+    S       :: AbstractSolver,
+            :: Type{tCh},
+    is_mfRG :: Union{Val{true}, Val{false}} = Val(false),
+    )       :: Nothing
+    BSE_K1_1loop!(S.Fbuff.γt.K1, S.F0, S.F, S.FL, S.Π0ph, S.Πph, S.SGph[1], -1, tCh, dSp, is_mfRG; S.mode)
+
+    # Currently S.Fbuff.γt.K1 has γtd = 2 γtp + γtx = 2 γtp - γax
+    # We want to store γtp = (γtd + γax) / 2
+    add!(S.Fbuff.γt.K1, S.Fbuff.γa.K1)
+    S.Fbuff.γt.K1.data ./= 2
+
+    return nothing
+end
+
+
+#----------------------------------------------------------------------------------------------#
+# K2 class, 1loop BSE
+
+function BSE_K2_1loop!(
+    S       :: AbstractSolver,
+            :: Type{aCh},
+    is_mfRG :: Union{Val{true}, Val{false}} = Val(false),
+    ) :: Nothing
+    BSE_K2_1loop!(S.Fbuff.γa.K2, S.F0, S.F, S.FL, S.Π0ph, S.Πph, S.SGph[2], +1, aCh, pSp, is_mfRG; S.mode)
+end
+
+function BSE_K2_1loop!(
+    S       :: AbstractSolver,
+            :: Type{pCh},
+    is_mfRG :: Union{Val{true}, Val{false}} = Val(false),
+    ) :: Nothing
+    BSE_K2_1loop!(S.Fbuff.γp.K2, S.F0, S.F, S.FL, S.Π0pp, S.Πpp, S.SGpp[2], +1, pCh, pSp, is_mfRG; S.mode)
+end
+
+function BSE_K2_1loop!(
+    S       :: AbstractSolver,
+            :: Type{tCh},
+    is_mfRG :: Union{Val{true}, Val{false}} = Val(false),
+    ) :: Nothing
+    BSE_K2_1loop!(S.Fbuff.γt.K2, S.F0, S.F, S.FL, S.Π0ph, S.Πph, S.SGph[2], -1, tCh, dSp, is_mfRG; S.mode)
+
+    # Currently S.Fbuff.γt.K2 has γtd = 2 γtp + γtx = 2 γtp - γax
+    # We want to store γtp = (γtd + γax) / 2
+    add!(S.Fbuff.γt.K2, S.Fbuff.γa.K2)
+    S.Fbuff.γt.K2.data ./= 2
+
+    return nothing
+end
+
+#----------------------------------------------------------------------------------------------#
+# K3 class, 1loop BSE
+
+function BSE_K3_1loop!(
+    S       :: AbstractSolver,
+            :: Type{aCh},
+    is_mfRG :: Union{Val{true}, Val{false}} = Val(false),
+    ) :: Nothing
+    BSE_K3_1loop!(S.Fbuff.γa.K3, S.FL, S.cache_Γa, S.cache_Fa, S.cache_F0a, S.Π0ph, S.Πph, S.SGph[3], +1, +1, aCh, pSp, is_mfRG; S.mode)
+end
+
+function BSE_K3_1loop!(
+    S       :: AbstractSolver,
+            :: Type{pCh},
+    is_mfRG :: Union{Val{true}, Val{false}} = Val(false),
+    ) :: Nothing
+    BSE_K3_1loop!(S.Fbuff.γp.K3, S.FL, S.cache_Γpx, S.cache_Fp, S.cache_F0p, S.Π0pp, S.Πpp, S.SGpp[3], -1, +1, pCh, pSp, is_mfRG; S.mode)
+end
+
+function BSE_K3_1loop!(
+    S       :: AbstractSolver,
+            :: Type{tCh},
+    is_mfRG :: Union{Val{true}, Val{false}} = Val(false),
+    ) :: Nothing
+    BSE_K3_1loop!(S.Fbuff.γt.K3, S.FL, S.cache_Γt, S.cache_Ft, S.cache_F0t, S.Π0ph, S.Πph, S.SGph[3], -1, -1, tCh, dSp, is_mfRG; S.mode)
+
+    # Currently S.Fbuff.γt.K3 has γtd = 2 γtp + γtx = 2 γtp - γax
+    # We want to store γtp = (γtd + γax) / 2
+    add!(S.Fbuff.γt.K3, S.Fbuff.γa.K3)
+    S.Fbuff.γt.K3.data ./= 2
+
+    return nothing
+end

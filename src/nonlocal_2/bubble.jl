@@ -42,7 +42,10 @@ end
 function bubbles_real_space!(
     Πpp :: NL2_MF_Π{Q},
     Πph :: NL2_MF_Π{Q},
-    G   :: NL_MF_G{Q},
+    G1  :: NL_MF_G{Q},
+    G2  :: NL_MF_G{Q} = G1
+    ;
+    use_G_tail :: Bool = false
     ) :: Nothing where {Q}
 
     # G(R) = ∑_k G(k) exp(-ikR) / N_k
@@ -53,13 +56,14 @@ function bubbles_real_space!(
     set!(Πpp, 0)
     set!(Πph, 0)
 
-    LG = bz(meshes(G, Val(2))).L
+    LG = bz(meshes(G1, Val(2))).L
     L  = bz(meshes(Πpp, Val(3))).L
 
     n1 = length(meshes(Πpp, Val(1)))
     n2 = length(meshes(Πpp, Val(2)))
 
-    G_real_space = fft(reshape(G.data, :, LG, LG), (2, 3)) / LG^2
+    G1_real_space = fft(reshape(G1.data, :, LG, LG), (2, 3)) / LG^2
+    G2_real_space = fft(reshape(G2.data, :, LG, LG), (2, 3)) / LG^2
 
     Πpp_R = Base.ReshapedArray(Πpp.data, (n1, n2, L, L, L, L), ())
     Πph_R = Base.ReshapedArray(Πph.data, (n1, n2, L, L, L, L), ())
@@ -91,15 +95,22 @@ function bubbles_real_space!(
             iRmR_Π = mod.(Rp_vec .- R_vec, (L, L)) .+ 1
             iRpR_Π = mod.(Rp_vec .+ R_vec, (L, L)) .+ 1
 
-            G_R  = MeshFunction((meshes(G, Val(1)),), view(G_real_space, :, iR_G...))
-            G_Rp = MeshFunction((meshes(G, Val(1)),), view(G_real_space, :, iRp_G...))
+            G1_R  = MeshFunction((meshes(G1, Val(1)),), view(G1_real_space, :, iR_G...))
+            G2_Rp = MeshFunction((meshes(G2, Val(1)),), view(G2_real_space, :, iRp_G...))
 
             for iΩ in eachindex(meshes(Πpp, Val(1))), iν in eachindex(meshes(Πpp, Val(2)))
                 Ω = value(meshes(Πpp, Val(1))[iΩ])
                 ν = value(meshes(Πpp, Val(2))[iν])
 
-                Πpp_R[iΩ, iν, iR_Π..., iRmR_Π...] += G_R(Ω - ν) * G_Rp(ν) * weight
-                Πph_R[iΩ, iν, iR_Π..., iRpR_Π...] += G_R(Ω + ν) * G_Rp(ν) * weight
+                # Πpp_R[iΩ, iν, iR_Π..., iRmR_Π...] += G1_R(Ω - ν) * G2_Rp(ν) * weight
+                # Πph_R[iΩ, iν, iR_Π..., iRpR_Π...] += G1_R(Ω + ν) * G2_Rp(ν) * weight
+                if R_vec == (0, 0) && use_G_tail
+                    Πpp_R[iΩ, iν, iR_Π..., iRmR_Π...] += green_with_tail(G1_R, Ω - ν) * green_with_tail(G2_Rp, ν) * weight
+                    Πph_R[iΩ, iν, iR_Π..., iRpR_Π...] += green_with_tail(G1_R, Ω + ν) * green_with_tail(G2_Rp, ν) * weight
+                else
+                    Πpp_R[iΩ, iν, iR_Π..., iRmR_Π...] += G1_R(Ω - ν) * G2_Rp(ν) * weight
+                    Πph_R[iΩ, iν, iR_Π..., iRpR_Π...] += G1_R(Ω + ν) * G2_Rp(ν) * weight
+                end
             end
         end
     end

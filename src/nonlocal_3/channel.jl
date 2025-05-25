@@ -59,9 +59,9 @@ end
     Ω  :: MatsubaraFrequency,
     ν  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
     ω  :: Union{MatsubaraFrequency, InfiniteMatsubaraFrequency},
-    P  :: BrillouinPoint,
-    k  :: BrillouinPoint,
-    q  :: BrillouinPoint,
+    P  :: Union{BrillouinPoint, SWaveBrillouinPoint},
+    k  :: Union{BrillouinPoint, SWaveBrillouinPoint},
+    q  :: Union{BrillouinPoint, SWaveBrillouinPoint},
     ;
     K1 :: Bool = true,
     K2 :: Bool = true,

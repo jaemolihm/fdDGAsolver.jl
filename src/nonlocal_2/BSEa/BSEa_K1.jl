@@ -88,6 +88,8 @@ function BSE_K1_new!(
         for iq in eachindex(meshes(Πslice, Val(2))), iω in eachindex(meshes(Πslice, Val(1)))
             ω = value(meshes(Πslice, Val(1))[iω])
             q = value(meshes(Πslice, Val(2))[iq])
+            Π_  = Πslice[iω, iq]
+            Π0_ = Π0slice[iω, iq]
 
             # vertices
             Fl  = F( Ω, νInf, ω, P, k0, q, Ch, Sp)
@@ -95,9 +97,9 @@ function BSE_K1_new!(
 
             # 1ℓ and central part
             if is_mfRG === Val(true)
-                val += (Fl - F0l) * Πslice[iω, iq] * U
+                val += (Fl - F0l) * Π_ * U
             else
-                val += (Fl * Πslice[iω, iq] - F0l * Π0slice[iω, iq]) * U
+                val += (Fl * Π_ - F0l * Π0_) * U
             end
         end
 

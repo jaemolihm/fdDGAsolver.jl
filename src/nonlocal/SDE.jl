@@ -7,6 +7,7 @@ function SDE_channel_L_pp!(
     SGpp2 :: SymmetryGroup
     ;
     mode  :: Symbol,
+    subtract_asymptotic :: Bool = false,
     )     :: Nothing where {Q}
 
     # model the diagram
@@ -20,6 +21,12 @@ function SDE_channel_L_pp!(
             ω = value(meshes(Πpp, Val(2))[i])
 
             val += bare_vertex(F) * Πslice[i] * F.γp(Ω, Ω - ω, ν, P)
+
+            if subtract_asymptotic
+                # Subtract the asymptotic contribution ν → νInf.
+                # This term is computed as GW self-energy.
+                val -= bare_vertex(F) * Πslice[i] * F.γp(Ω, Ω - ω, νInf, P)
+            end
         end
 
         return temperature(F) * val
@@ -38,6 +45,7 @@ function SDE_channel_L_ph!(
     SGph2 :: SymmetryGroup
     ;
     mode  :: Symbol,
+    subtract_asymptotic :: Bool = false,
     )     :: Nothing where {Q}
 
     # model the diagram
@@ -51,6 +59,12 @@ function SDE_channel_L_ph!(
             ω = value(meshes(Πph, Val(2))[i])
 
             val += bare_vertex(F) * Πslice[i] * (F.γt(Ω, ν, ω, P) + F.γa(Ω, ν, ω, P))
+
+            if subtract_asymptotic
+                # Subtract the asymptotic contribution ν → νInf.
+                # This term is computed as GW self-energy.
+                val -= bare_vertex(F) * Πslice[i] * (F.γt(Ω, νInf, ω, P) + F.γa(Ω, νInf, ω, P))
+            end
         end
 
         return temperature(F) * val
@@ -71,6 +85,7 @@ function SDE_channel_L_pp!(
     SGpp2 :: SymmetryGroup
     ;
     mode  :: Symbol,
+    subtract_asymptotic :: Bool = false,
     )     :: Nothing where {Q}
 
     # model the diagram
@@ -102,6 +117,7 @@ function SDE_channel_L_ph!(
     SGph2 :: SymmetryGroup
     ;
     mode  :: Symbol,
+    subtract_asymptotic :: Bool = false,
     )     :: Nothing where {Q}
 
     # model the diagram
@@ -139,18 +155,55 @@ function SDE_compute!(
     SGpp2 :: SymmetryGroup,
     SGph2 :: SymmetryGroup,
     ;
-    mode  :: Symbol,
+    mode  :: Symbol = :threads,
     use_real_space :: Bool = true,
     include_U² = true,
     include_Hartree = true,
+    subtract_asymptotic = false,
     )     :: NL_MF_G{Q} where {Q}
     # γa, γp, γt contribution to the self-energy in the asymptotic decomposition
 
-    SDE_channel_L_pp!(Lpp, Πpp, F, SGpp2; mode)
-    SDE_channel_L_ph!(Lph, Πph, F, SGph2; mode)
+    SDE_channel_L_pp!(Lpp, Πpp, F, SGpp2; mode, subtract_asymptotic)
+    SDE_channel_L_ph!(Lph, Πph, F, SGph2; mode, subtract_asymptotic)
+
+    SDE_compute_inner!(Σ, G, Lpp, Lph, SGΣ; mode, use_real_space)
+
+    if F isa RefVertex
+        # If F is a RefVertex, a, p, and t channel contributions are all equivalent and
+        # counted three times. We divide by 3 to get the correct result.
+        Σ.data .*= 1/3
+    end
+
+    if include_U²
+        Σ_U² = SDE_U2_using_G(Σ, G, SGΣ, bare_vertex(F); mode)
+        # Σ_U² = SDE_U2_using_Π(Σ, G, Πpp, Πph, SGΣ, bare_vertex(F); mode)
+        add!(Σ, Σ_U²)
+    end
+
+    if include_Hartree
+        n = compute_occupation(G)
+        # We store im * Σ in S.Σ, so we multiply im.
+        Σ.data .+= Q((n - 1/2) * bare_vertex(F) * im)
+    end
+
+    return Σ
+end;
+
+function SDE_compute_inner!(
+    Σ     :: NL_MF_G{Q},
+    G     :: NL_MF_G{Q},
+    Lpp   :: NL_MF_K2{Q},
+    Lph   :: NL_MF_K2{Q},
+    SGΣ   :: SymmetryGroup,
+    ;
+    mode  :: Symbol = :threads,
+    use_real_space :: Bool = true,
+    )     :: NL_MF_G{Q} where {Q}
 
     meshK_G = meshes(G, Val(2))
     T = temperature(meshes(G, Val(1)))
+
+    set!(Σ, 0)
 
     if use_real_space
         # Real-space evaluation
@@ -209,6 +262,8 @@ function SDE_compute!(
 
                         if is_inbounds(Ω - ν, meshes(G, Val(1)))
                             Σ_R_pp[ν] += G_R[Ω - ν] * Lpp_R[iΩ, iν] * weight
+                        end
+                        if is_inbounds(Ω + ν, meshes(G, Val(1)))
                             Σ_R_ph[ν] += G_R[Ω + ν] * Lph_R[iΩ, iν] * weight
                         end
                     end
@@ -264,30 +319,11 @@ function SDE_compute!(
 
             end
 
-            return T * val / length(meshes(Πpp, Val(3)))
+            return T * val / length(meshes(Lpp, Val(3)))
         end
 
         # compute Σ
         SGΣ(Σ, InitFunction{2, Q}(diagram); mode)
-    end
-
-    if F isa RefVertex
-        # If F is a RefVertex, a, p, and t channel contributions are all equivalent and
-        # counted three times. We divide by 3 to get the correct result.
-        Σ.data .*= 1/3
-    end
-
-
-    if include_U²
-        Σ_U² = SDE_U2_using_G(Σ, G, SGΣ, bare_vertex(F); mode)
-        # Σ_U² = SDE_U2_using_Π(Σ, G, Πpp, Πph, SGΣ, bare_vertex(F); mode)
-        add!(Σ, Σ_U²)
-    end
-
-    if include_Hartree
-        n = compute_occupation(G)
-        # We store im * Σ in S.Σ, so we multiply im.
-        Σ.data .+= Q((n - 1/2) * bare_vertex(F) * im)
     end
 
     return Σ
@@ -367,7 +403,7 @@ function SDE_U2_using_G(
     SGΣ :: SymmetryGroup,
     U   :: Number,
     ;
-    mode  :: Symbol,
+    mode  :: Symbol = :threads,
     )   :: NL_MF_G{Q} where {Q}
 
     # Σ_U²(ν, R) = U² * T² * ∑_{ω1, ω2, ν} G(ω1, -R) * G(ω2, R) * G(ω1 - ω2 + ν, R)

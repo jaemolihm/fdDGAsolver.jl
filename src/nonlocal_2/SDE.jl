@@ -7,7 +7,10 @@ function SDE_channel_L_pp!(
     SGpp2 :: SymmetryGroup
     ;
     mode  :: Symbol,
+    subtract_asymptotic :: Bool = false,
     )     :: Nothing where {Q}
+
+    subtract_asymptotic && error("Not implemented")
 
     # model the diagram
     @inline function diagram(wtpl)
@@ -42,7 +45,10 @@ function SDE_channel_L_ph!(
     SGph2 :: SymmetryGroup
     ;
     mode  :: Symbol,
+    subtract_asymptotic :: Bool = false,
     )     :: Nothing where {Q}
+
+    subtract_asymptotic && error("Not implemented")
 
     # model the diagram
     @inline function diagram(wtpl)
@@ -83,6 +89,7 @@ function SDE_channel_L_pp!(
     SGpp2 :: SymmetryGroup
     ;
     mode  :: Symbol,
+    subtract_asymptotic :: Bool = false,
     )     :: Nothing where {Q}
 
     # model the diagram
@@ -116,6 +123,7 @@ function SDE_channel_L_ph!(
     SGph2 :: SymmetryGroup
     ;
     mode  :: Symbol,
+    subtract_asymptotic :: Bool = false,
     )     :: Nothing where {Q}
 
     # model the diagram
@@ -159,11 +167,12 @@ function SDE_compute!(
     use_real_space :: Bool = true,
     include_U² = true,
     include_Hartree = true,
+    subtract_asymptotic = false,
     )     :: NL_MF_G{Q} where {Q}
     # γa, γp, γt contribution to the self-energy in the asymptotic decomposition
 
-    SDE_channel_L_pp!(Lpp, Πpp, F, SGpp2; mode)
-    SDE_channel_L_ph!(Lph, Πph, F, SGph2; mode)
+    SDE_channel_L_pp!(Lpp, Πpp, F, SGpp2; mode, subtract_asymptotic)
+    SDE_channel_L_ph!(Lph, Πph, F, SGph2; mode, subtract_asymptotic)
 
     T = temperature(meshes(G, Val(1)))
 

@@ -1,19 +1,27 @@
 # Define AbstractSolver interface
 
-function SDE!(S :: AbstractSolver; strategy = :scPA, include_U² = true, include_Hartree = true)
+function SDE!(S :: AbstractSolver; strategy = :scPA, include_U² = true, include_Hartree = true, subtract_asymptotic = false)
     if strategy == :scPA || strategy == :scPA_new
         # Σ = SDE(ΔΓ + Γ₀, Π, G)
         set!(S.Σ, 0)
-        SDE!(S.Σ, S.G, S.Πpp, S.Πph, S.Lpp, S.Lph, S.F, S.SGΣ, S.SGpp[2], S.SGph[2]; include_U², include_Hartree, S.mode)
+        SDE!(S.Σ, S.G, S.Πpp, S.Πph, S.Lpp, S.Lph, S.F, S.SGΣ, S.SGpp[2], S.SGph[2]; include_U², include_Hartree, S.mode, subtract_asymptotic)
 
-    elseif strategy == :fdPA || strategy == :fdPA_new
+    elseif strategy == :fdPA || strategy == :fdPA_new || strategy == :fdPA_1loop
+        # We set include_Hartree to false because Hartree self-energy is included in S.Σ0
         # Σ = SDE(ΔΓ + Γ₀, Π, G)
         set!(S.Σ, 0)
-        SDE!(S.Σ, S.G, S.Πpp, S.Πph, S.Lpp, S.Lph, S.F, S.SGΣ, S.SGpp[2], S.SGph[2]; include_U², include_Hartree, S.mode)
+        SDE!(S.Σ, S.G, S.Πpp, S.Πph, S.Lpp, S.Lph, S.F, S.SGΣ, S.SGpp[2], S.SGph[2]; include_U², include_Hartree, S.mode, subtract_asymptotic)
         #   - SDE(Γ₀, Π₀, G₀)
-        mult_add!(S.Σ, SDE!(copy(S.Σ)*0, S.G0, S.Π0pp, S.Π0ph, S.L0pp, S.L0ph, S.F0, S.SGΣ, S.SG0pp2, S.SG0ph2; include_U², include_Hartree, S.mode), -1)
+        mult_add!(S.Σ, SDE!(copy(S.Σ)*0, S.G0, S.Π0pp, S.Π0ph, S.L0pp, S.L0ph, S.F0, S.SGΣ, S.SG0pp2, S.SG0ph2; include_U², include_Hartree, S.mode, subtract_asymptotic), -1)
         # #   + Σ₀
         add!(S.Σ, S.Σ0)
+
+        if include_Hartree
+            # SDE_compute! computes the Hartree self-energy with the occupation of G.
+            # Here we subtract the the Hartree self-energy for G0, so that we get G - G0.
+            n0 = compute_occupation(S.G0)
+            S.Σ.data .-= eltype(S.Σ.data)((n0 - 1/2) * bare_vertex(S.F) * im)
+        end
 
         # # Using K12
         # SDE_using_K12!(S)
@@ -24,16 +32,16 @@ function SDE!(S :: AbstractSolver; strategy = :scPA, include_U² = true, include
     end
 end
 
-function SDE!(Σ, G, Πpp, Πph, Lpp, Lph, F, SGΣ, SGpp, SGph; include_U² = true, include_Hartree = true, mode = :threads)
+function SDE!(Σ, G, Πpp, Πph, Lpp, Lph, F, SGΣ, SGpp, SGph; include_U² = true, include_Hartree = true, mode = :threads, subtract_asymptotic = false)
     # Apply SDE for F and all of its reference vertices F.F0, F.F0.F0, ... recursively.
 
     # Current vertex
-    add!(Σ, SDE_compute!(copy(Σ), G, Πpp, Πph, Lpp, Lph, F, SGΣ, SGpp, SGph; mode, include_U², include_Hartree))
+    add!(Σ, SDE_compute!(copy(Σ), G, Πpp, Πph, Lpp, Lph, F, SGΣ, SGpp, SGph; mode, include_U², include_Hartree, subtract_asymptotic))
 
     if F isa AbstractVertex
         # RefVertex of the current vertex
         # Set include_U² and include_Hartree to false because it is already computed.
-        SDE!(Σ, G, Πpp, Πph, Lpp, Lph, F.F0, SGΣ, SGpp, SGph; include_U² = false, include_Hartree = false, mode)
+        SDE!(Σ, G, Πpp, Πph, Lpp, Lph, F.F0, SGΣ, SGpp, SGph; include_U² = false, include_Hartree = false, mode, subtract_asymptotic)
     end
 
     return Σ
@@ -75,7 +83,10 @@ function SDE_channel_L_pp!(
     SGpp2 :: SymmetryGroup
     ;
     mode  :: Symbol,
+    subtract_asymptotic :: Bool = false,
     )     :: Nothing where {Q}
+
+    subtract_asymptotic && error("Subtracting asymptotic contribution not implemented")
 
     # model the diagram
     @inline function diagram(wtpl)
@@ -108,7 +119,10 @@ function SDE_channel_L_ph!(
     SGph2 :: SymmetryGroup
     ;
     mode  :: Symbol,
+    subtract_asymptotic :: Bool = false,
     )     :: Nothing where {Q}
+
+    subtract_asymptotic && error("Subtracting asymptotic contribution not implemented")
 
     # model the diagram
     @inline function diagram(wtpl)
@@ -144,6 +158,7 @@ function SDE_channel_L_pp!(
     SGpp2 :: SymmetryGroup
     ;
     mode  :: Symbol,
+    subtract_asymptotic :: Bool = false,
     )     :: Nothing where {Q}
 
     # model the diagram
@@ -176,6 +191,7 @@ function SDE_channel_L_ph!(
     SGph2 :: SymmetryGroup
     ;
     mode  :: Symbol,
+    subtract_asymptotic :: Bool = false,
     )     :: Nothing where {Q}
 
     # model the diagram
@@ -215,11 +231,12 @@ function SDE_compute!(
     mode  :: Symbol,
     include_U² = true,
     include_Hartree = true,
+    subtract_asymptotic = false,
     )     :: MF_G{Q} where {Q}
     # γa, γp, γt contribution to the self-energy in the asymptotic decomposition
 
-    SDE_channel_L_pp!(Lpp, Πpp, F, SGpp2; mode)
-    SDE_channel_L_ph!(Lph, Πph, F, SGph2; mode)
+    SDE_channel_L_pp!(Lpp, Πpp, F, SGpp2; mode, subtract_asymptotic)
+    SDE_channel_L_ph!(Lph, Πph, F, SGph2; mode, subtract_asymptotic)
 
     # model the diagram
     @inline function diagram(wtpl)
@@ -314,7 +331,7 @@ function SDE_U2_using_G(
     SGΣ :: SymmetryGroup,
     U   :: Number,
     ;
-    mode  :: Symbol,
+    mode  :: Symbol = :threads,
     )   :: MF_G{Q} where {Q}
     # 2nd-order perturbative contribution to the self-energy
 
